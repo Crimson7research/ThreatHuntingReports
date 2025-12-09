@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shai-Hulud NPM Supply Chain Attack | Microsoft Sentinel Threat Hunt Runbook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-code: #1a1f27;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-red: #f85149;
+            --accent-red-bg: rgba(248, 81, 73, 0.15);
+            --accent-orange: #d29922;
+            --accent-orange-bg: rgba(210, 153, 34, 0.15);
+            --accent-yellow: #e3b341;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --crimson: #c62828;
+            --crimson-light: #ef5350;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 3rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-light) 50%, var(--accent-orange) 100%);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo img {
+            width: 250px;
+            height: 200px;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--crimson-light);
+            letter-spacing: 2px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Critical Alert Banner */
+        .critical-alert {
+            background: var(--accent-red-bg);
+            border: 1px solid var(--accent-red);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .critical-alert-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-red);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .critical-alert h2 {
+            color: var(--accent-red);
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .critical-alert p {
+            color: var(--text-secondary);
+        }
+
+        /* Navigation */
+        .nav-container {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 1rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .nav a.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-number {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            color: var(--text-primary);
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .card h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: var(--bg-tertiary);
+        }
+
+        /* Severity Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-critical {
+            background: var(--accent-red-bg);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .badge-high {
+            background: var(--accent-orange-bg);
+            color: var(--accent-orange);
+            border: 1px solid var(--accent-orange);
+        }
+
+        .badge-medium {
+            background: rgba(227, 179, 65, 0.15);
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+        }
+
+        .badge-low {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        pre {
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: var(--accent-purple); }
+        .fn { color: var(--accent-blue); }
+        .str { color: var(--accent-green); }
+        .num { color: var(--accent-orange); }
+        .op { color: var(--accent-cyan); }
+        .cm { color: var(--text-muted); font-style: italic; }
+        .var { color: var(--text-primary); }
+
+        /* Inline Code */
+        code.inline {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--accent-cyan);
+        }
+
+        /* Attack Chain Steps */
+        .attack-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .attack-step {
+            display: flex;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .step-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--accent-blue);
+        }
+
+        .step-line {
+            width: 2px;
+            flex-grow: 1;
+            background: var(--border-color);
+            min-height: 40px;
+        }
+
+        .attack-step:last-child .step-line {
+            display: none;
+        }
+
+        .step-content {
+            padding-bottom: 1.5rem;
+        }
+
+        .step-action {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .step-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            background: var(--bg-tertiary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        /* MITRE ATT&CK */
+        .mitre-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .mitre-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .mitre-tactic {
+            font-size: 0.75rem;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .mitre-technique {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .mitre-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Priority Table */
+        .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .priority-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .priority-column h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .priority-list {
+            list-style: none;
+        }
+
+        .priority-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .priority-list .query-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: var(--text-secondary);
+        }
+
+        /* Impact List */
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .impact-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .impact-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .impact-icon.red { background: var(--accent-red-bg); color: var(--accent-red); }
+        .impact-icon.orange { background: var(--accent-orange-bg); color: var(--accent-orange); }
+        .impact-icon.yellow { background: rgba(227, 179, 65, 0.15); color: var(--accent-yellow); }
+        .impact-icon.blue { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+
+        .impact-text h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .impact-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .critical-alert {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .main {
+                padding: 1rem;
+            }
+
+            pre {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="https://cdn.prod.website-files.com/67711bb097dfc839a8004a6c/68482a560217871b92242435_c7_logo_small.png" alt="CRIMSON7 Logo">
+            </div>
+            <h1>Shai-Hulud NPM Supply Chain Attack</h1>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Microsoft Sentinel Threat Hunt Runbook</p>
+            <div class="header-meta">
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    Version 2.0
+                </span>
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 1.5v1h7v-1h-7zM3 3.5V1a1 1 0 011-1h8a1 1 0 011 1v2.5h2a1 1 0 011 1v8a1 1 0 01-1 1h-2v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2H1a1 1 0 01-1-1v-8a1 1 0 011-1h2zm1 0h8v10H4v-10zm-3 2v6h2v-6H1zm13 0v6h-2v-6h2z"/></svg>
+                    Last Updated: December 2, 2025
+                </span>
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/></svg>
+                    Microsoft Sentinel / Microsoft Defender for Endpoint
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Critical Alert -->
+    <div class="critical-alert">
+        <div class="critical-alert-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+        </div>
+        <div>
+            <h2>Critical Threat Advisory</h2>
+            <p>796+ compromised packages | 132M+ monthly downloads | Destructive payload capability</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav">
+            <a href="#overview" class="active">Overview</a>
+            <a href="#iocs">Indicators of Compromise</a>
+            <a href="#queries">KQL Detection Queries</a>
+            <a href="#priority">Priority Reference</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Section 1: Attack Overview -->
+        <section id="overview" class="section">
+            <div class="section-header">
+                <span class="section-number">01</span>
+                <h2>Attack Overview</h2>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top: 0;">What is Shai-Hulud 2.0?</h3>
+                <p>Shai-Hulud 2.0 ("The Second Coming") is a sophisticated NPM supply chain attack discovered on November 24, 2025. The attacker compromised 796+ packages across major organizations including Zapier, PostHog, Postman, ENS Domains, AsyncAPI, Voiceflow, and others.</p>
+            </div>
+
+            <h3>Attack Chain</h3>
+            <div class="attack-chain">
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">1</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Initial Infection Vector</div>
+                        <div class="step-description">Victim installs compromised package</div>
+                        <div class="step-code">npm install compromised-package</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">2</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Hook Execution</div>
+                        <div class="step-description">preinstall/postinstall hook executes setup_bun.js</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">3</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Runtime Download</div>
+                        <div class="step-description">Downloads Bun runtime from bun.sh/install</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">4</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Payload Execution</div>
+                        <div class="step-description">Executes bun_environment.js (10MB+ obfuscated payload)</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">5</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Credential Scanning</div>
+                        <div class="step-description">Downloads &amp; runs TruffleHog — Scans filesystem for secrets</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">6</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Data Exfiltration</div>
+                        <div class="step-description">Exfiltrates credentials via GitHub API</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">7</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Destructive Payload</div>
+                        <div class="step-description">On failure: WIPES HOME DIR</div>
+                        <div class="step-code">rm -rf $HOME / shred</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Impact</h3>
+            <div class="impact-grid">
+                <div class="impact-item">
+                    <div class="impact-icon red">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-8h2v6h-2V9z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>796 Compromised Packages</h5>
+                        <p>132M+ monthly downloads affected</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon orange">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Credential Theft</h5>
+                        <p>npm, GitHub, AWS, GCP, Azure, SSH keys</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon red">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Destructive Payload</h5>
+                        <p>Wipes home directory on auth failure</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon blue">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Persistence</h5>
+                        <p>Registers malicious GitHub Actions runners</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>MITRE ATT&amp;CK Mapping</h3>
+            <div class="mitre-grid">
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Initial Access</div>
+                    <div class="mitre-technique">Supply Chain Compromise</div>
+                    <div class="mitre-id">T1195.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">Command and Scripting Interpreter: JavaScript</div>
+                    <div class="mitre-id">T1059.007</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Credential Access</div>
+                    <div class="mitre-technique">Unsecured Credentials: Credentials In Files</div>
+                    <div class="mitre-id">T1552.001</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Collection</div>
+                    <div class="mitre-technique">Data from Local System</div>
+                    <div class="mitre-id">T1005</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Exfiltration</div>
+                    <div class="mitre-technique">Exfiltration Over Web Service</div>
+                    <div class="mitre-id">T1567</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Impact</div>
+                    <div class="mitre-technique">Data Destruction</div>
+                    <div class="mitre-id">T1485</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Indicators of Compromise -->
+        <section id="iocs" class="section">
+            <div class="section-header">
+                <span class="section-number">02</span>
+                <h2>Indicators of Compromise</h2>
+            </div>
+
+            <h3>2.1 File-Based IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">setup_bun.js</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">SHA-1: d1829b4708126dcc7bea7437c04d1f10eacd4a16</span></td>
+                            <td>Dropper script</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">bun_environment.js</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">SHA-1: d60ec97eea19fffb4809bc35b91033b52490ca11</span></td>
+                            <td>Main payload 10MB+</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">actionsSecrets.json</code></td>
+                            <td>Stolen GitHub secrets</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">truffleSecrets.json</code></td>
+                            <td>TruffleHog scan results</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">trufflehog_output.json</code></td>
+                            <td>Raw credential scan output</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.2 Process/Command IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">trufflehog filesystem</code></td>
+                            <td>Credential scanning</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">curl -fsSL https://bun.sh/install</code></td>
+                            <td>Bun install from npm/node</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">irm bun.sh/install.ps1|iex</code></td>
+                            <td>Windows Bun install from npm</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">rm -rf $HOME</code> / <code class="inline">rm -rf ~</code></td>
+                            <td>Destructive payload</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">rmdir /s /q %USERPROFILE%</code></td>
+                            <td>Windows destructive payload</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.3 GitHub IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Runner name: <code class="inline">SHA1HULUD</code></td>
+                            <td>Malicious self-hosted runner</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Workflow: <code class="inline">discussion.yaml</code></td>
+                            <td>Injected malicious workflow</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>Workflow: <code class="inline">formatter_*.yml</code></td>
+                            <td>Malicious workflow pattern</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 3: KQL Detection Queries -->
+        <section id="queries" class="section">
+            <div class="section-header">
+                <span class="section-number">03</span>
+                <h2>KQL Detection Queries</h2>
+            </div>
+
+            <h3>3.1 File-Based Detection</h3>
+
+            <!-- Query 1 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #1: Malicious File Detection</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect Shai-Hulud malware files</span>
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">in~</span> (
+    <span class="str">"setup_bun.js"</span>,
+    <span class="str">"bun_environment.js"</span>,
+    <span class="str">"actionsSecrets.json"</span>,
+    <span class="str">"truffleSecrets.json"</span>,
+    <span class="str">"trufflehog_output.json"</span>,
+    <span class="str">"cloud.json"</span>,
+    <span class="str">"contents.json"</span>,
+    <span class="str">"environment.json"</span>
+)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ActionType</span> <span class="kw">in</span> (<span class="str">"FileCreated"</span>, <span class="str">"FileModified"</span>)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">FileName</span>,
+    <span class="var">FolderPath</span>,
+    <span class="var">FileSize</span>,
+    <span class="var">SHA256</span>,
+    <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Severity</span> = <span class="kw">case</span>(
+        <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"setup_bun.js"</span>, <span class="str">"bun_environment.js"</span>, <span class="str">"actionsSecrets.json"</span>), <span class="str">"CRITICAL"</span>,
+        <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"truffleSecrets.json"</span>, <span class="str">"trufflehog_output.json"</span>), <span class="str">"CRITICAL"</span>,
+        <span class="str">"HIGH"</span>
+    )
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 2 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #2: Suspicious Package Install Behavior</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect suspicious behavior during npm lifecycle scripts (behavioral detection)</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"npm"</span>, <span class="str">"npm.cmd"</span>, <span class="str">"yarn"</span>, <span class="str">"yarn.cmd"</span>, <span class="str">"pnpm"</span>, <span class="str">"pnpm.cmd"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessCommandLine</span> <span class="kw">has</span> <span class="str">"install"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"node"</span>, <span class="str">"node.exe"</span>, <span class="str">"bun"</span>, <span class="str">"bun.exe"</span>, <span class="str">"curl"</span>, <span class="str">"wget"</span>, <span class="str">"powershell.exe"</span>, <span class="str">"cmd.exe"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (
+    <span class="str">"bun.sh"</span>,
+    <span class="str">"eval"</span>,
+    <span class="str">"base64"</span>,
+    <span class="str">"trufflehog"</span>,
+    <span class="str">"webhook.site"</span>,
+    <span class="str">"api.github.com"</span>
+)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">ProcessCommandLine</span>,
+    <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Severity</span> = <span class="str">"CRITICAL"</span>,
+    <span class="var">Description</span> = <span class="str">"Suspicious behavior during package installation"</span>
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 3 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #3: Large Obfuscated Payload Detection</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect bun_environment.js payload (typically 10MB+)</span>
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"bun_environment.js"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ActionType</span> <span class="kw">in</span> (<span class="str">"FileCreated"</span>, <span class="str">"FileModified"</span>)
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">FileSizeMB</span> = <span class="var">FileSize</span> / <span class="num">1048576.0</span>
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">FileName</span>,
+    <span class="var">FolderPath</span>,
+    <span class="var">FileSizeMB</span> = <span class="fn">round</span>(<span class="var">FileSizeMB</span>, <span class="num">2</span>),
+    <span class="var">SHA256</span>,
+    <span class="var">Severity</span> = <span class="kw">case</span>(
+        <span class="var">FileSizeMB</span> <span class="op">></span> <span class="num">5</span>, <span class="str">"CRITICAL - Obfuscated Payload"</span>,
+        <span class="var">FileSizeMB</span> <span class="op">></span> <span class="num">1</span>, <span class="str">"HIGH - Suspicious Size"</span>,
+        <span class="str">"MEDIUM - Review Required"</span>
+    )
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <h3>3.2 Process-Based Detection</h3>
+
+            <!-- Query 4 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #4: Bun Installation from NPM Context</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect Bun runtime installation from npm/node context</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"bun.sh/install"</span>, <span class="str">"bun.sh\\install"</span>)
+<span class="op">|</span> <span class="kw">extend</span>
+    <span class="var">IsFromNodeProcess</span> = <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"node"</span>, <span class="str">"node.exe"</span>, <span class="str">"npm"</span>, <span class="str">"npm.cmd"</span>),
+    <span class="var">IsFromPackageInstall</span> = <span class="var">InitiatingProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"install"</span>, <span class="str">"preinstall"</span>, <span class="str">"postinstall"</span>)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">ProcessCommandLine</span>,
+    <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Confidence</span> = <span class="kw">case</span>(
+        <span class="var">IsFromNodeProcess</span> <span class="kw">and</span> <span class="var">IsFromPackageInstall</span>, <span class="str">"HIGH - Confirmed Attack Pattern"</span>,
+        <span class="var">IsFromNodeProcess</span>, <span class="str">"MEDIUM - Suspicious"</span>,
+        <span class="str">"LOW - Review Context"</span>
+    ),
+    <span class="var">Severity</span> = <span class="str">"CRITICAL"</span>
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 5 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #5: TruffleHog Execution Detection</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect TruffleHog credential scanning</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (
+    <span class="str">"trufflehog"</span>,
+    <span class="str">"trufflesecurity"</span>,
+    <span class="str">"--json --no-update"</span>,
+    <span class="str">"secret-scanner"</span>,
+    <span class="str">"credential-scan"</span>
+)
+<span class="kw">or</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"trufflehog"</span>, <span class="str">"trufflehog.exe"</span>)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">FileName</span>,
+    <span class="var">ProcessCommandLine</span>,
+    <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Severity</span> = <span class="str">"CRITICAL"</span>,
+    <span class="var">Description</span> = <span class="str">"TruffleHog credential scanning detected"</span>
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 6 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #6: Suspicious Package.json Script Execution</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect malicious preinstall/postinstall scripts</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"node"</span>, <span class="str">"node.exe"</span>, <span class="str">"npm"</span>, <span class="str">"npm.cmd"</span>, <span class="str">"sh"</span>, <span class="str">"bash"</span>, <span class="str">"cmd.exe"</span>, <span class="str">"powershell.exe"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (
+    <span class="str">"setup_bun.js"</span>,
+    <span class="str">"bun_environment.js"</span>,
+    <span class="str">"preinstall"</span>,
+    <span class="str">"postinstall"</span>
+)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (
+    <span class="str">"curl"</span>, <span class="str">"wget"</span>, <span class="str">"eval"</span>, <span class="str">"base64"</span>, <span class="str">"bun.sh"</span>
+)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">FileName</span>,
+    <span class="var">ProcessCommandLine</span>,
+    <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Severity</span> = <span class="kw">case</span>(
+        <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"setup_bun.js"</span>, <span class="str">"bun_environment.js"</span>), <span class="str">"CRITICAL"</span>,
+        <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"curl|sh"</span>, <span class="str">"wget|sh"</span>), <span class="str">"CRITICAL"</span>,
+        <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"eval"</span>, <span class="str">"HIGH"</span>,
+        <span class="str">"MEDIUM"</span>
+    )
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 7 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #7: Destructive Payload Detection (Home Directory Wipe)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect home directory wipe attempts</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (
+    <span class="str">"rm -rf $HOME"</span>, <span class="str">"rm -rf ~"</span>, <span class="str">"rm -rf /home/"</span>,
+    <span class="str">"rmdir /s /q %USERPROFILE%"</span>,
+    <span class="str">"Remove-Item -Recurse -Force $env:USERPROFILE"</span>,
+    <span class="str">"find \"$HOME\" -type f -writable -user"</span>,
+    <span class="str">"xargs -0 -r shred"</span>
+)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">DestructiveCommand</span> = <span class="var">ProcessCommandLine</span>,
+    <span class="var">InitiatingProcess</span> = <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Severity</span> = <span class="str">"CRITICAL"</span>,
+    <span class="var">Description</span> = <span class="str">"Home directory destruction attempt detected"</span>
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <h3>3.3 Network-Based Detection</h3>
+
+            <!-- Query 8 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #8: GitHub API Exfiltration Pattern</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect credential upload to GitHub</span>
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"api.github.com"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="str">"/repos/"</span>, <span class="str">"/contents/"</span>, <span class="str">"/user"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"node"</span>, <span class="str">"node.exe"</span>, <span class="str">"bun"</span>, <span class="str">"bun.exe"</span>)
+<span class="op">|</span> <span class="fn">summarize</span>
+    <span class="var">CallCount</span> = <span class="fn">count</span>(),
+    <span class="var">UniqueEndpoints</span> = <span class="fn">dcount</span>(<span class="var">RemoteUrl</span>),
+    <span class="var">Endpoints</span> = <span class="fn">make_set</span>(<span class="var">RemoteUrl</span>, <span class="num">10</span>),
+    <span class="var">FirstSeen</span> = <span class="fn">min</span>(<span class="var">Timestamp</span>),
+    <span class="var">LastSeen</span> = <span class="fn">max</span>(<span class="var">Timestamp</span>)
+<span class="kw">by</span> <span class="var">DeviceName</span>, <span class="var">InitiatingProcessFileName</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">CallCount</span> <span class="op">></span> <span class="num">5</span> <span class="kw">or</span> <span class="var">UniqueEndpoints</span> <span class="op">></span> <span class="num">3</span>
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">Severity</span> = <span class="kw">case</span>(
+    <span class="var">CallCount</span> <span class="op">></span> <span class="num">20</span>, <span class="str">"CRITICAL"</span>,
+    <span class="var">CallCount</span> <span class="op">></span> <span class="num">10</span>, <span class="str">"HIGH"</span>,
+    <span class="str">"MEDIUM"</span>
+)
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">CallCount</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 9 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #9: TruffleHog Binary Download Detection</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect TruffleHog binary download</span>
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (
+    <span class="str">"github.com/trufflesecurity/trufflehog"</span>,
+    <span class="str">"releases/download"</span>
+)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"trufflehog"</span>
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">RemoteUrl</span>,
+    <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Severity</span> = <span class="str">"CRITICAL"</span>,
+    <span class="var">Description</span> = <span class="str">"TruffleHog binary download detected"</span>
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 10 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #10: GitHub Repo Creation Detection</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect potential exfiltration repo creation</span>
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"api.github.com"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="str">"/repos"</span>, <span class="str">"/user/repos"</span>, <span class="str">"/orgs/"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"node"</span>, <span class="str">"bun"</span>, <span class="str">"node.exe"</span>, <span class="str">"bun.exe"</span>, <span class="str">"git"</span>)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">InitiatingProcessAccountName</span>,
+    <span class="var">RemoteUrl</span>,
+    <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Alert</span> = <span class="str">"Potential exfiltration repo creation"</span></pre>
+            </div>
+
+            <!-- Query 11 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #11: GitHub Actions Artifact Abuse Detection</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect GitHub Actions artifact abuse for secret exfiltration</span>
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"api.github.com"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="str">"/actions/artifacts"</span>, <span class="str">"/actions/runs/"</span>, <span class="str">"upload-artifact"</span>, <span class="str">"download-artifact"</span>)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">InitiatingProcessAccountName</span>,
+    <span class="var">RemoteUrl</span>,
+    <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">Alert</span> = <span class="str">"GitHub Actions artifact manipulation - potential secret exfil"</span></pre>
+            </div>
+
+            <h3>3.4 Credential Access Detection</h3>
+
+            <!-- Query 12 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #12: Sensitive File Access by Node/Bun</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect node/bun accessing credential files</span>
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"node"</span>, <span class="str">"node.exe"</span>, <span class="str">"bun"</span>, <span class="str">"bun.exe"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">in~</span> (
+    <span class="str">".npmrc"</span>,
+    <span class="str">".env"</span>,
+    <span class="str">"credentials"</span>,
+    <span class="str">"config"</span>,
+    <span class="str">".netrc"</span>,
+    <span class="str">"id_rsa"</span>,
+    <span class="str">"id_ed25519"</span>,
+    <span class="str">".aws"</span>,
+    <span class="str">".azure"</span>
+)
+<span class="kw">or</span> <span class="var">FolderPath</span> <span class="fn">has_any</span> (<span class="str">".aws"</span>, <span class="str">".ssh"</span>, <span class="str">".config/gcloud"</span>, <span class="str">".azure"</span>)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">FileName</span>,
+    <span class="var">FolderPath</span>,
+    <span class="var">ActionType</span>,
+    <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">Severity</span> = <span class="kw">case</span>(
+        <span class="var">FileName</span> <span class="fn">has_any</span> (<span class="str">"id_rsa"</span>, <span class="str">"id_ed25519"</span>, <span class="str">"credentials"</span>), <span class="str">"CRITICAL"</span>,
+        <span class="var">FolderPath</span> <span class="fn">has_any</span> (<span class="str">".aws"</span>, <span class="str">".ssh"</span>), <span class="str">"CRITICAL"</span>,
+        <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">".npmrc"</span>, <span class="str">".env"</span>), <span class="str">"HIGH"</span>,
+        <span class="str">"MEDIUM"</span>
+    )
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <h3>3.5 GitHub Actions Detection</h3>
+
+            <!-- Query 13 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #13: Malicious GitHub Workflow Detection</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect malicious GitHub Actions workflows</span>
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">".github"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">endswith</span> <span class="str">".yml"</span> <span class="kw">or</span> <span class="var">FileName</span> <span class="fn">endswith</span> <span class="str">".yaml"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ActionType</span> <span class="kw">in</span> (<span class="str">"FileCreated"</span>, <span class="str">"FileModified"</span>)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">FileName</span>,
+    <span class="var">FolderPath</span>,
+    <span class="var">ActionType</span>,
+    <span class="var">SHA256</span>,
+    <span class="var">Severity</span> = <span class="kw">case</span>(
+        <span class="var">FileName</span> <span class="fn">startswith</span> <span class="str">"formatter_"</span>, <span class="str">"CRITICAL - Malicious formatter workflow"</span>,
+        <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"discussion.yaml"</span>, <span class="str">"discussion.yml"</span>), <span class="str">"CRITICAL - Malicious discussion workflow"</span>,
+        <span class="str">"Review Required"</span>
+    )
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Severity</span> <span class="fn">startswith</span> <span class="str">"CRITICAL"</span>
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 14 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #14: Suspicious Git Activity</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect suspicious git branch/remote activity</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"git"</span>, <span class="str">"git.exe"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (
+    <span class="str">"checkout -b"</span>, <span class="str">"branch"</span>, <span class="str">"switch -c"</span>, <span class="str">"remote add"</span>
+)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (
+    <span class="str">"shai-hulud"</span>, <span class="str">"sha1hulud"</span>, <span class="str">"second-coming"</span>
+)
+<span class="op">|</span> <span class="fn">project</span>
+    <span class="var">Timestamp</span>,
+    <span class="var">DeviceName</span>,
+    <span class="var">AccountName</span>,
+    <span class="var">ProcessCommandLine</span>,
+    <span class="var">Severity</span> = <span class="str">"MEDIUM"</span>,
+    <span class="var">Description</span> = <span class="str">"Suspicious git activity detected"</span>
+<span class="op">|</span> <span class="fn">order by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+        </section>
+
+        <!-- Section 4: Priority Reference -->
+        <section id="priority" class="section">
+            <div class="section-header">
+                <span class="section-number">04</span>
+                <h2>Query Priority Reference</h2>
+            </div>
+
+            <div class="priority-grid">
+                <div class="priority-column">
+                    <h4><span class="badge badge-critical">P1-CRIT</span> Critical Priority</h4>
+                    <ul class="priority-list">
+                        <li><span class="query-num">#1</span> Malicious files</li>
+                        <li><span class="query-num">#2</span> Suspicious install behavior</li>
+                        <li><span class="query-num">#5</span> TruffleHog execution</li>
+                        <li><span class="query-num">#7</span> Destructive payload</li>
+                    </ul>
+                </div>
+                <div class="priority-column">
+                    <h4><span class="badge badge-high">P2-HIGH</span> High Priority</h4>
+                    <ul class="priority-list">
+                        <li><span class="query-num">#3</span> Large payload detection</li>
+                        <li><span class="query-num">#4</span> Bun installation</li>
+                        <li><span class="query-num">#8</span> GitHub API exfiltration</li>
+                        <li><span class="query-num">#9</span> TruffleHog download</li>
+                        <li><span class="query-num">#10</span> GitHub repo creation</li>
+                        <li><span class="query-num">#11</span> Actions artifact abuse</li>
+                        <li><span class="query-num">#12</span> Credential file access</li>
+                    </ul>
+                </div>
+                <div class="priority-column">
+                    <h4><span class="badge badge-medium">P3-MED</span> Medium Priority</h4>
+                    <ul class="priority-list">
+                        <li><span class="query-num">#6</span> Suspicious scripts</li>
+                        <li><span class="query-num">#13</span> Malicious workflows</li>
+                        <li><span class="query-num">#14</span> Git activity</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                <strong>Document Classification:</strong> Internal Use Only
+            </div>
+            <div class="footer-meta">
+                <span>Contact: Security Operations Center</span>
+                <span>Last Updated: December 2, 2025</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                target.scrollIntoView({ behavior: 'smooth' });
+                
+                // Update active state
+                document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        // Update active nav on scroll
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY + 100;
+            
+            sections.forEach(section => {
+                if (section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+                    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                    document.querySelector(`.nav a[href="#${section.id}"]`)?.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
