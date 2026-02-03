@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notepad++ Hijacking Attack | Threat Hunt Runbook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-code: #1a1f27;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-red: #f85149;
+            --accent-red-bg: rgba(248, 81, 73, 0.15);
+            --accent-orange: #d29922;
+            --accent-orange-bg: rgba(210, 153, 34, 0.15);
+            --accent-yellow: #e3b341;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --crimson: #c62828;
+            --crimson-light: #ef5350;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 3rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-light) 50%, var(--accent-orange) 100%);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo img {
+            width: 200px;
+            height: auto;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Critical Alert Banner */
+        .critical-alert {
+            background: var(--accent-red-bg);
+            border: 1px solid var(--accent-red);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .critical-alert-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-red);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .critical-alert h2 {
+            color: var(--accent-red);
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .critical-alert p {
+            color: var(--text-secondary);
+        }
+
+        /* Navigation */
+        .nav-container {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 1rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .nav a.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-number {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            color: var(--text-primary);
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: var(--bg-tertiary);
+        }
+
+        /* Severity Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-critical {
+            background: var(--accent-red-bg);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .badge-high {
+            background: var(--accent-orange-bg);
+            color: var(--accent-orange);
+            border: 1px solid var(--accent-orange);
+        }
+
+        .badge-medium {
+            background: rgba(227, 179, 65, 0.15);
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+        }
+
+        .badge-low {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        pre {
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: var(--accent-purple); }
+        .fn { color: var(--accent-blue); }
+        .str { color: var(--accent-green); }
+        .num { color: var(--accent-orange); }
+        .op { color: var(--accent-cyan); }
+        .cm { color: var(--text-muted); font-style: italic; }
+        .var { color: var(--text-primary); }
+
+        /* Inline Code */
+        code.inline {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--accent-cyan);
+        }
+
+        /* Attack Chain Steps */
+        .attack-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .attack-step {
+            display: flex;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .step-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--accent-blue);
+        }
+
+        .step-line {
+            width: 2px;
+            flex-grow: 1;
+            background: var(--border-color);
+            min-height: 40px;
+        }
+
+        .attack-step:last-child .step-line {
+            display: none;
+        }
+
+        .step-content {
+            padding-bottom: 1.5rem;
+        }
+
+        .step-action {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .step-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            background: var(--bg-tertiary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        /* MITRE ATT&CK */
+        .mitre-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .mitre-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .mitre-tactic {
+            font-size: 0.75rem;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .mitre-technique {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .mitre-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Priority Table */
+        .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .priority-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .priority-column h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .priority-list {
+            list-style: none;
+        }
+
+        .priority-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .priority-list .query-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: var(--text-secondary);
+        }
+
+        /* Impact List */
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .impact-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .impact-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .impact-icon.red { background: var(--accent-red-bg); color: var(--accent-red); }
+        .impact-icon.orange { background: var(--accent-orange-bg); color: var(--accent-orange); }
+        .impact-icon.blue { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+        .impact-icon.purple { background: rgba(163, 113, 247, 0.15); color: var(--accent-purple); }
+
+        .impact-text h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .impact-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Hash display */
+        .hash {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .critical-alert {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .main {
+                padding: 1rem;
+            }
+
+            pre {
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="https://cdn.prod.website-files.com/67711bb097dfc839a8004a6c/68482a560217871b92242435_c7_logo_small.png" alt="CRIMSON7 Logo">
+            </div>
+            <h1>Notepad++ Hijacking Attack</h1>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Chrysalis Backdoor - Threat Hunt Runbook</p>
+            <div class="header-meta">
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    Version 1.0
+                </span>
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 1.5v1h7v-1h-7zM3 3.5V1a1 1 0 011-1h8a1 1 0 011 1v2.5h2a1 1 0 011 1v8a1 1 0 01-1 1h-2v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2H1a1 1 0 01-1-1v-8a1 1 0 011-1h2zm1 0h8v10H4v-10zm-3 2v6h2v-6H1zm13 0v6h-2v-6h2z"/></svg>
+                    Attack Window: June - December 2025
+                </span>
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/></svg>
+                    Microsoft Defender XDR / Sentinel
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Critical Alert -->
+    <div class="critical-alert">
+        <div class="critical-alert-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+        </div>
+        <div>
+            <h2>Supply Chain Compromise Advisory</h2>
+            <p>Chinese APT (Lotus Blossom) | Chrysalis Backdoor | DLL Sideloading | Cobalt Strike deployment</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav">
+            <a href="#overview" class="active">Overview</a>
+            <a href="#iocs">Indicators of Compromise</a>
+            <a href="#queries">KQL Detection Queries</a>
+            <a href="#mitre">MITRE ATT&CK</a>
+            <a href="#references">References</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Section 1: Attack Overview -->
+        <section id="overview" class="section">
+            <div class="section-header">
+                <span class="section-number">01</span>
+                <h2>Attack Overview</h2>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-top: 0;">What Happened?</h4>
+                <p>A China-linked threat actor (<strong>Lotus Blossom</strong>, aka Billbug/Spring Dragon) compromised the hosting infrastructure of Notepad++ to hijack update traffic. Starting June 2025, selective traffic redirection served tampered updates containing the <strong>Chrysalis backdoor</strong> to targeted users via the WinGUp (GUP.exe) update mechanism.</p>
+                <p style="margin-bottom: 0;"><strong>Vulnerability:</strong> Insufficient update verification in Notepad++ versions prior to v8.8.9</p>
+            </div>
+
+            <h3>Attack Chain</h3>
+            <div class="attack-chain">
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">1</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">User Opens Notepad++</div>
+                        <div class="step-description">Application triggers automatic update check via GUP.exe</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">2</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Traffic Hijacking</div>
+                        <div class="step-description">Compromised infrastructure redirects update request to malicious server</div>
+                        <div class="step-code">95.179.213.0 (Payload Server)</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">3</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Malicious Update Downloaded</div>
+                        <div class="step-description">NSIS installer (update.exe) drops 4 files to disk</div>
+                        <div class="step-code">BluetoothService.exe + log.dll + encrypted shellcode</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">4</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">DLL Sideloading</div>
+                        <div class="step-description">Legitimate Bitdefender binary (BluetoothService.exe) loads malicious log.dll</div>
+                        <div class="step-code">T1574.002 - DLL Side-Loading</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">5</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Chrysalis Backdoor Execution</div>
+                        <div class="step-description">log.dll decrypts shellcode using XOR key and executes Chrysalis RAT</div>
+                        <div class="step-code">XOR Key: gQ2JR&9;</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">6</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">C2 Communication Established</div>
+                        <div class="step-description">Backdoor connects to C2 server over HTTPS with Chrome User-Agent</div>
+                        <div class="step-code">api.skycloudcenter.com (61.4.102.97)</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">7</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Post-Exploitation</div>
+                        <div class="step-description">Cobalt Strike beacons deployed for lateral movement</div>
+                        <div class="step-code">59.110.7.32:8880 | 124.222.137.114:9999</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Impact</h3>
+            <div class="impact-grid">
+                <div class="impact-item">
+                    <div class="impact-icon red">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-8h2v6h-2V9z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Supply Chain Compromise</h5>
+                        <p>6 months of potential exposure (June-Dec 2025)</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon orange">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Custom Backdoor</h5>
+                        <p>Chrysalis RAT with 16 command handlers</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon blue">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Persistence</h5>
+                        <p>Registry Run keys, Windows Services</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon purple">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Targeted Sectors</h5>
+                        <p>Government, Telecom, Aviation, Critical Infrastructure</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Chrysalis Backdoor Capabilities</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Function</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code class="inline">4T</code></td><td>Interactive cmd.exe reverse shell</td></tr>
+                        <tr><td><code class="inline">4V</code></td><td>Create process</td></tr>
+                        <tr><td><code class="inline">4W/4X</code></td><td>Write file to disk</td></tr>
+                        <tr><td><code class="inline">4Y</code></td><td>Read and exfiltrate file data</td></tr>
+                        <tr><td><code class="inline">4_</code></td><td>Enumerate logical drives</td></tr>
+                        <tr><td><code class="inline">4`</code></td><td>Enumerate files in directory</td></tr>
+                        <tr><td><code class="inline">4a</code></td><td>Delete file</td></tr>
+                        <tr><td><code class="inline">4\</code></td><td>Uninstall/cleanup (self-removal)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 2: Indicators of Compromise -->
+        <section id="iocs" class="section">
+            <div class="section-header">
+                <span class="section-number">02</span>
+                <h2>Indicators of Compromise</h2>
+            </div>
+
+            <h3>2.1 File Hashes (SHA256)</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>SHA256</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">update.exe</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">NSIS Installer</span></td>
+                            <td><span class="hash">a511be5164dc1122fb5a7daa3eef9467e43d8458425b15a640235796006590c9</span></td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">BluetoothService.exe</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Bitdefender Sideload Target</span></td>
+                            <td><span class="hash">2da00de67720f5f13b17e9d985fe70f10f153da60c9ab1086fe58f069a156924</span></td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">log.dll</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Malicious DLL Loader</span></td>
+                            <td><span class="hash">3bdc4c0637591533f1d4198a72a33426c01f69bd2e15ceee547866f65e26b7ad</span></td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">conf.c</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">TCC Shellcode Source</span></td>
+                            <td><span class="hash">f4d829739f2d6ba7e3ede83dad428a0ced1a703ec582fc73a4eee3df3704629a</span></td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">ConsoleApplication2.exe</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Warbird Loader</span></td>
+                            <td><span class="hash">b4169a831292e245ebdffedd5820584d73b129411546e7d3eccf4663d5fc5be3</span></td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.2 Network IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Indicator</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Domain</td>
+                            <td><code class="inline">api.skycloudcenter.com</code></td>
+                            <td>Chrysalis C2</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Domain</td>
+                            <td><code class="inline">api.wiresguard.com</code></td>
+                            <td>Cobalt Strike C2</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>IP</td>
+                            <td><code class="inline">95.179.213.0</code></td>
+                            <td>Initial payload delivery</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>IP</td>
+                            <td><code class="inline">61.4.102.97</code></td>
+                            <td>Chrysalis C2 (Malaysia)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>IP</td>
+                            <td><code class="inline">59.110.7.32:8880</code></td>
+                            <td>Cobalt Strike beacon</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>IP</td>
+                            <td><code class="inline">124.222.137.114:9999</code></td>
+                            <td>Cobalt Strike beacon</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.3 Process Artifacts</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Artifact</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">C:\ProgramData\USOShared\svchost.exe -nostdlib -run conf.c</code></td>
+                            <td>TCC shellcode execution</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Mutex: <code class="inline">Global\Jdhfv_1.0.1</code></td>
+                            <td>Chrysalis single instance mutex</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>C2 Endpoint: <code class="inline">/a/chat/s/70521ddf-a2ef-4adf-9cf0-6d8e24aaa821</code></td>
+                            <td>Chrysalis beacon path</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.4 Encryption Keys</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">gQ2JR&9;</code></td>
+                            <td>XOR decryption for shellcode in log.dll</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">qwhvb^435h&*7</code></td>
+                            <td>RC4 key for config decryption</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">vAuig34%^325hGV</code></td>
+                            <td>RC4 key for C2 communication</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 3: KQL Detection Queries -->
+        <section id="queries" class="section">
+            <div class="section-header">
+                <span class="section-number">03</span>
+                <h2>KQL Detection Queries</h2>
+            </div>
+
+            <h3>3.1 GUP.exe Traffic Hijack Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #1: Detect GUP.exe connecting to malicious infrastructure</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect GUP.exe traffic to known malicious or unknown infrastructure</span>
+<span class="kw">let</span> <span class="var">MaliciousInfra</span> = <span class="fn">dynamic</span>([
+    <span class="str">"95.179.213.0"</span>,           <span class="cm">// Payload delivery</span>
+    <span class="str">"61.4.102.97"</span>,            <span class="cm">// Chrysalis C2</span>
+    <span class="str">"59.110.7.32"</span>,            <span class="cm">// Cobalt Strike</span>
+    <span class="str">"124.222.137.114"</span>,        <span class="cm">// Cobalt Strike</span>
+    <span class="str">"api.skycloudcenter.com"</span>, <span class="cm">// Chrysalis C2</span>
+    <span class="str">"api.wiresguard.com"</span>      <span class="cm">// Cobalt Strike C2</span>
+]);
+<span class="kw">let</span> <span class="var">LegitimateDomains</span> = <span class="fn">dynamic</span>([
+    <span class="str">"notepad-plus-plus.org"</span>,
+    <span class="str">"github.com"</span>,
+    <span class="str">"githubusercontent.com"</span>
+]);
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="op">=~</span> <span class="str">"gup.exe"</span>
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">Domain</span> = <span class="fn">extract</span>(<span class="str">@"https?://([^/:]+)"</span>, <span class="num">1</span>, <span class="var">RemoteUrl</span>)
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">IsMalicious</span> = <span class="var">RemoteIP</span> <span class="fn">in~</span> (<span class="var">MaliciousInfra</span>) <span class="kw">or</span> <span class="var">Domain</span> <span class="fn">in~</span> (<span class="var">MaliciousInfra</span>)
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">IsLegitimate</span> = <span class="var">Domain</span> <span class="fn">has_any</span> (<span class="var">LegitimateDomains</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">IsMalicious</span> <span class="kw">or</span> <span class="kw">not</span>(<span class="var">IsLegitimate</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">RemoteIP</span>, <span class="var">RemoteUrl</span>, <span class="var">IsMalicious</span></pre>
+            </div>
+
+            <h3>3.2 Chrysalis IOC Hash Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #2: Detect known Chrysalis file hashes</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect known malicious hashes from Chrysalis campaign</span>
+<span class="kw">let</span> <span class="var">ChrysalisHashes</span> = <span class="fn">dynamic</span>([
+    <span class="str">"a511be5164dc1122fb5a7daa3eef9467e43d8458425b15a640235796006590c9"</span>,
+    <span class="str">"2da00de67720f5f13b17e9d985fe70f10f153da60c9ab1086fe58f069a156924"</span>,
+    <span class="str">"3bdc4c0637591533f1d4198a72a33426c01f69bd2e15ceee547866f65e26b7ad"</span>,
+    <span class="str">"f4d829739f2d6ba7e3ede83dad428a0ced1a703ec582fc73a4eee3df3704629a"</span>,
+    <span class="str">"b4169a831292e245ebdffedd5820584d73b129411546e7d3eccf4663d5fc5be3"</span>
+]);
+<span class="kw">union</span> <span class="var">DeviceFileEvents</span>, <span class="var">DeviceProcessEvents</span>, <span class="var">DeviceImageLoadEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">SHA256</span> <span class="fn">in~</span> (<span class="var">ChrysalisHashes</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>, <span class="var">SHA256</span></pre>
+            </div>
+
+            <h3>3.3 C2 Communication Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #3: Detect Chrysalis/Cobalt Strike C2 connections</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect connections to known Lotus Blossom C2 infrastructure</span>
+<span class="kw">let</span> <span class="var">ChrysalisC2</span> = <span class="fn">dynamic</span>([
+    <span class="str">"api.skycloudcenter.com"</span>,
+    <span class="str">"api.wiresguard.com"</span>,
+    <span class="str">"95.179.213.0"</span>,
+    <span class="str">"61.4.102.97"</span>,
+    <span class="str">"59.110.7.32"</span>,
+    <span class="str">"124.222.137.114"</span>
+]);
+<span class="kw">let</span> <span class="var">C2Paths</span> = <span class="fn">dynamic</span>([
+    <span class="str">"/a/chat/s/70521ddf-a2ef-4adf-9cf0-6d8e24aaa821"</span>
+]);
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">Domain</span> = <span class="fn">extract</span>(<span class="str">@"https?://([^/:]+)"</span>, <span class="num">1</span>, <span class="var">RemoteUrl</span>)
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">URLPath</span> = <span class="fn">extract</span>(<span class="str">@"https?://[^/]+(/[^\?]*)"</span>, <span class="num">1</span>, <span class="var">RemoteUrl</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Domain</span> <span class="fn">in~</span> (<span class="var">ChrysalisC2</span>) <span class="kw">or</span> <span class="var">RemoteIP</span> <span class="fn">in~</span> (<span class="var">ChrysalisC2</span>) <span class="kw">or</span> <span class="var">URLPath</span> <span class="fn">has_any</span> (<span class="var">C2Paths</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">RemoteIP</span>, <span class="var">RemoteUrl</span>, <span class="var">InitiatingProcessFileName</span></pre>
+            </div>
+
+            <h3>3.4 DLL Sideloading Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #4: Detect BluetoothService.exe sideloading</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect BluetoothService.exe loading DLLs outside Bitdefender paths</span>
+<span class="kw">let</span> <span class="var">MaliciousHash</span> = <span class="str">"3bdc4c0637591533f1d4198a72a33426c01f69bd2e15ceee547866f65e26b7ad"</span>;
+<span class="var">DeviceImageLoadEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"BluetoothService.exe"</span>, <span class="str">"BDSubWiz.exe"</span>)
+    <span class="kw">or</span> <span class="var">SHA256</span> <span class="op">=~</span> <span class="var">MaliciousHash</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="kw">not</span>(<span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"Program Files\\Bitdefender"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="kw">not</span>(<span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"Windows\\System32"</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>, <span class="var">SHA256</span>, <span class="var">InitiatingProcessFileName</span></pre>
+            </div>
+
+            <h3>3.5 TCC Shellcode Execution Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #5: Detect Tiny-C-Compiler shellcode execution</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect TCC shellcode execution pattern used by Chrysalis</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="kw">not</span>(<span class="var">FolderPath</span> <span class="kw">startswith</span> <span class="str">"/"</span>)  <span class="cm">// Windows only</span>
+<span class="op">|</span> <span class="kw">where</span>
+    (<span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"-nostdlib"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"-run"</span>)
+    <span class="kw">or</span> (<span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"conf.c"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"C:\\"</span>)
+    <span class="kw">or</span> (<span class="var">FileName</span> <span class="op">=~</span> <span class="str">"svchost.exe"</span> <span class="kw">and</span> <span class="kw">not</span>(<span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"Windows\\System32"</span>))
+    <span class="kw">or</span> <span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"ProgramData\\USOShared"</span>
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>, <span class="var">ProcessCommandLine</span></pre>
+            </div>
+
+            <h3>3.6 Persistence Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #6: Detect Chrysalis persistence mechanisms</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect Chrysalis-specific persistence indicators</span>
+<span class="kw">let</span> <span class="var">ChrysalisIndicators</span> = <span class="fn">dynamic</span>([
+    <span class="str">"BluetoothService.exe"</span>,
+    <span class="str">"USOShared"</span>,
+    <span class="str">"ConsoleApplication2.exe"</span>,
+    <span class="str">"skycloudcenter"</span>,
+    <span class="str">"wiresguard"</span>
+]);
+<span class="var">DeviceRegistryEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryKey</span> <span class="fn">has_any</span> (
+    <span class="str">"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"</span>,
+    <span class="str">"SYSTEM\\CurrentControlSet\\Services"</span>
+)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryValueData</span> <span class="fn">has_any</span> (<span class="var">ChrysalisIndicators</span>)
+    <span class="kw">or</span> (<span class="var">RegistryValueData</span> <span class="kw">has</span> <span class="str">"svchost.exe"</span> <span class="kw">and</span> <span class="kw">not</span>(<span class="var">RegistryValueData</span> <span class="kw">has</span> <span class="str">"System32"</span>))
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">RegistryKey</span>, <span class="var">RegistryValueData</span></pre>
+            </div>
+        </section>
+
+        <!-- Section 4: MITRE ATT&CK -->
+        <section id="mitre" class="section">
+            <div class="section-header">
+                <span class="section-number">04</span>
+                <h2>MITRE ATT&CK Mapping</h2>
+            </div>
+
+            <div class="mitre-grid">
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Initial Access</div>
+                    <div class="mitre-technique">Supply Chain Compromise: Software Dependencies</div>
+                    <div class="mitre-id">T1195.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">User Execution: Malicious File</div>
+                    <div class="mitre-id">T1204.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Persistence</div>
+                    <div class="mitre-technique">Boot or Logon Autostart: Registry Run Keys</div>
+                    <div class="mitre-id">T1547.001</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Persistence</div>
+                    <div class="mitre-technique">Create or Modify System Process: Windows Service</div>
+                    <div class="mitre-id">T1543.003</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Hijack Execution Flow: DLL Side-Loading</div>
+                    <div class="mitre-id">T1574.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Obfuscated Files or Information</div>
+                    <div class="mitre-id">T1027</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Masquerading</div>
+                    <div class="mitre-id">T1036</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Command and Control</div>
+                    <div class="mitre-technique">Application Layer Protocol: HTTPS</div>
+                    <div class="mitre-id">T1071.001</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Command and Control</div>
+                    <div class="mitre-technique">Encrypted Channel</div>
+                    <div class="mitre-id">T1573</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Exfiltration</div>
+                    <div class="mitre-technique">Exfiltration Over C2 Channel</div>
+                    <div class="mitre-id">T1041</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: References -->
+        <section id="references" class="section">
+            <div class="section-header">
+                <span class="section-number">05</span>
+                <h2>References</h2>
+            </div>
+
+            <div class="card">
+                <h4>Primary Sources</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Rapid7 - TR-Chrysalis: Dive into Lotus Blossom's Toolkit</strong><br>
+                        <a href="https://www.rapid7.com/blog/post/tr-chrysalis-backdoor-dive-into-lotus-blossoms-toolkit/" target="_blank">https://www.rapid7.com/blog/post/tr-chrysalis-backdoor-dive-into-lotus-blossoms-toolkit/</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Notepad++ Official Incident Disclosure</strong><br>
+                        <a href="https://notepad-plus-plus.org/news/hijacked-incident-info-update/" target="_blank">https://notepad-plus-plus.org/news/hijacked-incident-info-update/</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Notepad++ v8.8.9 Security Fix</strong><br>
+                        <a href="https://notepad-plus-plus.org/news/v889-released/" target="_blank">https://notepad-plus-plus.org/news/v889-released/</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>MITRE ATT&CK - Supply Chain Compromise</strong><br>
+                        <a href="https://attack.mitre.org/techniques/T1195/002/" target="_blank">https://attack.mitre.org/techniques/T1195/002/</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>Threat Actor Profile: Lotus Blossom</h4>
+                <p><strong>Also known as:</strong> Billbug, Spring Dragon, Raspberry Typhoon</p>
+                <p><strong>Attribution:</strong> Chinese state-sponsored APT</p>
+                <p><strong>Active since:</strong> 2009</p>
+                <p><strong>Primary targets:</strong> Government, telecommunications, aviation, critical infrastructure, media</p>
+                <p style="margin-bottom: 0;"><strong>Geographic focus:</strong> Southeast Asia, Central America</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                <strong>Community Threat Hunt Runbook</strong> | Created by Crimson7 Security Operations
+            </div>
+            <div class="footer-meta">
+                <span>Last Updated: February 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                target.scrollIntoView({ behavior: 'smooth' });
+
+                document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        // Update active nav on scroll
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY + 100;
+
+            sections.forEach(section => {
+                if (section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+                    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                    document.querySelector(`.nav a[href="#${section.id}"]`)?.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
