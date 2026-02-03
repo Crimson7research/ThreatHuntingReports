@@ -1,13 +1,26 @@
 [
-    {
-        "file": "shai-hulud-threat-hunt-runbook.html",
-        "title": "Shai-Hulud NPM Supply Chain Attack",
-        "description": "Sophisticated NPM supply chain attack compromising 796+ packages with credential theft and destructive payload capabilities.",
-        "severity": "critical",
-        "type": "Supply Chain",
-        "tags": ["npm", "supply-chain", "credential-theft", "trufflehog"],
-        "date": "Dec 2, 2025",
-        "queries": 14,
-        "version": "2.0"
-    }
-]
+      {
+          "file": "shai-hulud-threat-hunt-runbook.html",
+          "title": "Shai-Hulud NPM Supply Chain Attack",
+          "description": "Sophisticated NPM supply chain attack compromising 796+ packages with credential theft and
+  destructive payload capabilities.",
+          "severity": "critical",
+          "type": "Supply Chain",
+          "tags": ["npm", "supply-chain", "credential-theft", "trufflehog"],
+          "date": "Dec 2, 2025",
+          "queries": 14,
+          "version": "2.0"
+      },
+      {
+          "file": "notepad-chrysalis-threat-hunt-runbook.html",
+          "title": "Notepad++ Hijacking Attack",
+          "description": "Chinese APT (Lotus Blossom) compromised Notepad++ update infrastructure to deliver Chrysalis
+  backdoor via DLL sideloading.",
+          "severity": "critical",
+          "type": "Supply Chain",
+          "tags": ["notepad++", "apt", "dll-sideloading", "chrysalis", "cobalt-strike"],
+          "date": "Feb 3, 2026",
+          "queries": 6,
+          "version": "1.0"
+      }
+  ]
