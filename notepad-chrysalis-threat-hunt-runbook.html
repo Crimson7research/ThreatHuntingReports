@@ -1374,6 +1374,78 @@
     <span class="kw">or</span> (<span class="var">RegistryValueData</span> <span class="kw">has</span> <span class="str">"svchost.exe"</span> <span class="kw">and</span> <span class="kw">not</span>(<span class="var">RegistryValueData</span> <span class="kw">has</span> <span class="str">"System32"</span>))
 <span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">RegistryKey</span>, <span class="var">RegistryValueData</span></pre>
             </div>
+
+            <h3>3.7 LOLBin Child Process Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #7: Detect suspicious child processes from Notepad++/GUP</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Notepad++ should NEVER spawn command interpreters</span>
+<span class="kw">let</span> <span class="var">LOLBins</span> = <span class="fn">dynamic</span>([
+    <span class="str">"cmd.exe"</span>, <span class="str">"powershell.exe"</span>, <span class="str">"pwsh.exe"</span>,
+    <span class="str">"wscript.exe"</span>, <span class="str">"cscript.exe"</span>, <span class="str">"mshta.exe"</span>,
+    <span class="str">"certutil.exe"</span>, <span class="str">"bitsadmin.exe"</span>, <span class="str">"rundll32.exe"</span>,
+    <span class="str">"regsvr32.exe"</span>, <span class="str">"msiexec.exe"</span>, <span class="str">"schtasks.exe"</span>
+]);
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"notepad++.exe"</span>, <span class="str">"gup.exe"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="kw">not</span>(<span class="var">InitiatingProcessFileName</span> <span class="op">=~</span> <span class="str">"notepad++.exe"</span> <span class="kw">and</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"gup.exe"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="var">LOLBins</span>)
+    <span class="kw">or</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"update.exe"</span>, <span class="str">"BluetoothService.exe"</span>, <span class="str">"ConsoleApplication2.exe"</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span></pre>
+            </div>
+
+            <h3>3.8 Chrysalis Payload Delivery Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #8: Detect GUP.exe dropping suspicious executables</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect Chrysalis payloads dropped by hijacked GUP.exe</span>
+<span class="kw">let</span> <span class="var">ChrysalisPayloads</span> = <span class="fn">dynamic</span>([
+    <span class="str">"update.exe"</span>, <span class="str">"BluetoothService.exe"</span>, <span class="str">"log.dll"</span>,
+    <span class="str">"ConsoleApplication2.exe"</span>, <span class="str">"svchost.exe"</span>, <span class="str">"conf.c"</span>
+]);
+<span class="kw">let</span> <span class="var">SafeDropPaths</span> = <span class="fn">dynamic</span>([<span class="str">"\\Program Files\\Notepad++"</span>, <span class="str">"\\Program Files (x86)\\Notepad++"</span>]);
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="op">=~</span> <span class="str">"gup.exe"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ActionType</span> <span class="fn">in</span> (<span class="str">"FileCreated"</span>, <span class="str">"FileModified"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="kw">endswith</span> <span class="str">".exe"</span> <span class="kw">or</span> <span class="var">FileName</span> <span class="kw">endswith</span> <span class="str">".dll"</span> <span class="kw">or</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="var">ChrysalisPayloads</span>)
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">IsChrysalis</span> = <span class="var">FileName</span> <span class="fn">in~</span> (<span class="var">ChrysalisPayloads</span>)
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">IsUnsafePath</span> = <span class="kw">not</span>(<span class="var">FolderPath</span> <span class="fn">has_any</span> (<span class="var">SafeDropPaths</span>))
+<span class="op">|</span> <span class="kw">where</span> <span class="var">IsChrysalis</span> <span class="kw">or</span> <span class="var">IsUnsafePath</span>
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>, <span class="var">SHA256</span>, <span class="var">IsChrysalis</span></pre>
+            </div>
+
+            <h3>3.9 Unsigned Binary Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #9: Detect unsigned or untrusted binaries in Notepad++ paths</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect binaries not signed by legitimate Notepad++ signers</span>
+<span class="kw">let</span> <span class="var">LegitimateSigners</span> = <span class="fn">dynamic</span>([<span class="str">"GlobalSign"</span>, <span class="str">"Don HO"</span>, <span class="str">"Notepad++"</span>]);
+<span class="kw">let</span> <span class="var">CertInfo</span> = <span class="var">DeviceFileCertificateInfo</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+    <span class="op">|</span> <span class="fn">summarize</span> <span class="fn">arg_max</span>(<span class="var">Timestamp</span>, *) <span class="kw">by</span> <span class="var">SHA1</span>
+    <span class="op">|</span> <span class="fn">project</span> <span class="var">SHA1</span>, <span class="var">IsSigned</span>, <span class="var">IsTrusted</span>, <span class="var">Signer</span>;
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"Notepad++"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="kw">endswith</span> <span class="str">".exe"</span> <span class="kw">or</span> <span class="var">FileName</span> <span class="kw">endswith</span> <span class="str">".dll"</span>
+<span class="op">|</span> <span class="kw">join</span> <span class="kw">kind</span>=<span class="var">leftouter</span> <span class="var">CertInfo</span> <span class="kw">on</span> <span class="var">SHA1</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">IsSigned</span> == <span class="num">false</span> <span class="kw">or</span> <span class="var">IsTrusted</span> == <span class="num">false</span> <span class="kw">or</span> <span class="kw">not</span>(<span class="var">Signer</span> <span class="fn">has_any</span> (<span class="var">LegitimateSigners</span>))
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">RiskLevel</span> = <span class="fn">case</span>(
+    <span class="var">IsSigned</span> == <span class="num">false</span>, <span class="str">"UNSIGNED"</span>,
+    <span class="var">IsTrusted</span> == <span class="num">false</span>, <span class="str">"UNTRUSTED CERT"</span>,
+    <span class="kw">not</span>(<span class="var">Signer</span> <span class="fn">has_any</span> (<span class="var">LegitimateSigners</span>)), <span class="str">"UNKNOWN SIGNER"</span>,
+    <span class="str">"REVIEW REQUIRED"</span>
+)
+<span class="op">|</span> <span class="fn">summarize</span> <span class="var">DeviceCount</span> = <span class="fn">dcount</span>(<span class="var">DeviceName</span>) <span class="kw">by</span> <span class="var">SHA256</span>, <span class="var">FileName</span>, <span class="var">Signer</span>, <span class="var">RiskLevel</span></pre>
+            </div>
         </section>
 
         <!-- Section 4: MITRE ATT&CK -->
