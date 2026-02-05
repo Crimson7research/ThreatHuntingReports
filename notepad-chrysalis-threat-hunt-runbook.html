@@ -673,7 +673,7 @@
             <div class="header-meta">
                 <span>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-                    Version 1.0
+                    Version 1.1
                 </span>
                 <span>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 1.5v1h7v-1h-7zM3 3.5V1a1 1 0 011-1h8a1 1 0 011 1v2.5h2a1 1 0 011 1v8a1 1 0 01-1 1h-2v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2H1a1 1 0 01-1-1v-8a1 1 0 011-1h2zm1 0h8v10H4v-10zm-3 2v6h2v-6H1zm13 0v6h-2v-6h2z"/></svg>
@@ -706,6 +706,7 @@
             <a href="#queries">KQL Detection Queries</a>
             <a href="#mitre">MITRE ATT&CK</a>
             <a href="#references">References</a>
+            <a href="#changelog">Changelog</a>
         </div>
     </nav>
 
@@ -875,12 +876,14 @@
             </div>
 
             <h3>2.1 File Hashes (SHA256)</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;"><strong>Sources:</strong> [R7] = Rapid7 | [TF] = ThreatFox/abuse.ch | [VT] = VirusTotal</p>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
                             <th>File</th>
                             <th>SHA256</th>
+                            <th>Source</th>
                             <th>Severity</th>
                         </tr>
                     </thead>
@@ -888,33 +891,105 @@
                         <tr>
                             <td><code class="inline">update.exe</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">NSIS Installer</span></td>
                             <td><span class="hash">a511be5164dc1122fb5a7daa3eef9467e43d8458425b15a640235796006590c9</span></td>
+                            <td>[R7]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
                         </tr>
                         <tr>
                             <td><code class="inline">BluetoothService.exe</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Bitdefender Sideload Target</span></td>
                             <td><span class="hash">2da00de67720f5f13b17e9d985fe70f10f153da60c9ab1086fe58f069a156924</span></td>
+                            <td>[R7]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
                         </tr>
                         <tr>
                             <td><code class="inline">log.dll</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Malicious DLL Loader</span></td>
                             <td><span class="hash">3bdc4c0637591533f1d4198a72a33426c01f69bd2e15ceee547866f65e26b7ad</span></td>
+                            <td>[R7]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
                         </tr>
                         <tr>
                             <td><code class="inline">conf.c</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">TCC Shellcode Source</span></td>
                             <td><span class="hash">f4d829739f2d6ba7e3ede83dad428a0ced1a703ec582fc73a4eee3df3704629a</span></td>
+                            <td>[R7]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
                         </tr>
                         <tr>
                             <td><code class="inline">ConsoleApplication2.exe</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Warbird Loader</span></td>
                             <td><span class="hash">b4169a831292e245ebdffedd5820584d73b129411546e7d3eccf4663d5fc5be3</span></td>
+                            <td>[R7]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">[NSIS.nsi]</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Installer Script</span></td>
+                            <td><span class="hash">8ea8b83645fba6e23d48075a0d3fc73ad2ba515b4536710cda4f1f232718f53e</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">BluetoothService</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Variant (no .exe)</span></td>
+                            <td><span class="hash">77bfea78def679aa1117f569a35e8fd1542df21f7e00e27f192c907e61d63a2e</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">u.bat</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Batch Script</span></td>
+                            <td><span class="hash">9276594e73cda1c69b7d265b3f08dc8fa84bf2d6599086b9acc0bb3745146600</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">libtcc.dll</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">TCC Library</span></td>
+                            <td><span class="hash">4a52570eeaf9d27722377865df312e295a7a23c3b6eb991944c2ecd707cc9906</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">admin</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Payload</span></td>
+                            <td><span class="hash">831e1ea13a1bd405f5bda2b9d8f2265f7b1db6c668dd2165ccc8a9c4c15ea7dd</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">loader1</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Loader Stage 1</span></td>
+                            <td><span class="hash">0a9b8df968df41920b6ff07785cbfebe8bda29e6b512c94a3b2a83d10014d2fd</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">loader2</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Loader Stage 2</span></td>
+                            <td><span class="hash">e7cd605568c38bd6e0aba31045e1633205d0598c607a855e2e1bca4cca1c6eda</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">uffhxpSy</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Encrypted Payload</span></td>
+                            <td><span class="hash">4c2ea8193f4a5db63b897a2d3ce127cc5d89687f380b97a1d91e0c8db542e4f8</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">3yzr31vk</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Encrypted Payload</span></td>
+                            <td><span class="hash">078a9e5c6c787e5532a7e728720cbafee9021bfec4a30e3c2be110748d7c43c5</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">system</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Masquerading Payload</span></td>
+                            <td><span class="hash">7add554a98d3a99b319f2127688356c1283ed073a084805f14e33b4f6a6126fd</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">s047t5g.exe</code><br><span style="font-size: 0.75rem; color: var(--text-muted);">Executable Payload</span></td>
+                            <td><span class="hash">fcc2765305bcd213b7558025b2039df2265c3e0b6401e4833123c461df2de51a</span></td>
+                            <td>[R7]</td>
+                            <td><span class="badge badge-high">High</span></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <h3>2.2 Network IOCs</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;"><strong>Sources:</strong> [R7] = Rapid7 | [TF] = ThreatFox/abuse.ch | [VT] = VirusTotal</p>
             <div class="table-container">
                 <table>
                     <thead>
@@ -922,6 +997,7 @@
                             <th>Type</th>
                             <th>Indicator</th>
                             <th>Description</th>
+                            <th>Source</th>
                             <th>Severity</th>
                         </tr>
                     </thead>
@@ -930,43 +1006,139 @@
                             <td>Domain</td>
                             <td><code class="inline">api.skycloudcenter.com</code></td>
                             <td>Chrysalis C2</td>
+                            <td>[R7, TF]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
                         </tr>
                         <tr>
                             <td>Domain</td>
                             <td><code class="inline">api.wiresguard.com</code></td>
                             <td>Cobalt Strike C2</td>
+                            <td>[R7, TF]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
                         </tr>
                         <tr>
                             <td>IP</td>
                             <td><code class="inline">95.179.213.0</code></td>
                             <td>Initial payload delivery</td>
+                            <td>[R7, TF]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
                         </tr>
                         <tr>
                             <td>IP</td>
                             <td><code class="inline">61.4.102.97</code></td>
                             <td>Chrysalis C2 (Malaysia)</td>
+                            <td>[R7, TF]</td>
                             <td><span class="badge badge-critical">Critical</span></td>
                         </tr>
                         <tr>
                             <td>IP</td>
                             <td><code class="inline">59.110.7.32:8880</code></td>
                             <td>Cobalt Strike beacon</td>
+                            <td>[R7, TF]</td>
                             <td><span class="badge badge-high">High</span></td>
                         </tr>
                         <tr>
                             <td>IP</td>
                             <td><code class="inline">124.222.137.114:9999</code></td>
                             <td>Cobalt Strike beacon</td>
+                            <td>[R7, TF]</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>IP</td>
+                            <td><code class="inline">45.76.155.202</code></td>
+                            <td>Malicious update distribution</td>
+                            <td>[R7, TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>IP</td>
+                            <td><code class="inline">45.32.144.255</code></td>
+                            <td>Malicious update distribution</td>
+                            <td>[R7, TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Domain</td>
+                            <td><code class="inline">cdncheck.it.com</code></td>
+                            <td>Cobalt Strike C2</td>
+                            <td>[R7, TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Domain</td>
+                            <td><code class="inline">safe-dns.it.com</code></td>
+                            <td>Cobalt Strike C2</td>
+                            <td>[R7, TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Domain</td>
+                            <td><code class="inline">self-dns.it.com</code></td>
+                            <td>Secondary C2</td>
+                            <td>[R7, TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>IP</td>
+                            <td><code class="inline">45.77.31.210</code></td>
+                            <td>Beacon delivery & C2</td>
+                            <td>[TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Domain</td>
+                            <td><code class="inline">temp.sh</code></td>
+                            <td>Sysinfo exfiltration</td>
+                            <td>[TF]</td>
                             <td><span class="badge badge-high">High</span></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <h3>2.3 Process Artifacts</h3>
+            <h3>2.3 Staging Directories</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;"><strong>Sources:</strong> [R7] = Rapid7 | [TF] = ThreatFox/abuse.ch</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Path</th>
+                            <th>Description</th>
+                            <th>Source</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">C:\ProgramData\USOShared</code></td>
+                            <td>Chrysalis staging (Chain #3)</td>
+                            <td>[R7, TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">%appdata%\ProShow\</code></td>
+                            <td>ProShow exploit staging (Chain #1)</td>
+                            <td>[TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">%appdata%\Adobe\Scripts\</code></td>
+                            <td>Lua/Adobe staging (Chain #2)</td>
+                            <td>[TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">%appdata%\Bluetooth\</code></td>
+                            <td>Chrysalis staging (Chain #3)</td>
+                            <td>[TF]</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.4 Process Artifacts</h3>
             <div class="table-container">
                 <table>
                     <thead>
@@ -996,7 +1168,7 @@
                 </table>
             </div>
 
-            <h3>2.4 Encryption Keys</h3>
+            <h3>2.5 Encryption Keys</h3>
             <div class="table-container">
                 <table>
                     <thead>
@@ -1018,6 +1190,36 @@
                             <td><code class="inline">vAuig34%^325hGV</code></td>
                             <td>RC4 key for C2 communication</td>
                         </tr>
+                        <tr>
+                            <td><code class="inline">CRAZY</code></td>
+                            <td>XOR key for Beacon configuration [TF]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.6 C2 URL Paths</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Path</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code class="inline">/a/chat/s/70521ddf-a2ef-4adf-9cf0-6d8e24aaa821</code></td><td>Chrysalis beacon</td></tr>
+                        <tr><td><code class="inline">/users/admin</code></td><td>Beacon delivery</td></tr>
+                        <tr><td><code class="inline">/help/Get-Start</code></td><td>C2 endpoint</td></tr>
+                        <tr><td><code class="inline">/api/update/v1</code></td><td>C2 update check</td></tr>
+                        <tr><td><code class="inline">/api/getInfo/v1</code></td><td>System info collection</td></tr>
+                        <tr><td><code class="inline">/api/getBasicInfo/v1</code></td><td>Basic info collection</td></tr>
+                        <tr><td><code class="inline">/api/FileUpload/submit</code></td><td>Data exfiltration</td></tr>
+                        <tr><td><code class="inline">/api/Metadata/submit</code></td><td>Metadata submission</td></tr>
+                        <tr><td><code class="inline">/api/updateStatus/v1</code></td><td>Status update</td></tr>
+                        <tr><td><code class="inline">/resolve</code></td><td>DNS-over-HTTPS C2</td></tr>
+                        <tr><td><code class="inline">/dns-query</code></td><td>DNS-over-HTTPS C2</td></tr>
+                        <tr><td><code class="inline">/list</code></td><td>System info upload</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1038,12 +1240,10 @@
                 </div>
                 <pre><span class="cm">// Detect GUP.exe traffic to known malicious or unknown infrastructure</span>
 <span class="kw">let</span> <span class="var">MaliciousInfra</span> = <span class="fn">dynamic</span>([
-    <span class="str">"95.179.213.0"</span>,           <span class="cm">// Payload delivery</span>
-    <span class="str">"61.4.102.97"</span>,            <span class="cm">// Chrysalis C2</span>
-    <span class="str">"59.110.7.32"</span>,            <span class="cm">// Cobalt Strike</span>
-    <span class="str">"124.222.137.114"</span>,        <span class="cm">// Cobalt Strike</span>
-    <span class="str">"api.skycloudcenter.com"</span>, <span class="cm">// Chrysalis C2</span>
-    <span class="str">"api.wiresguard.com"</span>      <span class="cm">// Cobalt Strike C2</span>
+    <span class="str">"95.179.213.0"</span>, <span class="str">"61.4.102.97"</span>, <span class="str">"59.110.7.32"</span>, <span class="str">"124.222.137.114"</span>,
+    <span class="str">"45.76.155.202"</span>, <span class="str">"45.32.144.255"</span>,  <span class="cm">// Additional IPs</span>
+    <span class="str">"api.skycloudcenter.com"</span>, <span class="str">"api.wiresguard.com"</span>,
+    <span class="str">"cdncheck.it.com"</span>, <span class="str">"safe-dns.it.com"</span>, <span class="str">"self-dns.it.com"</span>  <span class="cm">// Additional domains</span>
 ]);
 <span class="kw">let</span> <span class="var">LegitimateDomains</span> = <span class="fn">dynamic</span>([
     <span class="str">"notepad-plus-plus.org"</span>,
@@ -1068,11 +1268,22 @@
                 </div>
                 <pre><span class="cm">// Detect known malicious hashes from Chrysalis campaign</span>
 <span class="kw">let</span> <span class="var">ChrysalisHashes</span> = <span class="fn">dynamic</span>([
-    <span class="str">"a511be5164dc1122fb5a7daa3eef9467e43d8458425b15a640235796006590c9"</span>,
-    <span class="str">"2da00de67720f5f13b17e9d985fe70f10f153da60c9ab1086fe58f069a156924"</span>,
-    <span class="str">"3bdc4c0637591533f1d4198a72a33426c01f69bd2e15ceee547866f65e26b7ad"</span>,
-    <span class="str">"f4d829739f2d6ba7e3ede83dad428a0ced1a703ec582fc73a4eee3df3704629a"</span>,
-    <span class="str">"b4169a831292e245ebdffedd5820584d73b129411546e7d3eccf4663d5fc5be3"</span>
+    <span class="str">"a511be5164dc1122fb5a7daa3eef9467e43d8458425b15a640235796006590c9"</span>,  <span class="cm">// update.exe</span>
+    <span class="str">"8ea8b83645fba6e23d48075a0d3fc73ad2ba515b4536710cda4f1f232718f53e"</span>,  <span class="cm">// NSIS.nsi</span>
+    <span class="str">"2da00de67720f5f13b17e9d985fe70f10f153da60c9ab1086fe58f069a156924"</span>,  <span class="cm">// BluetoothService.exe</span>
+    <span class="str">"77bfea78def679aa1117f569a35e8fd1542df21f7e00e27f192c907e61d63a2e"</span>,  <span class="cm">// BluetoothService variant</span>
+    <span class="str">"3bdc4c0637591533f1d4198a72a33426c01f69bd2e15ceee547866f65e26b7ad"</span>,  <span class="cm">// log.dll</span>
+    <span class="str">"9276594e73cda1c69b7d265b3f08dc8fa84bf2d6599086b9acc0bb3745146600"</span>,  <span class="cm">// u.bat</span>
+    <span class="str">"f4d829739f2d6ba7e3ede83dad428a0ced1a703ec582fc73a4eee3df3704629a"</span>,  <span class="cm">// conf.c</span>
+    <span class="str">"4a52570eeaf9d27722377865df312e295a7a23c3b6eb991944c2ecd707cc9906"</span>,  <span class="cm">// libtcc.dll</span>
+    <span class="str">"b4169a831292e245ebdffedd5820584d73b129411546e7d3eccf4663d5fc5be3"</span>,  <span class="cm">// ConsoleApplication2.exe</span>
+    <span class="str">"831e1ea13a1bd405f5bda2b9d8f2265f7b1db6c668dd2165ccc8a9c4c15ea7dd"</span>,  <span class="cm">// admin</span>
+    <span class="str">"0a9b8df968df41920b6ff07785cbfebe8bda29e6b512c94a3b2a83d10014d2fd"</span>,  <span class="cm">// loader1</span>
+    <span class="str">"e7cd605568c38bd6e0aba31045e1633205d0598c607a855e2e1bca4cca1c6eda"</span>,  <span class="cm">// loader2</span>
+    <span class="str">"4c2ea8193f4a5db63b897a2d3ce127cc5d89687f380b97a1d91e0c8db542e4f8"</span>,  <span class="cm">// uffhxpSy</span>
+    <span class="str">"078a9e5c6c787e5532a7e728720cbafee9021bfec4a30e3c2be110748d7c43c5"</span>,  <span class="cm">// 3yzr31vk</span>
+    <span class="str">"7add554a98d3a99b319f2127688356c1283ed073a084805f14e33b4f6a6126fd"</span>,  <span class="cm">// system</span>
+    <span class="str">"fcc2765305bcd213b7558025b2039df2265c3e0b6401e4833123c461df2de51a"</span>   <span class="cm">// s047t5g.exe</span>
 ]);
 <span class="kw">union</span> <span class="var">DeviceFileEvents</span>, <span class="var">DeviceProcessEvents</span>, <span class="var">DeviceImageLoadEvents</span>
 <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">></span> <span class="fn">ago</span>(<span class="num">30d</span>)
@@ -1088,12 +1299,10 @@
                 </div>
                 <pre><span class="cm">// Detect connections to known Lotus Blossom C2 infrastructure</span>
 <span class="kw">let</span> <span class="var">ChrysalisC2</span> = <span class="fn">dynamic</span>([
-    <span class="str">"api.skycloudcenter.com"</span>,
-    <span class="str">"api.wiresguard.com"</span>,
-    <span class="str">"95.179.213.0"</span>,
-    <span class="str">"61.4.102.97"</span>,
-    <span class="str">"59.110.7.32"</span>,
-    <span class="str">"124.222.137.114"</span>
+    <span class="str">"api.skycloudcenter.com"</span>, <span class="str">"api.wiresguard.com"</span>,
+    <span class="str">"cdncheck.it.com"</span>, <span class="str">"safe-dns.it.com"</span>, <span class="str">"self-dns.it.com"</span>,
+    <span class="str">"95.179.213.0"</span>, <span class="str">"61.4.102.97"</span>, <span class="str">"59.110.7.32"</span>, <span class="str">"124.222.137.114"</span>,
+    <span class="str">"45.76.155.202"</span>, <span class="str">"45.32.144.255"</span>
 ]);
 <span class="kw">let</span> <span class="var">C2Paths</span> = <span class="fn">dynamic</span>([
     <span class="str">"/a/chat/s/70521ddf-a2ef-4adf-9cf0-6d8e24aaa821"</span>
@@ -1254,6 +1463,14 @@
                         <strong>MITRE ATT&CK - Supply Chain Compromise</strong><br>
                         <a href="https://attack.mitre.org/techniques/T1195/002/" target="_blank">https://attack.mitre.org/techniques/T1195/002/</a>
                     </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>ThreatFox - abuse.ch IOC Sharing Platform</strong><br>
+                        <a href="https://threatfox.abuse.ch/" target="_blank">https://threatfox.abuse.ch/</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>VirusTotal - Malware Analysis</strong><br>
+                        <a href="https://www.virustotal.com/" target="_blank">https://www.virustotal.com/</a>
+                    </li>
                 </ul>
             </div>
 
@@ -1266,6 +1483,88 @@
                 <p style="margin-bottom: 0;"><strong>Geographic focus:</strong> Southeast Asia, Central America</p>
             </div>
         </section>
+
+        <!-- Section 6: Changelog -->
+        <section id="changelog" class="section">
+            <div class="section-header">
+                <span class="section-number">06</span>
+                <h2>Changelog</h2>
+            </div>
+
+            <div class="card">
+                <h4 style="color: var(--accent-green);">v1.1 - February 5, 2026</h4>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Extended IOC coverage from ThreatFox/abuse.ch threat intelligence</p>
+
+                <p><strong>New Network IOCs Added (7):</strong></p>
+                <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-secondary);">
+                    <li><code class="inline">45.76.155.202</code> - Malicious update distribution [R7, TF]</li>
+                    <li><code class="inline">45.32.144.255</code> - Malicious update distribution [R7, TF]</li>
+                    <li><code class="inline">45.77.31.210</code> - Beacon delivery & C2 server [TF]</li>
+                    <li><code class="inline">cdncheck.it.com</code> - Cobalt Strike C2 [R7, TF]</li>
+                    <li><code class="inline">safe-dns.it.com</code> - Cobalt Strike C2 [R7, TF]</li>
+                    <li><code class="inline">self-dns.it.com</code> - Secondary C2 [R7, TF]</li>
+                    <li><code class="inline">temp.sh</code> - System info exfiltration [TF]</li>
+                </ul>
+
+                <p><strong>New File Hashes Added (11):</strong></p>
+                <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-secondary);">
+                    <li><code class="inline">[NSIS.nsi]</code> - Installer script [R7]</li>
+                    <li><code class="inline">BluetoothService</code> - Variant without .exe extension [R7]</li>
+                    <li><code class="inline">u.bat</code> - Batch execution script [R7]</li>
+                    <li><code class="inline">libtcc.dll</code> - Tiny C Compiler library [R7]</li>
+                    <li><code class="inline">admin</code>, <code class="inline">loader1</code>, <code class="inline">loader2</code> - Multi-stage loaders [R7]</li>
+                    <li><code class="inline">uffhxpSy</code>, <code class="inline">3yzr31vk</code> - Encrypted payloads [R7]</li>
+                    <li><code class="inline">system</code>, <code class="inline">s047t5g.exe</code> - Additional payloads [R7]</li>
+                </ul>
+
+                <p><strong>New Section: Staging Directories (4 paths across 3 attack chains):</strong></p>
+                <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-secondary);">
+                    <li><code class="inline">C:\ProgramData\USOShared</code> - Chrysalis staging [R7, TF]</li>
+                    <li><code class="inline">%appdata%\ProShow\</code> - Chain #1: ProShow exploit [TF]</li>
+                    <li><code class="inline">%appdata%\Adobe\Scripts\</code> - Chain #2: Lua/Adobe loader [TF]</li>
+                    <li><code class="inline">%appdata%\Bluetooth\</code> - Chain #3: Chrysalis variant [TF]</li>
+                </ul>
+
+                <p><strong>New Section: C2 URL Paths (12 endpoints):</strong></p>
+                <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-secondary);">
+                    <li><code class="inline">/users/admin</code>, <code class="inline">/help/Get-Start</code> - Beacon delivery</li>
+                    <li><code class="inline">/api/update/v1</code>, <code class="inline">/api/getInfo/v1</code>, <code class="inline">/api/getBasicInfo/v1</code> - C2 check-in</li>
+                    <li><code class="inline">/api/FileUpload/submit</code>, <code class="inline">/api/Metadata/submit</code> - Data exfiltration</li>
+                    <li><code class="inline">/resolve</code>, <code class="inline">/dns-query</code> - DNS-over-HTTPS tunneling</li>
+                    <li><code class="inline">/list</code>, <code class="inline">/api/Info/submit</code>, <code class="inline">/api/updateStatus/v1</code> - Status reporting</li>
+                </ul>
+
+                <p><strong>New Encryption Key:</strong></p>
+                <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-secondary);">
+                    <li><code class="inline">CRAZY</code> - XOR key for Beacon configuration decryption [TF]</li>
+                </ul>
+
+                <p><strong>Source Attribution:</strong></p>
+                <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-secondary);">
+                    <li>All IOCs now tagged: [R7] Rapid7, [TF] ThreatFox/abuse.ch, [VT] VirusTotal</li>
+                </ul>
+
+                <p><strong>KQL Queries Updated:</strong></p>
+                <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                    <li>Query 1, 4, 5, 7 expanded with new IOCs</li>
+                    <li>Added staging directory detection paths</li>
+                    <li>Added extended C2 URL path matching</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4 style="color: var(--text-secondary);">v1.0 - February 3, 2026</h4>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Initial release based on Rapid7 TR-Chrysalis research</p>
+                <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                    <li><strong>5 file hashes:</strong> update.exe, BluetoothService.exe, log.dll, conf.c, ConsoleApplication2.exe</li>
+                    <li><strong>6 network IOCs:</strong> 4 IPs (95.179.213.0, 61.4.102.97, 59.110.7.32, 124.222.137.114) + 2 domains (api.skycloudcenter.com, api.wiresguard.com)</li>
+                    <li><strong>3 encryption keys:</strong> gQ2JR&9;, qwhvb^435h&*7, vAuig34%^325hGV</li>
+                    <li><strong>6 KQL detection queries:</strong> GUP traffic, hash detection, C2 communication, DLL sideloading, TCC execution, persistence</li>
+                    <li><strong>10 MITRE ATT&CK techniques</strong> mapped</li>
+                    <li><strong>7-step attack chain</strong> documented</li>
+                </ul>
+            </div>
+        </section>
     </main>
 
     <!-- Footer -->
@@ -1275,7 +1574,7 @@
                 <strong>Community Threat Hunt Runbook</strong> | Created by Crimson7 Security Operations
             </div>
             <div class="footer-meta">
-                <span>Last Updated: February 2026</span>
+                <span>Last Updated: February 5, 2026</span>
             </div>
         </div>
     </footer>
