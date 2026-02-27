@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="report-title" content="Notepad++ Hijacking Attack">
+    <meta name="report-description" content="Chinese APT (Lotus Blossom) compromised Notepad++ update infrastructure to deliver Chrysalis backdoor via DLL sideloading.">
+    <meta name="report-severity" content="critical">
+    <meta name="report-type" content="Supply Chain">
+    <meta name="report-tags" content="notepad++,apt,dll-sideloading,chrysalis,cobalt-strike">
+    <meta name="report-date" content="Feb 3, 2026">
+    <meta name="report-queries" content="6">
+    <meta name="report-version" content="1.0">
     <title>Notepad++ Hijacking Attack | Threat Hunt Runbook</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -343,6 +351,38 @@
             border-radius: 4px;
         }
 
+        .code-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.65rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .copy-btn.copied {
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
         pre {
             padding: 1.25rem;
             overflow-x: auto;
@@ -639,6 +679,9 @@
             .critical-alert {
                 flex-direction: column;
                 text-align: center;
+                margin-left: 1rem;
+                margin-right: 1rem;
+                padding: 1rem;
             }
 
             .main {
@@ -662,6 +705,22 @@
     </style>
 </head>
 <body>
+    <!-- Back Navigation -->
+    <style>
+        .back-nav { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; }
+        .back-nav a { color: var(--accent-blue); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem; font-family: inherit; transition: color 0.2s; }
+        .back-nav a:hover { color: var(--text-primary); }
+        @media (max-width: 768px) {
+            .back-nav { padding: 0.625rem 1rem; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); background: rgba(22, 27, 34, 0.9); }
+            .back-nav a { font-size: 0.85rem; padding: 0.25rem 0; }
+        }
+    </style>
+    <div class="back-nav">
+        <a href="index.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            Back to All Reports
+        </a>
+    </div>
     <!-- Header -->
     <header class="header">
         <div class="header-content">
@@ -1306,5 +1365,30 @@
             });
         });
     </script>
+<script>
+document.querySelectorAll('.code-header').forEach(header => {
+    const lang = header.querySelector('.code-lang');
+    const actions = document.createElement('div');
+    actions.className = 'code-header-actions';
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+    btn.addEventListener('click', () => {
+        const pre = header.closest('.code-block').querySelector('pre');
+        const text = pre.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            btn.classList.add('copied');
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Copied';
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+            }, 2000);
+        });
+    });
+    actions.appendChild(lang.cloneNode(true));
+    actions.appendChild(btn);
+    lang.replaceWith(actions);
+});
+</script>
 </body>
 </html>

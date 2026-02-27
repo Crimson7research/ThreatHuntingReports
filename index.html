@@ -449,15 +449,6 @@
                     <div class="stat-label">KQL Queries</div>
                 </div>
             </div>
-            <div class="stat-item">
-                <div class="stat-icon green">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
-                </div>
-                <div>
-                    <div class="stat-value">Active</div>
-                    <div class="stat-label">Defense Status</div>
-                </div>
-            </div>
         </div>
 
         <div class="search-container">
@@ -490,30 +481,7 @@
             version: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>'
         };
 
-        let reportsData = [
-            {
-                "file": "shai-hulud-threat-hunt-runbook.html",
-                "title": "Shai-Hulud NPM Supply Chain Attack",
-                "description": "Sophisticated NPM supply chain attack compromising 796+ packages with credential theft and destructive payload capabilities.",
-                "severity": "critical",
-                "type": "Supply Chain",
-                "tags": ["npm", "supply-chain", "credential-theft", "trufflehog"],
-                "date": "Dec 2, 2025",
-                "queries": 14,
-                "version": "2.0"
-            },
-            {
-                "file": "notepad-chrysalis-threat-hunt-runbook.html",
-                "title": "Notepad++ Hijacking Attack",
-                "description": "Chinese APT (Lotus Blossom) compromised Notepad++ update infrastructure to deliver Chrysalis backdoor via DLL sideloading.",
-                "severity": "critical",
-                "type": "Supply Chain",
-                "tags": ["notepad++", "apt", "dll-sideloading", "chrysalis", "cobalt-strike"],
-                "date": "Feb 3, 2026",
-                "queries": 6,
-                "version": "1.0"
-            }
-        ];
+        let reportsData = [];
 
         function createReportCard(report) {
             const tagsHtml = report.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
@@ -536,13 +504,31 @@
             `;
         }
 
-        function loadReports() {
+        function renderReports() {
             const grid = document.getElementById('reports-grid');
+            if (reportsData.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><p>No reports found.</p></div>';
+                return;
+            }
             grid.innerHTML = reportsData.map(createReportCard).join('');
 
             document.getElementById('total-reports').textContent = reportsData.length;
             const totalQueries = reportsData.reduce((sum, r) => sum + (r.queries || 0), 0);
             document.getElementById('total-queries').textContent = totalQueries;
+        }
+
+        function loadReports() {
+            fetch('reports.json')
+                .then(res => res.json())
+                .then(data => {
+                    reportsData = data;
+                    renderReports();
+                })
+                .catch(err => {
+                    console.error('Failed to load reports.json:', err);
+                    document.getElementById('reports-grid').innerHTML =
+                        '<div class="empty-state"><p>Failed to load reports.</p></div>';
+                });
         }
 
         document.getElementById('search-input').addEventListener('input', (e) => {

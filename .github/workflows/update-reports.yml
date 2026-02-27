@@ -1,0 +1,70 @@
+name: Update reports.json
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*-runbook.html'
+      - '**/*-threat-hunt*.html'
+
+jobs:
+  update-reports:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate reports.json from HTML meta tags
+        run: |
+          python3 << 'SCRIPT'
+          import os, re, json, glob
+
+          reports = []
+          html_files = [f for f in glob.glob("*.html") if f != "index.html"]
+
+          for filepath in sorted(html_files):
+              with open(filepath, "r", encoding="utf-8") as f:
+                  content = f.read(5000)  # meta tags are in the head
+
+              def get_meta(name):
+                  m = re.search(
+                      rf'<meta\s+name="{name}"\s+content="([^"]*)"',
+                      content
+                  )
+                  return m.group(1) if m else None
+
+              title = get_meta("report-title")
+              if not title:
+                  continue  # skip files without report meta tags
+
+              report = {
+                  "file": filepath,
+                  "title": title,
+                  "description": get_meta("report-description") or "",
+                  "severity": get_meta("report-severity") or "medium",
+                  "type": get_meta("report-type") or "General",
+                  "tags": [t.strip() for t in (get_meta("report-tags") or "").split(",") if t.strip()],
+                  "date": get_meta("report-date") or "",
+                  "queries": int(get_meta("report-queries") or 0),
+                  "version": get_meta("report-version") or "1.0",
+              }
+              reports.append(report)
+
+          with open("reports.json", "w", encoding="utf-8") as f:
+              json.dump(reports, f, indent=2, ensure_ascii=False)
+
+          print(f"Generated reports.json with {len(reports)} reports:")
+          for r in reports:
+              print(f"  - {r['title']} ({r['file']})")
+          SCRIPT
+
+      - name: Commit updated reports.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports.json
+          git diff --cached --quiet && echo "No changes to reports.json" && exit 0
+          git commit -m "Auto-update reports.json from HTML meta tags"
+          git push
