@@ -50,5 +50,25 @@
     "date": "Dec 2, 2025",
     "queries": 14,
     "version": "2.0"
+  },
+  {
+    "file": "stegabin-threat-hunt-runbook.html",
+    "title": "StegaBin (FAMOUS CHOLLIMA)",
+    "description": "26 Malicious npm Packages &mdash; Pastebin Steganography C2 &mdash; 9-Module Infostealer",
+    "severity": "critical",
+    "type": "Supply Chain",
+    "tags": [
+      "npm",
+      "supply-chain",
+      "lazarus",
+      "famous-chollima",
+      "steganography",
+      "pastebin",
+      "nodejs",
+      "credential-theft"
+    ],
+    "date": "Mar 02, 2026",
+    "queries": 10,
+    "version": "1.0"
   }
 ]
