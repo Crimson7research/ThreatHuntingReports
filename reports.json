@@ -17,6 +17,25 @@
     "version": "1.0"
   },
   {
+    "file": "rekoobe-backdoor-threat-hunt-runbook.html",
+    "title": "Rekoobe Backdoor via Malicious Go Crypto Module",
+    "description": "APT31 supply chain attack deploys Rekoobe Linux backdoor via malicious Go module github.com/xinfeisoft/crypto",
+    "severity": "critical",
+    "type": "Supply Chain",
+    "tags": [
+      "rekoobe",
+      "apt31",
+      "supply-chain",
+      "go-module",
+      "backdoor",
+      "linux",
+      "c2"
+    ],
+    "date": "Mar 03, 2026",
+    "queries": 12,
+    "version": "1.0"
+  },
+  {
     "file": "sandworm-threat-hunt-runbook.html",
     "title": "SANDWORM_MODE npm Supply Chain Worm",
     "description": "Self-propagating JavaScript worm spread through 23 typosquatted npm packages targeting developers. Steals credentials, injects CI/CD pipelines, poisons AI tool configs, and exfiltrates via DNS tunneling and Cloudflare Workers.",
