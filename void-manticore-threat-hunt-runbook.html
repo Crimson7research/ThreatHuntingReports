@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="report-title" content="Void Manticore / Handala Hack">
+<meta name="report-description" content="Operation Epic Fury - Stryker Corporation Wiper Attack">
+<meta name="report-severity" content="critical">
+<meta name="report-type" content="APT">
+<meta name="report-tags" content="void-manticore,handala,stryker,intune-wipe,mois,iran,wiper">
+<meta name="report-date" content="Mar 16, 2026">
+<meta name="report-queries" content="11">
+<meta name="report-version" content="3.0">
+<title>Void Manticore / Handala Hack - Threat Hunt Runbook</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-code: #1a1f27;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --accent-red: #f85149;
+    --accent-red-bg: rgba(248, 81, 73, 0.15);
+    --accent-orange: #d29922;
+    --accent-orange-bg: rgba(210, 153, 34, 0.15);
+    --accent-yellow: #e3b341;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-purple: #a371f7;
+    --accent-cyan: #39c5cf;
+    --crimson: #c62828;
+    --crimson-light: #ef5350;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+.header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1025 100%);
+    padding: 2.5rem 2rem 2rem;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+}
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--crimson);
+}
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.logo img {
+    height: 64px;
+    width: auto;
+    border-radius: 8px;
+}
+.header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.header .subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+}
+.header-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+.header-meta span {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+.header-meta span strong {
+    color: var(--text-secondary);
+}
+.critical-alert {
+    max-width: 1200px;
+    margin: 1.5rem auto;
+    padding: 1.25rem 1.5rem;
+    background: var(--accent-red-bg);
+    border: 1px solid var(--accent-red);
+    border-radius: 8px;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+.critical-alert .icon-box {
+    background: var(--accent-red);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+.critical-alert h2 {
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    color: var(--accent-red);
+    margin-bottom: 0.35rem;
+}
+.critical-alert p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+.nav-container {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+.nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+}
+.nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+.nav a:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+.nav a.active {
+    color: var(--accent-blue);
+    border-bottom-color: var(--accent-blue);
+}
+.main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+.section {
+    margin-bottom: 3rem;
+}
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+.section-number {
+    color: var(--accent-blue);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.section-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+.card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+}
+.card h3 {
+    font-size: 1.05rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+.card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+th {
+    background: var(--bg-tertiary);
+    padding: 0.65rem 0.85rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+td {
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    vertical-align: top;
+}
+tr:hover td {
+    background: rgba(88, 166, 255, 0.04);
+}
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.badge-critical {
+    background: var(--accent-red-bg);
+    color: var(--accent-red);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}
+.badge-high {
+    background: var(--accent-orange-bg);
+    color: var(--accent-orange);
+    border: 1px solid rgba(210, 153, 34, 0.3);
+}
+.badge-medium {
+    background: rgba(88, 166, 255, 0.1);
+    color: var(--accent-blue);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+}
+.badge-low {
+    background: rgba(63, 185, 80, 0.1);
+    color: var(--accent-green);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+.code-block {
+    background: var(--bg-code);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.code-header {
+    background: var(--bg-tertiary);
+    padding: 0.65rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.code-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.code-lang {
+    color: var(--accent-blue);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.copy-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.copy-btn:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+}
+.copy-btn.copied {
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+}
+pre {
+    padding: 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    color: var(--text-primary);
+}
+.kw { color: var(--accent-purple); }
+.fn { color: var(--accent-blue); }
+.str { color: var(--accent-green); }
+.num { color: var(--accent-orange); }
+.op { color: var(--accent-cyan); }
+.cm { color: var(--text-muted); font-style: italic; }
+.var { color: var(--text-primary); }
+code.inline {
+    background: var(--bg-tertiary);
+    color: var(--accent-cyan);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+}
+.attack-chain {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.attack-step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+.step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+.step-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--accent-blue);
+    background: var(--bg-primary);
+    flex-shrink: 0;
+}
+.step-line {
+    width: 2px;
+    height: 100%;
+    min-height: 24px;
+    background: var(--border-color);
+}
+.step-content {
+    padding-bottom: 1.25rem;
+    flex: 1;
+}
+.step-action {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+.step-description {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+.step-code {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-cyan);
+    font-size: 0.78rem;
+}
+.mitre-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+.mitre-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent-purple);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+}
+.mitre-tactic {
+    text-transform: uppercase;
+    color: var(--accent-purple);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.2rem;
+}
+.mitre-technique {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+.mitre-id {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-top: 0.15rem;
+}
+.priority-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+.priority-column {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+.priority-column h4 {
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+.priority-list {
+    list-style: none;
+    padding: 0;
+}
+.priority-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+.priority-list li:last-child {
+    border-bottom: none;
+}
+.impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+.impact-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+.impact-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.impact-icon.red { background: var(--accent-red-bg); color: var(--accent-red); }
+.impact-icon.orange { background: var(--accent-orange-bg); color: var(--accent-orange); }
+.impact-icon.blue { background: rgba(88,166,255,0.1); color: var(--accent-blue); }
+.impact-icon.purple { background: rgba(163,113,247,0.1); color: var(--accent-purple); }
+.impact-text h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+.impact-text p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+.hash {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    word-break: break-all;
+}
+.footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 1.5rem 2rem;
+    margin-top: 2rem;
+}
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.footer-text {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+.footer-meta {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-align: right;
+}
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content { flex-direction: column; text-align: center; }
+    .header h1 { font-size: 1.3rem; }
+    .header-meta { justify-content: center; }
+    .priority-grid { grid-template-columns: 1fr; }
+    .mitre-grid { grid-template-columns: 1fr; }
+    .impact-grid { grid-template-columns: 1fr; }
+    .nav { padding: 0 0.5rem; }
+    .main { padding: 1rem; }
+    .critical-alert { flex-direction: column; }
+    .footer-content { flex-direction: column; text-align: center; }
+    .footer-meta { text-align: center; }
+    .domain-infra { grid-template-columns: 1fr; }
+}
+.subsection-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 1.75rem 0 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.domain-infra {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+h3.query-group {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-content">
+        <div class="logo"><img src="data:image/png;base64,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" alt="Logo"></div>
+        <div>
+            <h1>Void Manticore / Handala Hack</h1>
+            <div class="subtitle">Microsoft Sentinel Threat Hunt Runbook</div>
+            <div class="header-meta">
+                <span><strong>Version</strong> 3.0</span>
+                <span><strong>Date</strong> March 16, 2026</span>
+                <span><strong>Platform</strong> Microsoft Sentinel / MDE</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CRITICAL ALERT -->
+<div class="critical-alert">
+    <div class="icon-box">!</div>
+    <div>
+        <h2>Critical Threat Advisory</h2>
+        <p>Iranian MOIS-directed Void Manticore (Storm-0842 / Banished Kitten) executed Operation Epic Fury against Stryker Corporation on March 11, 2026. 200,000+ devices wiped across 79 countries using Microsoft Intune Graph API &mdash; no malware needed. 11 wipers in arsenal, 3 identified operators, 7 CVEs exploited.</p>
+    </div>
+</div>
+
+<!-- NAV -->
+<div class="nav-container">
+    <nav class="nav">
+        <a href="#overview" class="active">Overview</a>
+        <a href="#osint">OSINT Findings</a>
+        <a href="#iocs">Indicators of Compromise</a>
+        <a href="#queries">KQL Detection Queries</a>
+        <a href="#priority">Priority Reference</a>
+        <a href="#references">References</a>
+    </nav>
+</div>
+
+<div class="main">
+
+<!-- SECTION 01: OVERVIEW -->
+<div class="section" id="overview">
+    <div class="section-header">
+        <span class="section-number">01</span>
+        <h2>Attack Overview</h2>
+    </div>
+
+    <div class="card">
+        <h3>What is Void Manticore?</h3>
+        <p>Void Manticore (Storm-0842 / Red Sandstorm / Banished Kitten / COBALT MYSTIQUE) is an Iranian state-sponsored destructive threat actor operated by the Ministry of Intelligence and Security (MOIS), Internal Security Deputy, Counter-Terrorism Division. Active since 2008, the group operates under multiple hacktivist personas including Handala Hack (Israel/Global), Karma (Israel), and Homeland Justice (Albania). The group works in a &ldquo;one-two punch&rdquo; model with Scarred Manticore (Storm-0861) which provides initial access after 12+ months of espionage, before handing off to Void Manticore for destruction. On March 11, 2026, Handala executed Operation Epic Fury against Stryker Corporation, weaponizing Microsoft Intune&rsquo;s Remote Wipe feature to destroy approximately 200,000 devices across 79 countries without deploying any malware.</p>
+    </div>
+
+    <div class="card">
+        <h3>Attack Chain</h3>
+        <div class="attack-chain">
+            <div class="attack-step">
+                <div class="step-indicator"><div class="step-number">1</div><div class="step-line"></div></div>
+                <div class="step-content">
+                    <div class="step-action">Initial Access</div>
+                    <div class="step-description">AiTM phishing for Entra ID session tokens / VPN brute-force from Starlink and commercial VPN ranges</div>
+                </div>
+            </div>
+            <div class="attack-step">
+                <div class="step-indicator"><div class="step-number">2</div><div class="step-line"></div></div>
+                <div class="step-content">
+                    <div class="step-action">Privilege Escalation</div>
+                    <div class="step-description">Session hijack to Global Administrator or Intune Administrator role in Entra ID</div>
+                </div>
+            </div>
+            <div class="attack-step">
+                <div class="step-indicator"><div class="step-number">3</div><div class="step-line"></div></div>
+                <div class="step-content">
+                    <div class="step-action">Credential Access</div>
+                    <div class="step-description">LSASS memory dump via <code class="inline">rundll32.exe + comsvcs.dll</code>; SAM registry hive extraction</div>
+                </div>
+            </div>
+            <div class="attack-step">
+                <div class="step-indicator"><div class="step-number">4</div><div class="step-line"></div></div>
+                <div class="step-content">
+                    <div class="step-action">Discovery</div>
+                    <div class="step-description">ADRecon (<code class="inline">dra.ps1</code>) for Active Directory enumeration; bulk LDAP queries</div>
+                </div>
+            </div>
+            <div class="attack-step">
+                <div class="step-indicator"><div class="step-number">5</div><div class="step-line"></div></div>
+                <div class="step-content">
+                    <div class="step-action">Lateral Movement</div>
+                    <div class="step-description">RDP from default-named VPS machines (<code class="inline">VULTR-GUEST</code>, <code class="inline">DESKTOP-*</code>); NetBird mesh VPN deployment</div>
+                </div>
+            </div>
+            <div class="attack-step">
+                <div class="step-indicator"><div class="step-number">6</div><div class="step-line"></div></div>
+                <div class="step-content">
+                    <div class="step-action">Defense Evasion</div>
+                    <div class="step-description">Defender tampering via registry; BYOVD with <code class="inline">ListOpenedFileDrv_32.sys</code> (0/72 VT detection)</div>
+                </div>
+            </div>
+            <div class="attack-step">
+                <div class="step-indicator"><div class="step-number">7</div><div class="step-line"></div></div>
+                <div class="step-content">
+                    <div class="step-action">Exfiltration</div>
+                    <div class="step-description">~50TB via Telegram Bot API (<code class="inline">sendDocument</code>), Storj (<code class="inline">handala-bucket</code>), AWS S3, Vultr Object Storage</div>
+                </div>
+            </div>
+            <div class="attack-step">
+                <div class="step-indicator"><div class="step-number">8</div></div>
+                <div class="step-content">
+                    <div class="step-action">Destruction</div>
+                    <div class="step-description">Primary: Mass Intune Remote Wipe via Graph API <code class="inline">POST /wipe</code> (NO RATE LIMIT); Secondary: GPO-distributed Handala Wiper (MBR), PowerShell Wiper (AI-assisted), VeraCrypt disk encryption</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Impact Assessment</h3>
+        <div class="impact-grid">
+            <div class="impact-item">
+                <div class="impact-icon red">&#9888;</div>
+                <div class="impact-text"><h4>200K+ Devices Wiped</h4><p>Intune mass wipe across 79 countries, no EDR detection</p></div>
+            </div>
+            <div class="impact-item">
+                <div class="impact-icon orange">&#8682;</div>
+                <div class="impact-text"><h4>50TB Data Exfiltration</h4><p>Claimed via Telegram, Storj, S3 cloud channels</p></div>
+            </div>
+            <div class="impact-item">
+                <div class="impact-icon red">&#9762;</div>
+                <div class="impact-text"><h4>11 Wiper Families</h4><p>Including 5 NEW 2026 variants (PhantomBlade, MisleadingAxe, ZeroShred, WovenMist, GoneXML)</p></div>
+            </div>
+            <div class="impact-item">
+                <div class="impact-icon orange">&#9881;</div>
+                <div class="impact-text"><h4>7 CVEs Exploited</h4><p>Hikvision (4), Dahua (1), MS Office, MS Exchange</p></div>
+            </div>
+            <div class="impact-item">
+                <div class="impact-icon purple">&#128065;</div>
+                <div class="impact-text"><h4>OPSEC Collapse</h4><p>Direct Iranian IPs + Starlink post-Jan 2026 shutdown</p></div>
+            </div>
+            <div class="impact-item">
+                <div class="impact-icon blue">&#9889;</div>
+                <div class="impact-text"><h4>Graph API No Rate Limit</h4><p>Intune wipe API has no bulk operation limit unlike GUI</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>MITRE ATT&amp;CK Mapping</h3>
+        <div class="mitre-grid">
+            <div class="mitre-card"><div class="mitre-tactic">Initial Access</div><div class="mitre-technique">Valid Accounts: Cloud</div><div class="mitre-id">T1078.004</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Initial Access</div><div class="mitre-technique">Brute Force</div><div class="mitre-id">T1110</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Initial Access</div><div class="mitre-technique">Phishing (AiTM)</div><div class="mitre-id">T1566</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Execution</div><div class="mitre-technique">Software Deployment Tools (Intune)</div><div class="mitre-id">T1072</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Execution</div><div class="mitre-technique">PowerShell</div><div class="mitre-id">T1059.001</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Persistence</div><div class="mitre-technique">Group Policy Modification</div><div class="mitre-id">T1484.001</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Defense Evasion</div><div class="mitre-technique">Disable Security Tools</div><div class="mitre-id">T1562.001</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Credential Access</div><div class="mitre-technique">LSASS Dump</div><div class="mitre-id">T1003.001</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Discovery</div><div class="mitre-technique">Account Discovery</div><div class="mitre-id">T1087.002</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Lateral Movement</div><div class="mitre-technique">Remote Desktop Protocol</div><div class="mitre-id">T1021.001</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Command &amp; Control</div><div class="mitre-technique">Protocol Tunneling (NetBird)</div><div class="mitre-id">T1572</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Exfiltration</div><div class="mitre-technique">Web Service (Telegram)</div><div class="mitre-id">T1102.002</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Impact</div><div class="mitre-technique">Account Access Removal (Intune Wipe)</div><div class="mitre-id">T1531</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Impact</div><div class="mitre-technique">Data Destruction</div><div class="mitre-id">T1485</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Impact</div><div class="mitre-technique">Disk Structure Wipe</div><div class="mitre-id">T1561.002</div></div>
+            <div class="mitre-card"><div class="mitre-tactic">Impact</div><div class="mitre-technique">Data Encrypted for Impact</div><div class="mitre-id">T1486</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 02: OSINT -->
+<div class="section" id="osint">
+    <div class="section-header">
+        <span class="section-number">02</span>
+        <h2>OSINT Findings</h2>
+    </div>
+
+    <h3 class="subsection-title">Identified Operators</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Name</th><th>Role</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td style="color:var(--text-primary);font-weight:600;">Seyed Yahya Hosseini Panjaki</td>
+                    <td>MOIS Deputy Dir, Domestic Security (Supervisor)</td>
+                </tr>
+                <tr>
+                    <td style="color:var(--text-primary);font-weight:600;">Morteza Aftabifar</td>
+                    <td>MOIS Handler</td>
+                </tr>
+                <tr>
+                    <td style="color:var(--text-primary);font-weight:600;">Ali Bermoudeh</td>
+                    <td>Operator / Channel Admin</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">Domain Infrastructure</h3>
+    <div class="domain-infra">
+        <div class="card">
+            <h3 style="color:var(--accent-cyan);">handala.to</h3>
+            <table>
+                <tr><td style="color:var(--text-muted);width:60px;">A</td><td><code class="inline">103.224.212.206</code> | Above.com (AS133618) | San Diego, US</td></tr>
+                <tr><td style="color:var(--text-muted);">SSL</td><td>CN=yekis.xyz (shared, 80+ domains) | Apache</td></tr>
+                <tr><td style="color:var(--text-muted);">Status</td><td><span class="badge badge-high">ACTIVE</span> &mdash; domain parking/redirect</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3 style="color:var(--accent-cyan);">handala-hack.to</h3>
+            <table>
+                <tr><td style="color:var(--text-muted);width:60px;">A</td><td><code class="inline">185.178.208.137</code> | DDoS-Guard (AS57724) | Rostov, Russia | <span class="badge badge-critical">BULLETPROOF</span></td></tr>
+                <tr><td style="color:var(--text-muted);">SSL</td><td>CN=handala-hack.to (dedicated) | WordPress | HSTS | QUIC/H3</td></tr>
+                <tr><td style="color:var(--text-muted);">Status</td><td><span class="badge badge-critical">ACTIVE</span> &mdash; operational blog, wp-json exposed</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <h3 class="subsection-title">C2 Infrastructure</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>IP</th><th>Location</th><th>Provider</th><th>Role</th></tr></thead>
+            <tbody>
+                <tr><td><code class="inline">107.189.19.52</code></td><td>Zaandam, NL</td><td>Cloudzy (AS14956)</td><td>C2 payload retrieval</td></tr>
+                <tr><td><code class="inline">82.25.35.25</code></td><td>London, UK</td><td>Zenlayer (AS21859)</td><td>Operator VPS</td></tr>
+                <tr><td><code class="inline">31.57.35.223</code></td><td>London, UK</td><td>Zenlayer (AS21859)</td><td>Operator VPS</td></tr>
+                <tr><td><code class="inline">146.185.219.235</code></td><td>Petah Tikva, IL</td><td>G-Core Labs (AS202422)</td><td>Israeli VPN egress</td></tr>
+                <tr><td><code class="inline">64.176.169.22</code></td><td>Rosh Ha'Ayin, IL</td><td>Vultr (AS20473)</td><td>SSH C2 (VULTR-GUEST)</td></tr>
+                <tr><td><code class="inline">31.192.237.207</code></td><td>&mdash;</td><td>&mdash;</td><td>NEW C2 (port 2515)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">OPSEC Timeline</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Period</th><th>Method</th><th>Significance</th></tr></thead>
+            <tbody>
+                <tr><td>2024&ndash;2025</td><td>Commercial VPN (<code class="inline">169.150.227.x</code>, <code class="inline">149.88.26.x</code>)</td><td>Standard masking</td></tr>
+                <tr><td>Jan 2026</td><td>Starlink (<code class="inline">188.92.255.x</code>, <code class="inline">209.198.131.x</code>)</td><td><span class="badge badge-high">Iran internet shutdown</span></td></tr>
+                <tr><td>Feb&ndash;Mar 2026</td><td>Direct Iranian IPs</td><td><span class="badge badge-critical">OPSEC COLLAPSE</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">Communications</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Platform</th><th>Handle</th><th>Status</th></tr></thead>
+            <tbody>
+                <tr><td>Telegram</td><td><code class="inline">@handala_hack8</code></td><td><span class="badge badge-critical">ACTIVE (current)</span></td></tr>
+                <tr><td>Telegram</td><td><code class="inline">@handala_hack</code></td><td>20+ suspensions</td></tr>
+                <tr><td>Telegram</td><td><code class="inline">t.me/Handala_Leak</code></td><td>Data leak</td></tr>
+                <tr><td>X / Twitter</td><td><code class="inline">@Handala_Hack</code></td><td><span class="badge badge-high">ACTIVE</span></td></tr>
+                <tr><td>X / Twitter</td><td><code class="inline">@HANDALA_RSS</code></td><td><span class="badge badge-high">ACTIVE</span></td></tr>
+                <tr><td>Forums</td><td>BreachForums (~140)</td><td>Active</td></tr>
+                <tr><td>Tor</td><td><span class="hash">vmjfieomxhnfjba57sd6jjws2ogvowjgxhhfglsikqvvrnrajbmpxqqd.onion</span></td><td>Leak site</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    
+        <h3 class="subsection-title">Threat Actor Map (Interactive)</h3>
+        <div class="card" style="padding:0;overflow:hidden;">
+            <iframe srcdoc="&lt;!--[if IE]&gt;&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=5,IE=9&quot; &gt;&lt;![endif]--&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;void_manticore_threat_map&lt;/title&gt;
+&lt;meta charset=&quot;utf-8&quot;/&gt;
+&lt;/head&gt;
+&lt;body&gt;&lt;div class=&quot;mxgraph&quot; style=&quot;max-width:100%;border:1px solid transparent;&quot; data-mxgraph=&quot;{&amp;quot;highlight&amp;quot;:&amp;quot;#0000ff&amp;quot;,&amp;quot;nav&amp;quot;:true,&amp;quot;resize&amp;quot;:true,&amp;quot;dark-mode&amp;quot;:&amp;quot;auto&amp;quot;,&amp;quot;toolbar&amp;quot;:&amp;quot;zoom layers tags lightbox&amp;quot;,&amp;quot;edit&amp;quot;:&amp;quot;_blank&amp;quot;,&amp;quot;xml&amp;quot;:&amp;quot;&amp;lt;mxfile host=\&amp;quot;app.diagrams.net\&amp;quot; agent=\&amp;quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36\&amp;quot; version=\&amp;quot;29.6.3\&amp;quot;&amp;gt;\n  &amp;lt;diagram name=\&amp;quot;Threat Actor Map\&amp;quot; id=\&amp;quot;void-manticore-map\&amp;quot;&amp;gt;\n    &amp;lt;mxGraphModel dx=\&amp;quot;2468\&amp;quot; dy=\&amp;quot;1528\&amp;quot; grid=\&amp;quot;1\&amp;quot; gridSize=\&amp;quot;10\&amp;quot; guides=\&amp;quot;1\&amp;quot; tooltips=\&amp;quot;1\&amp;quot; connect=\&amp;quot;1\&amp;quot; arrows=\&amp;quot;1\&amp;quot; fold=\&amp;quot;1\&amp;quot; page=\&amp;quot;0\&amp;quot; pageScale=\&amp;quot;1\&amp;quot; pageWidth=\&amp;quot;4400\&amp;quot; pageHeight=\&amp;quot;3200\&amp;quot; math=\&amp;quot;0\&amp;quot; shadow=\&amp;quot;0\&amp;quot;&amp;gt;\n      &amp;lt;root&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;0\&amp;quot; /&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;1\&amp;quot; parent=\&amp;quot;0\&amp;quot; /&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;title\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;text;html=1;align=center;verticalAlign=middle;strokeColor=none;fillColor=none;fontSize=16;fontColor=#e94560;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;VOID MANTICORE / HANDALA HACK — COMPLETE THREAT INTELLIGENCE MAP&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Operation Epic Fury | Stryker Case | 2026-03-16 | CRIMSON7 Security Operations&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Sources: Check Point, Unit 42, Splunk, Trellix, OP Innovate, Deepwatch, Critical Start, Iran International, FBI, OFAC&amp;amp;lt;/i&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;60\&amp;quot; width=\&amp;quot;920\&amp;quot; x=\&amp;quot;350\&amp;quot; y=\&amp;quot;-120\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;mois\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=3;fontSize=12;arcSize=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;IRAN — MOIS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Ministry of Intelligence &amp;amp;amp; Security&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Internal Security Deputy&amp;amp;lt;br&amp;amp;gt;Counter-Terrorism Division&amp;amp;lt;/i&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;80\&amp;quot; width=\&amp;quot;300\&amp;quot; x=\&amp;quot;640\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;panjaki\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#4a0000;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=3;fontSize=9;verticalAlign=top;arcSize=8;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;SEYED YAHYA HOSSEINI PANJAKI&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Deputy Dir, Domestic Security&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Alias: Seyed Yahya Hamidi&amp;amp;lt;br&amp;amp;gt;DOB: 1975-01-23 | Karaj, Iran&amp;amp;lt;br&amp;amp;gt;Passport: T56344199&amp;amp;lt;hr&amp;amp;gt;FBI Most Wanted | OFAC SDN&amp;amp;lt;br&amp;amp;gt;EU / UK / AU Sanctioned&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;&amp;amp;lt;b&amp;amp;gt;☠ KILLED March 2, 2026&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;9 days before Stryker attack&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;160\&amp;quot; width=\&amp;quot;260\&amp;quot; x=\&amp;quot;600\&amp;quot; y=\&amp;quot;120\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;aftabifar\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=2;fontSize=9;verticalAlign=top;arcSize=8;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;MORTEZA AFTABIFAR&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;MOIS Handler&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;NatID: 1680072404&amp;amp;lt;br&amp;amp;gt;Handles Handala operators&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Exposed Aug 2025 (Iran Intl)&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;90\&amp;quot; width=\&amp;quot;210\&amp;quot; x=\&amp;quot;500\&amp;quot; y=\&amp;quot;330\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;bermoudeh\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=2;fontSize=9;verticalAlign=top;arcSize=8;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;ALI BERMOUDEH&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Operator / Channel Admin&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;NatID: 1362398276 | Age 27 | Tabriz&amp;amp;lt;br&amp;amp;gt;FATA cyber police since age 16&amp;amp;lt;br&amp;amp;gt;Password: &amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;1377629&amp;amp;lt;/font&amp;amp;gt; (birthday — all accounts)&amp;amp;lt;br&amp;amp;gt;Father: Mousa Bermoudeh (IRGC Basij)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Exposed Aug 2025 (Nariman Gharib)&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;120\&amp;quot; width=\&amp;quot;250\&amp;quot; x=\&amp;quot;480\&amp;quot; y=\&amp;quot;460\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;operators\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#555555;strokeWidth=1;fontSize=8;verticalAlign=top;arcSize=8;align=left;spacingLeft=8;dashed=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;~8-10 UNNAMED OPERATORS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;12 machine hostnames identified&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;DESKTOP-FK1NPHF, WIN-P1B7V100IIS,&amp;amp;lt;br&amp;amp;gt;VULTR-GUEST, DESKTOP-R1FMLQP, etc.&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;Default Win10/11 names = poor OPSEC&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;85\&amp;quot; width=\&amp;quot;250\&amp;quot; x=\&amp;quot;480\&amp;quot; y=\&amp;quot;610\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;vie6c\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#555555;strokeWidth=1;fontSize=8;verticalAlign=top;arcSize=8;align=left;spacingLeft=8;dashed=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;vie6c&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;WordPress admin&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;handala-hack.to/author/vie6c/&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;Identity UNKNOWN&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;70\&amp;quot; width=\&amp;quot;170\&amp;quot; x=\&amp;quot;760\&amp;quot; y=\&amp;quot;460\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;e1\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;mois\&amp;quot; style=\&amp;quot;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#e94560;strokeWidth=2;\&amp;quot; target=\&amp;quot;panjaki\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;e1l\&amp;quot; connectable=\&amp;quot;0\&amp;quot; parent=\&amp;quot;e1\&amp;quot; style=\&amp;quot;edgeLabel;html=1;fontSize=8;fontColor=#999999;\&amp;quot; value=\&amp;quot;directs\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;e2\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;panjaki\&amp;quot; style=\&amp;quot;exitX=0.3;exitY=1;entryX=0.5;entryY=0;strokeColor=#e94560;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;aftabifar\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;e2l\&amp;quot; connectable=\&amp;quot;0\&amp;quot; parent=\&amp;quot;e2\&amp;quot; style=\&amp;quot;edgeLabel;html=1;fontSize=8;fontColor=#999999;\&amp;quot; value=\&amp;quot;supervises\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;e3\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;aftabifar\&amp;quot; style=\&amp;quot;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#f0a500;strokeWidth=1;\&amp;quot; target=\&amp;quot;bermoudeh\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;e3l\&amp;quot; connectable=\&amp;quot;0\&amp;quot; parent=\&amp;quot;e3\&amp;quot; style=\&amp;quot;edgeLabel;html=1;fontSize=8;fontColor=#f0a500;\&amp;quot; value=\&amp;quot;handles\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;e3b\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;bermoudeh\&amp;quot; style=\&amp;quot;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;operators\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;scarred\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=2;fontSize=9;verticalAlign=top;arcSize=8;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;SCARRED MANTICORE&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Storm-0861&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;PHASE 1: ESPIONAGE (12+ mo)&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;• CVE-2019-0604 (SharePoint)&amp;amp;lt;br&amp;amp;gt;• Liontail / FoxShell backdoors&amp;amp;lt;br&amp;amp;gt;• Email exfiltration (3-20 GB)&amp;amp;lt;br&amp;amp;gt;• Domain Admin credential harvest&amp;amp;lt;br&amp;amp;gt;• Network topology mapping\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;150\&amp;quot; width=\&amp;quot;230\&amp;quot; x=\&amp;quot;80\&amp;quot; y=\&amp;quot;140\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;void\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;fontColor=#ffffff;strokeColor=#1a1a2e;strokeWidth=3;fontSize=9;verticalAlign=top;arcSize=8;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;VOID MANTICORE&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Storm-0842 | Red Sandstorm&amp;amp;lt;br&amp;amp;gt;BANISHED KITTEN | COBALT MYSTIQUE&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;PHASE 3: DESTRUCTION&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;• RDP lateral movement&amp;amp;lt;br&amp;amp;gt;• Wiper deployment (GPO/schtasks)&amp;amp;lt;br&amp;amp;gt;• Intune MDM mass wipe (Graph API)&amp;amp;lt;br&amp;amp;gt;• Data leak via hacktivist personas&amp;amp;lt;br&amp;amp;gt;• 11+ wiper families in arsenal\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;170\&amp;quot; width=\&amp;quot;260\&amp;quot; x=\&amp;quot;1020\&amp;quot; y=\&amp;quot;120\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;handoff\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;scarred\&amp;quot; style=\&amp;quot;edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.4;entryX=0;entryY=0.4;strokeColor=#e94560;strokeWidth=3;\&amp;quot; target=\&amp;quot;void\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;handoff_l\&amp;quot; connectable=\&amp;quot;0\&amp;quot; parent=\&amp;quot;handoff\&amp;quot; style=\&amp;quot;edgeLabel;html=1;align=center;fontSize=8;fontColor=#e94560;fillColor=#1a1a2e;rounded=1;spacingTop=2;spacingBottom=2;spacingLeft=4;spacingRight=4;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;HANDOFF&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Domain Admin creds&amp;amp;lt;br&amp;amp;gt;Network topology&amp;amp;lt;br&amp;amp;gt;Simultaneous access&amp;amp;lt;br&amp;amp;gt;Geopolitical trigger\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; x=\&amp;quot;-0.1\&amp;quot; as=\&amp;quot;geometry\&amp;quot;&amp;gt;\n            &amp;lt;mxPoint x=\&amp;quot;145\&amp;quot; y=\&amp;quot;15\&amp;quot; as=\&amp;quot;offset\&amp;quot; /&amp;gt;\n          &amp;lt;/mxGeometry&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ep_s\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;panjaki\&amp;quot; style=\&amp;quot;exitX=0;exitY=0.2;entryX=0.5;entryY=0;strokeColor=#e94560;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;scarred\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ep_v\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;panjaki\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.2;entryX=0.5;entryY=0;strokeColor=#e94560;strokeWidth=2;\&amp;quot; target=\&amp;quot;void\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;handala_p\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;fontColor=#ffffff;strokeColor=#ffffff;strokeWidth=2;fontSize=9;arcSize=12;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;HANDALA HACK&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;@Handala_Hack | @HANDALA_RSS&amp;amp;lt;br&amp;amp;gt;@handala_hack8 (current TG)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Israel → Global (Dec 2023–now)&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Op Epic Fury | Op Blackout | Op Octopus | Op Roaring Lion\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;85\&amp;quot; width=\&amp;quot;260\&amp;quot; x=\&amp;quot;940\&amp;quot; y=\&amp;quot;360\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;karma_p\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;fontColor=#ffffff;strokeColor=#ffffff;strokeWidth=1;fontSize=9;arcSize=12;opacity=70;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;KARMA&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Karmabelow80&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Israel (2023-2024)&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;40+ entities, BiBi\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;65\&amp;quot; width=\&amp;quot;140\&amp;quot; x=\&amp;quot;1220\&amp;quot; y=\&amp;quot;360\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;homeland_p\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;fontColor=#ffffff;strokeColor=#ffffff;strokeWidth=1;fontSize=9;arcSize=12;opacity=70;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;HOMELAND JUSTICE&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Albania (2022-2024)&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;e-Albania, Parliament\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;55\&amp;quot; width=\&amp;quot;150\&amp;quot; x=\&amp;quot;1380\&amp;quot; y=\&amp;quot;360\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;darkbit_p\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#ffffff;strokeWidth=1;fontSize=8;arcSize=12;opacity=50;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;DARKBIT&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Technion 2023&amp;amp;lt;/i&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;40\&amp;quot; width=\&amp;quot;100\&amp;quot; x=\&amp;quot;1380\&amp;quot; y=\&amp;quot;425\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;hatef_p\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;fontColor=#ffffff;strokeColor=#ffffff;strokeWidth=1;fontSize=8;arcSize=12;opacity=50;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;HATEF&amp;amp;lt;/b&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;30\&amp;quot; width=\&amp;quot;60\&amp;quot; x=\&amp;quot;1490\&amp;quot; y=\&amp;quot;425\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;hamsa_p\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;fontColor=#ffffff;strokeColor=#ffffff;strokeWidth=1;fontSize=8;arcSize=12;opacity=50;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;HAMSA&amp;amp;lt;/b&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;30\&amp;quot; width=\&amp;quot;60\&amp;quot; x=\&amp;quot;1490\&amp;quot; y=\&amp;quot;390\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ev_h\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;void\&amp;quot; style=\&amp;quot;exitX=0.3;exitY=1;entryX=0.5;entryY=0;strokeColor=#ffffff;strokeWidth=2;\&amp;quot; target=\&amp;quot;handala_p\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ev_k\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;void\&amp;quot; style=\&amp;quot;exitX=0.6;exitY=1;entryX=0.5;entryY=0;strokeColor=#ffffff;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;karma_p\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ev_hl\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;void\&amp;quot; style=\&amp;quot;exitX=0.85;exitY=1;entryX=0.5;entryY=0;strokeColor=#ffffff;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;homeland_p\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eb_h\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;bermoudeh\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.3;entryX=0;entryY=0.5;strokeColor=#f0a500;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;handala_p\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eb_hl\&amp;quot; connectable=\&amp;quot;0\&amp;quot; parent=\&amp;quot;eb_h\&amp;quot; style=\&amp;quot;edgeLabel;html=1;fontSize=7;fontColor=#f0a500;\&amp;quot; value=\&amp;quot;channel admin\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ev6\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;vie6c\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.8;strokeColor=#555555;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;handala_p\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ev6l\&amp;quot; connectable=\&amp;quot;0\&amp;quot; parent=\&amp;quot;ev6\&amp;quot; style=\&amp;quot;edgeLabel;html=1;fontSize=7;fontColor=#555555;\&amp;quot; value=\&amp;quot;WP admin\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;al_h\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;text;html=1;align=center;fillColor=none;strokeColor=none;fontSize=11;fontColor=#16c79a;fontStyle=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;ALLIED THREAT ECOSYSTEM&amp;amp;lt;/b&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;20\&amp;quot; width=\&amp;quot;200\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;120\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;muddy\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=1;fontSize=8;arcSize=12;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;MuddyWater (Seedworm)&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;MOIS Espionage&amp;amp;lt;/i&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Dindoor, Fakeset, DinDoor\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;55\&amp;quot; width=\&amp;quot;180\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;150\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;qilin\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=1;fontSize=8;arcSize=12;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;Qilin RaaS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Ransomware — IL hospitals&amp;amp;lt;/i&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;40\&amp;quot; width=\&amp;quot;180\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;220\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;cir\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=1;fontSize=8;arcSize=12;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;Cyber Islamic Resistance&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;DDoS + Defacement umbrella&amp;amp;lt;/i&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;40\&amp;quot; width=\&amp;quot;180\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;275\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;fad\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=1;fontSize=8;arcSize=12;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;FAD Team (Fatimiyoun)&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Wiper + SCADA/PLC&amp;amp;lt;/i&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;40\&amp;quot; width=\&amp;quot;180\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;330\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;dark\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=1;fontSize=8;arcSize=12;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;Dark Storm Team&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;DDoS + Ransomware&amp;amp;lt;/i&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;35\&amp;quot; width=\&amp;quot;180\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;385\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;aptir\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=1;fontSize=8;arcSize=12;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;APT Iran&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;i&amp;amp;gt;Hack-and-leak — Jordan CI&amp;amp;lt;/i&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;35\&amp;quot; width=\&amp;quot;180\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;435\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;em_v\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;muddy\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.15;strokeColor=#16c79a;strokeWidth=1;dashed=1;dashPattern=8 4;\&amp;quot; target=\&amp;quot;void\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eq_v\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;qilin\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#16c79a;strokeWidth=1;dashed=1;dashPattern=8 4;\&amp;quot; target=\&amp;quot;void\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ar_h\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;text;html=1;align=center;fillColor=none;strokeColor=none;fontSize=11;fontColor=#e94560;fontStyle=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;MALWARE ARSENAL&amp;amp;lt;/b&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;20\&amp;quot; width=\&amp;quot;180\&amp;quot; x=\&amp;quot;1620\&amp;quot; y=\&amp;quot;50\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;wipers\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#4a0000;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=2;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;CUSTOM WIPERS (11)&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Handala Wiper&amp;amp;lt;/font&amp;amp;gt; — MBR + 4KB overwrite (Delphi)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;PowerShell Wiper&amp;amp;lt;/font&amp;amp;gt; — AI-assisted (2026)&amp;amp;lt;br&amp;amp;gt;BiBi Wiper v2 — Win + Linux (.bb ext)&amp;amp;lt;br&amp;amp;gt;JustMBR / Pinky / LowEraser — Partition&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;PhantomBlade&amp;amp;lt;/font&amp;amp;gt; — NEW 2026&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;MisleadingAxe&amp;amp;lt;/font&amp;amp;gt; — NEW 2026&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;ZeroShred / WovenMist / GoneXML&amp;amp;lt;/font&amp;amp;gt; — NEW\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;155\&amp;quot; width=\&amp;quot;260\&amp;quot; x=\&amp;quot;1600\&amp;quot; y=\&amp;quot;75\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;tools\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=2;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;TOOLS (LOLBins + Legitimate Abuse)&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Microsoft Intune&amp;amp;lt;/font&amp;amp;gt; — Graph API POST /wipe (NO RATE LIMIT)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;NetBird&amp;amp;lt;/font&amp;amp;gt; — Mesh VPN tunneling (WireGuard)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;VeraCrypt&amp;amp;lt;/font&amp;amp;gt; — Destructive disk encryption&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;ADRecon&amp;amp;lt;/font&amp;amp;gt; (dra.ps1) — AD enumeration&amp;amp;lt;br&amp;amp;gt;rundll32 + comsvcs.dll — LSASS dump&amp;amp;lt;br&amp;amp;gt;AutoIt3.exe + .a3x — Shellcode injection → regasm.exe&amp;amp;lt;br&amp;amp;gt;ListOpenedFileDrv_32.sys — BYOVD (&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;0/72 VT!&amp;amp;lt;/font&amp;amp;gt;)&amp;amp;lt;br&amp;amp;gt;OpenFileFinder.dll — Driver loader&amp;amp;lt;br&amp;amp;gt;wmic.exe — SAM/SYSTEM hive extraction&amp;amp;lt;br&amp;amp;gt;senvarservice-DC.exe — PyInstaller exfil tool\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;185\&amp;quot; width=\&amp;quot;280\&amp;quot; x=\&amp;quot;1600\&amp;quot; y=\&amp;quot;250\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;criminal\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=1;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;dashed=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;CRIMINAL ECOSYSTEM TOOLS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Rhadamanthys&amp;amp;lt;/font&amp;amp;gt; — Purchased infostealer&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Qilin RaaS&amp;amp;lt;/font&amp;amp;gt; — Hospital ransomware cover&amp;amp;lt;br&amp;amp;gt;RedAlert APK — Mobile surveillance app&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;DDoS-Guard, Cloudzy — Bulletproof hosting&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;85\&amp;quot; width=\&amp;quot;250\&amp;quot; x=\&amp;quot;1600\&amp;quot; y=\&amp;quot;455\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;cves\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=1;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;CVEs EXPLOITED (7)&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;CVE-2023-6895&amp;amp;lt;/font&amp;amp;gt; Hikvision RCE (9.8)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;CVE-2017-7921&amp;amp;lt;/font&amp;amp;gt; Hikvision Bypass (10.0)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;CVE-2021-33044&amp;amp;lt;/font&amp;amp;gt; Dahua Auth (9.8)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;CVE-2021-36260&amp;amp;lt;/font&amp;amp;gt; Hikvision CmdInj (9.8)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;CVE-2025-34067&amp;amp;lt;/font&amp;amp;gt; Hikvision ISMP NEW (9.8)&amp;amp;lt;br&amp;amp;gt;CVE-2017-11882 MS Office (7.8)&amp;amp;lt;br&amp;amp;gt;CVE-2020-0688 MS Exchange (8.8)\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;140\&amp;quot; width=\&amp;quot;250\&amp;quot; x=\&amp;quot;1600\&amp;quot; y=\&amp;quot;560\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ev_w\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;void\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.15;entryX=0;entryY=0.3;strokeColor=#e94560;strokeWidth=2;\&amp;quot; target=\&amp;quot;wipers\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ev_t\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;void\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.6;entryX=0;entryY=0.3;strokeColor=#f0a500;strokeWidth=1;\&amp;quot; target=\&amp;quot;tools\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;inf_h\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;text;html=1;align=center;fillColor=none;strokeColor=none;fontSize=12;fontColor=#f0a500;fontStyle=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;INFRASTRUCTURE&amp;amp;lt;/b&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;20\&amp;quot; width=\&amp;quot;150\&amp;quot; x=\&amp;quot;430\&amp;quot; y=\&amp;quot;730\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;c2\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=2;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;C2 / VPS Servers&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;107.189.19.52 — &amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Cloudzy, NL&amp;amp;lt;/font&amp;amp;gt; (abuse-flagged)&amp;amp;lt;br&amp;amp;gt;82.25.35.25 — &amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Zenlayer, UK&amp;amp;lt;/font&amp;amp;gt; (AS21859)&amp;amp;lt;br&amp;amp;gt;31.57.35.223 — &amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Zenlayer, UK&amp;amp;lt;/font&amp;amp;gt; (AS21859)&amp;amp;lt;br&amp;amp;gt;31.192.237.207:2515 — C2 endpoint&amp;amp;lt;br&amp;amp;gt;64.176.169.22 — &amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Vultr, Israel&amp;amp;lt;/font&amp;amp;gt; (VULTR-GUEST)&amp;amp;lt;br&amp;amp;gt;64.176.172.x (4 IPs) — Vultr, Israel&amp;amp;lt;br&amp;amp;gt;146.185.219.235 — &amp;amp;lt;font color=&amp;amp;quot;#16c79a&amp;amp;quot;&amp;amp;gt;G-Core, Israel&amp;amp;lt;/font&amp;amp;gt; (il.zeropointer.net)\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;150\&amp;quot; width=\&amp;quot;270\&amp;quot; x=\&amp;quot;80\&amp;quot; y=\&amp;quot;760\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;opsec\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=2;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;VPN / OPSEC TIMELINE&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#16c79a&amp;amp;quot;&amp;amp;gt;2024-2025:&amp;amp;lt;/font&amp;amp;gt; Commercial VPN&amp;amp;lt;br&amp;amp;gt;  169.150.227.x | 149.88.26.x&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;JAN 2026 (Iran internet shutdown):&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;  188.92.255.x — &amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Starlink satellite&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;  209.198.131.x — &amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Starlink satellite&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;FEB-MAR 2026 (OPSEC COLLAPSE):&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;  Direct Iranian IPs observed&amp;amp;lt;br&amp;amp;gt;  Iran internet at 1-4% (Feb 28)&amp;amp;lt;br&amp;amp;gt;  Bangkok airport blunder (Nov 25)&amp;amp;lt;br&amp;amp;gt;  NetBird downloaded via RDP in clear\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;200\&amp;quot; width=\&amp;quot;240\&amp;quot; x=\&amp;quot;370\&amp;quot; y=\&amp;quot;760\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;leaks\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=2;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;LEAK SITES&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#16c79a&amp;amp;quot;&amp;amp;gt;handala.to&amp;amp;lt;/font&amp;amp;gt; → 103.224.212.206&amp;amp;lt;br&amp;amp;gt;  Above.com parking | Apache | shared cert (80+)&amp;amp;lt;br&amp;amp;gt;  SSL: CN=yekis.xyz | Registrant: &amp;amp;quot;Roxie Collins&amp;amp;quot;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;handala-hack.to&amp;amp;lt;/font&amp;amp;gt; → 185.178.208.137&amp;amp;lt;br&amp;amp;gt;  &amp;amp;lt;b&amp;amp;gt;DDoS-Guard (Russia) — BULLETPROOF&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;  WordPress (wp-json exposed) | admin: vie6c&amp;amp;lt;br&amp;amp;gt;  HSTS | QUIC/H3 | Dedicated SSL cert&amp;amp;lt;br&amp;amp;gt;  &amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;This is the OPERATIONAL site&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;Tor: vmjfie...mpxqqd.onion&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;195\&amp;quot; width=\&amp;quot;260\&amp;quot; x=\&amp;quot;630\&amp;quot; y=\&amp;quot;760\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;exfil\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=2;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;EXFILTRATION CHANNELS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Telegram Bot API&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;  1 disposable bot/campaign (sendDocument)&amp;amp;lt;br&amp;amp;gt;  Token embedded in senvarservice-DC.exe&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Storj&amp;amp;lt;/font&amp;amp;gt; — bucket: handala-bucket&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;AWS S3&amp;amp;lt;/font&amp;amp;gt; — via botocore in PyInstaller&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Vultr Object Storage&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Mega&amp;amp;lt;/font&amp;amp;gt; — public leak distribution&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Cloudflare + Azure App Svc&amp;amp;lt;/font&amp;amp;gt; — C2 resilience\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;175\&amp;quot; width=\&amp;quot;230\&amp;quot; x=\&amp;quot;910\&amp;quot; y=\&amp;quot;760\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;comms\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=2;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;COMMUNICATIONS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;b&amp;amp;gt;Telegram:&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;@handala_hack8 (&amp;amp;lt;font color=&amp;amp;quot;#16c79a&amp;amp;quot;&amp;amp;gt;current active&amp;amp;lt;/font&amp;amp;gt;)&amp;amp;lt;br&amp;amp;gt;@handala_hack (20+ bans)&amp;amp;lt;br&amp;amp;gt;@handala_hack26 (backup)&amp;amp;lt;br&amp;amp;gt;t.me/Handala_Leak | t.me/HANDALA_HPR2&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;b&amp;amp;gt;X/Twitter:&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;@Handala_Hack | @HANDALA_RSS&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;b&amp;amp;gt;Forums:&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;BreachForums (~140) | Ramp | Exploit&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;b&amp;amp;gt;Secure:&amp;amp;lt;/b&amp;amp;gt; Tox | ProtonMail\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;210\&amp;quot; width=\&amp;quot;190\&amp;quot; x=\&amp;quot;1160\&amp;quot; y=\&amp;quot;760\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eh_c2\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;handala_p\&amp;quot; style=\&amp;quot;exitX=0.1;exitY=1;entryX=0.5;entryY=0;strokeColor=#f0a500;strokeWidth=1;\&amp;quot; target=\&amp;quot;c2\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eh_ops\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;handala_p\&amp;quot; style=\&amp;quot;exitX=0.3;exitY=1;entryX=0.5;entryY=0;strokeColor=#f0a500;strokeWidth=1;\&amp;quot; target=\&amp;quot;opsec\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eh_lk\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;handala_p\&amp;quot; style=\&amp;quot;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#f0a500;strokeWidth=1;\&amp;quot; target=\&amp;quot;leaks\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eh_ex\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;handala_p\&amp;quot; style=\&amp;quot;exitX=0.7;exitY=1;entryX=0.5;entryY=0;strokeColor=#f0a500;strokeWidth=1;\&amp;quot; target=\&amp;quot;exfil\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eh_cm\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;handala_p\&amp;quot; style=\&amp;quot;exitX=0.9;exitY=1;entryX=0.5;entryY=0;strokeColor=#16c79a;strokeWidth=1;\&amp;quot; target=\&amp;quot;comms\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eop_c2\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;operators\&amp;quot; style=\&amp;quot;exitX=0;exitY=0.5;entryX=0.5;entryY=0;strokeColor=#555555;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;c2\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;eop_c2l\&amp;quot; connectable=\&amp;quot;0\&amp;quot; parent=\&amp;quot;eop_c2\&amp;quot; style=\&amp;quot;edgeLabel;html=1;fontSize=7;fontColor=#555555;\&amp;quot; value=\&amp;quot;operate from\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;kc_h\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;text;html=1;align=center;fillColor=none;strokeColor=none;fontSize=12;fontColor=#e94560;fontStyle=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;STRYKER KILL CHAIN — Operation Epic Fury (March 11, 2026) — 200K devices wiped, 79 countries, 50TB claimed&amp;amp;lt;/b&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;25\&amp;quot; width=\&amp;quot;750\&amp;quot; x=\&amp;quot;200\&amp;quot; y=\&amp;quot;1010\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;k1\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=2;fontSize=8;arcSize=10;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;1. ACCESS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;AiTM Phishing&amp;amp;lt;br&amp;amp;gt;VPN Brute-Force&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;T1566 T1110&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;65\&amp;quot; width=\&amp;quot;120\&amp;quot; x=\&amp;quot;80\&amp;quot; y=\&amp;quot;1050\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;k2\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=2;fontSize=8;arcSize=10;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;2. PRIV ESC&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Global Admin&amp;amp;lt;br&amp;amp;gt;Intune Admin&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;T1078.004&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;65\&amp;quot; width=\&amp;quot;110\&amp;quot; x=\&amp;quot;230\&amp;quot; y=\&amp;quot;1050\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;k3\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=2;fontSize=8;arcSize=10;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;3. CREDS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;LSASS dump&amp;amp;lt;br&amp;amp;gt;ADRecon&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;T1003.001&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;65\&amp;quot; width=\&amp;quot;100\&amp;quot; x=\&amp;quot;370\&amp;quot; y=\&amp;quot;1050\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;k4\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=2;fontSize=8;arcSize=10;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;4. LATERAL&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;RDP (default hosts)&amp;amp;lt;br&amp;amp;gt;NetBird mesh&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;T1021 T1572&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;65\&amp;quot; width=\&amp;quot;120\&amp;quot; x=\&amp;quot;500\&amp;quot; y=\&amp;quot;1050\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;k5\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=2;fontSize=8;arcSize=10;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;5. EXFIL&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;~50TB claimed&amp;amp;lt;br&amp;amp;gt;Telegram+Storj+S3&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;T1041 T1102&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;65\&amp;quot; width=\&amp;quot;120\&amp;quot; x=\&amp;quot;650\&amp;quot; y=\&amp;quot;1050\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;k6\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#4a0000;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=3;fontSize=8;arcSize=10;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;6. DESTRUCTION&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;&amp;amp;lt;b&amp;amp;gt;INTUNE MASS WIPE&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;/font&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;Graph API /wipe&amp;amp;lt;br&amp;amp;gt;NO RATE LIMIT&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;T1531 T1072&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;85\&amp;quot; width=\&amp;quot;150\&amp;quot; x=\&amp;quot;800\&amp;quot; y=\&amp;quot;1040\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;k6b\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#4a0000;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=1;fontSize=8;arcSize=10;dashed=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;6b. WIPER&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;br&amp;amp;gt;GPO → handala.exe&amp;amp;lt;br&amp;amp;gt;PS Wiper | VeraCrypt&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;T1485 T1486&amp;amp;lt;/font&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;65\&amp;quot; width=\&amp;quot;130\&amp;quot; x=\&amp;quot;980\&amp;quot; y=\&amp;quot;1050\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ka1\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;k1\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#16c79a;strokeWidth=2;\&amp;quot; target=\&amp;quot;k2\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ka2\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;k2\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#16c79a;strokeWidth=2;\&amp;quot; target=\&amp;quot;k3\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ka3\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;k3\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#16c79a;strokeWidth=2;\&amp;quot; target=\&amp;quot;k4\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ka4\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;k4\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#f0a500;strokeWidth=2;\&amp;quot; target=\&amp;quot;k5\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ka5\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;k5\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#e94560;strokeWidth=3;\&amp;quot; target=\&amp;quot;k6\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;ka6\&amp;quot; edge=\&amp;quot;1\&amp;quot; parent=\&amp;quot;1\&amp;quot; source=\&amp;quot;k6\&amp;quot; style=\&amp;quot;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#e94560;strokeWidth=1;dashed=1;\&amp;quot; target=\&amp;quot;k6b\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry relative=\&amp;quot;1\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;tgt_h\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;text;html=1;align=center;fillColor=none;strokeColor=none;fontSize=11;fontColor=#16c79a;fontStyle=1;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;2026 TARGETS&amp;amp;lt;/b&amp;amp;gt;\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;20\&amp;quot; width=\&amp;quot;130\&amp;quot; x=\&amp;quot;1380\&amp;quot; y=\&amp;quot;760\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;t_stryker\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;fontColor=#ffffff;strokeColor=#ffffff;strokeWidth=2;fontSize=8;arcSize=10;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;STRYKER CORP&amp;amp;lt;/b&amp;amp;gt; — Op Epic Fury&amp;amp;lt;br&amp;amp;gt;200K devices | 79 countries | 50TB&amp;amp;lt;br&amp;amp;gt;Mar 11, 2026\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;50\&amp;quot; width=\&amp;quot;190\&amp;quot; x=\&amp;quot;1370\&amp;quot; y=\&amp;quot;785\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;t_army\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=1;fontSize=7;arcSize=10;\&amp;quot; value=\&amp;quot;US Army / Kuwait (Mar 2) — leaked coords\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;22\&amp;quot; width=\&amp;quot;190\&amp;quot; x=\&amp;quot;1370\&amp;quot; y=\&amp;quot;845\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;t_verifone\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#999999;strokeColor=#555555;strokeWidth=1;fontSize=7;arcSize=10;\&amp;quot; value=\&amp;quot;Verifone (Mar 11 — denied by company)\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;22\&amp;quot; width=\&amp;quot;190\&amp;quot; x=\&amp;quot;1370\&amp;quot; y=\&amp;quot;877\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;t_silicom\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=1;fontSize=7;arcSize=10;\&amp;quot; value=\&amp;quot;Silicom (Unit 8200 cover) — 40TB claimed\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;22\&amp;quot; width=\&amp;quot;190\&amp;quot; x=\&amp;quot;1370\&amp;quot; y=\&amp;quot;909\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;t_delek\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=1;fontSize=7;arcSize=10;\&amp;quot; value=\&amp;quot;Delek — Op Blackout (Israeli fuel)\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;22\&amp;quot; width=\&amp;quot;190\&amp;quot; x=\&amp;quot;1370\&amp;quot; y=\&amp;quot;941\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;t_sharjah\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#f0a500;strokeWidth=1;fontSize=7;arcSize=10;\&amp;quot; value=\&amp;quot;Sharjah NOC + IL Energy — 1.3TB\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;22\&amp;quot; width=\&amp;quot;190\&amp;quot; x=\&amp;quot;1370\&amp;quot; y=\&amp;quot;973\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;t_intel\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#999999;strokeColor=#555555;strokeWidth=1;fontSize=7;arcSize=10;\&amp;quot; value=\&amp;quot;Raz Zimmt (Iran Desk) | Tamir Hayman (Aman)&amp;amp;lt;br&amp;amp;gt;Bennett (Op Octopus) | Kindergartens (Jan 26)\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;32\&amp;quot; width=\&amp;quot;190\&amp;quot; x=\&amp;quot;1370\&amp;quot; y=\&amp;quot;1005\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;campaigns\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=1;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;NAMED CAMPAIGNS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Op Epic Fury&amp;amp;lt;/font&amp;amp;gt; — Stryker (Mar 2026)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Op Roaring Lion&amp;amp;lt;/font&amp;amp;gt; — Israel (Mar 2026)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Op Blackout&amp;amp;lt;/font&amp;amp;gt; — Delek fuel (2026)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Op Octopus&amp;amp;lt;/font&amp;amp;gt; — Bennett (Dec 2025)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;HamsaUpdate&amp;amp;lt;/font&amp;amp;gt; — Israel (Dec 2023)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;Homeland Justice&amp;amp;lt;/font&amp;amp;gt; — Albania (2022-24)\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;130\&amp;quot; width=\&amp;quot;200\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;535\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;timeline\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#e94560;strokeWidth=1;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;KEY EVENTS TIMELINE&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;Sep 2024&amp;amp;lt;/font&amp;amp;gt; — Panjaki sanctioned (OFAC)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Aug 2025&amp;amp;lt;/font&amp;amp;gt; — Bermoudeh + Aftabifar exposed&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Nov 2025&amp;amp;lt;/font&amp;amp;gt; — Thailand airport OPSEC blunder&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Jan 2026&amp;amp;lt;/font&amp;amp;gt; — Iran internet shutdown → Starlink&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Feb 28&amp;amp;lt;/font&amp;amp;gt; — Minab school strike (175+ killed)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Mar 2&amp;amp;lt;/font&amp;amp;gt; — &amp;amp;lt;b&amp;amp;gt;Panjaki KILLED&amp;amp;lt;/b&amp;amp;gt; (Israeli strikes)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;Mar 11&amp;amp;lt;/font&amp;amp;gt; — &amp;amp;lt;b&amp;amp;gt;STRYKER ATTACK&amp;amp;lt;/b&amp;amp;gt; (9 days later)&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#999999&amp;amp;quot;&amp;amp;gt;Mar 12&amp;amp;lt;/font&amp;amp;gt; — Check Point publishes full report\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;175\&amp;quot; width=\&amp;quot;200\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;685\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;sources\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#16c79a;strokeWidth=1;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;KEY INVESTIGATORS&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Nariman Gharib&amp;amp;lt;/font&amp;amp;gt; — Unmasked operators&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;Iran International&amp;amp;lt;/font&amp;amp;gt; — Published exposé&amp;amp;lt;br&amp;amp;gt;Check Point Research — TTPs + attribution&amp;amp;lt;br&amp;amp;gt;OP Innovate — Forensics (senvarservice)&amp;amp;lt;br&amp;amp;gt;FBI — Panjaki wanted listing&amp;amp;lt;br&amp;amp;gt;US OFAC — Sanctions (EO 13553)\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;120\&amp;quot; width=\&amp;quot;200\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;880\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n        &amp;lt;mxCell id=\&amp;quot;legend\&amp;quot; parent=\&amp;quot;1\&amp;quot; style=\&amp;quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;fontColor=#ffffff;strokeColor=#555555;strokeWidth=1;fontSize=8;verticalAlign=top;arcSize=6;align=left;spacingLeft=8;\&amp;quot; value=\&amp;quot;&amp;amp;lt;b&amp;amp;gt;LEGEND&amp;amp;lt;/b&amp;amp;gt;&amp;amp;lt;hr&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#e94560&amp;amp;quot;&amp;amp;gt;■&amp;amp;lt;/font&amp;amp;gt; Destructive / Critical / Named Individual&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#4a0000&amp;amp;quot;&amp;amp;gt;■&amp;amp;lt;/font&amp;amp;gt; Wiper / Destruction&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#0f3460&amp;amp;quot;&amp;amp;gt;■&amp;amp;lt;/font&amp;amp;gt; Espionage / Access Broker&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#f0a500&amp;amp;quot;&amp;amp;gt;■&amp;amp;lt;/font&amp;amp;gt; Infrastructure / Tools / Newly Discovered&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#16c79a&amp;amp;quot;&amp;amp;gt;■&amp;amp;lt;/font&amp;amp;gt; Allied / Support / Communications&amp;amp;lt;br&amp;amp;gt;&amp;amp;lt;font color=&amp;amp;quot;#555555&amp;amp;quot;&amp;amp;gt;■&amp;amp;lt;/font&amp;amp;gt; Unidentified / Low Confidence&amp;amp;lt;br&amp;amp;gt;— Solid line = confirmed link&amp;amp;lt;br&amp;amp;gt;-- Dashed line = assessed / probable\&amp;quot; vertex=\&amp;quot;1\&amp;quot;&amp;gt;\n          &amp;lt;mxGeometry height=\&amp;quot;140\&amp;quot; width=\&amp;quot;200\&amp;quot; x=\&amp;quot;-130\&amp;quot; y=\&amp;quot;1020\&amp;quot; as=\&amp;quot;geometry\&amp;quot; /&amp;gt;\n        &amp;lt;/mxCell&amp;gt;\n      &amp;lt;/root&amp;gt;\n    &amp;lt;/mxGraphModel&amp;gt;\n  &amp;lt;/diagram&amp;gt;\n&amp;lt;/mxfile&amp;gt;\n&amp;quot;}&quot;&gt;&lt;/div&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://viewer.diagrams.net/js/viewer-static.min.js&quot;&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;" style="width:100%;height:700px;border:none;border-radius:8px;background:#fff;" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+</div>
+
+<!-- SECTION 03: IOCs -->
+<div class="section" id="iocs">
+    <div class="section-header">
+        <span class="section-number">03</span>
+        <h2>Indicators of Compromise</h2>
+    </div>
+
+    <h3 class="subsection-title">3.1 Network IOCs</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Indicator</th><th>Context</th><th>Period</th><th>Severity</th></tr></thead>
+            <tbody>
+                <tr><td><code class="inline">107.189.19.52</code></td><td>C2 payload retrieval (Cloudzy NL)</td><td>2025&ndash;2026</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">82.25.35.25</code></td><td>Operator VPS (Zenlayer UK)</td><td>2025&ndash;2026</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">31.57.35.223</code></td><td>Operator VPS (Zenlayer UK)</td><td>2025&ndash;2026</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">146.185.219.235</code></td><td>Israeli VPN egress (G-Core)</td><td>2024&ndash;2026</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">31.192.237.207:2515</code></td><td>C2 endpoint</td><td>2025&ndash;2026</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">64.176.169.22</code></td><td>Vultr Israel SSH C2</td><td>2024</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">188.92.255.x</code></td><td>Starlink range</td><td>2026</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">209.198.131.x</code></td><td>Starlink range</td><td>2026</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">169.150.227.x</code></td><td>Commercial VPN</td><td>2024&ndash;2025</td><td><span class="badge badge-medium">Medium</span></td></tr>
+                <tr><td><code class="inline">149.88.26.x</code></td><td>Commercial VPN</td><td>2024&ndash;2025</td><td><span class="badge badge-medium">Medium</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">3.2 Domain IOCs</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Domain</th><th>Context</th><th>Severity</th></tr></thead>
+            <tbody>
+                <tr><td><code class="inline">handala.to</code></td><td>Leak site (Above.com parking)</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">handala-hack.to</code></td><td>Operational blog (DDoS-Guard)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">hdabla-8519.buzz</code></td><td>Typosquat / phishing</td><td><span class="badge badge-medium">Medium</span></td></tr>
+                <tr><td><code class="inline">api.ra-backup.com</code></td><td>C2 callback</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">shirideitch.com</code></td><td>APK delivery</td><td><span class="badge badge-high">High</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">3.3 File Hash IOCs (2025&ndash;2026)</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Hash (MD5)</th><th>Description</th><th>Severity</th></tr></thead>
+            <tbody>
+                <tr><td><span class="hash">5986ab04dd6b3d259935249741d3eff2</span></td><td>Handala Wiper (MBR destruction)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><span class="hash">3cb9dea916432ffb8784ac36d1f2d3cd</span></td><td>PowerShell Wiper (AI-assisted)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><span class="hash">3236facc7a30df4ba4e57fddfba41ec5</span></td><td>VeraCrypt Installer (abused)</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><span class="hash">3dfb151d082df7937b01e2bb6030fe4a</span></td><td>NetBird Installer</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><span class="hash">e035c858c1969cffc1a4978b86e90a30</span></td><td>NetBird binary</td><td><span class="badge badge-high">High</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">3.4 File Hash IOCs (2024)</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Hash (SHA-256)</th><th>Description</th><th>Severity</th></tr></thead>
+            <tbody>
+                <tr><td><span class="hash">96dec6e07229201a02f538310815c695cf6147c548ff1c6a0def2fe38f3dcbc8</span></td><td>update.zip delivery</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><span class="hash">454e6d3782f23455875a5db64e1a8cd8eb743400d8c6dadb1cd8fd2ffc2f9567</span></td><td>handala.exe (Delphi)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><span class="hash">19001dd441e50233d7f0addb4fcd405a70ac3d5e310ff20b331d6f1a29c634f0</span></td><td>Phishing PDF attachment</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><span class="hash">8316065c4536384611cbe7b6ba6a5f12f10db09949e66cb608c92ae8b69e4d67</span></td><td>OpenFileFinder.dll (BYOVD, 0/72 VT!)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><span class="hash">9e519211947c63d9bf6f4a51bc161f5b9ace596c2935a8eedfce4057f747b961</span></td><td>ListOpenedFileDrv_32.sys (BYOVD)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><span class="hash">83651b0589665b112687f0858bfe2832ca317ba75e700c91ac34025ee6578b72</span></td><td>RedAlert.apk (mobile)</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><span class="hash">ca9bf13897af109cb354f2629c10803966eb757ee4b2e468abc04e7681d0d74a</span></td><td>F5UPDATER.exe (loader)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">3.5 File Artifact IOCs</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Filename</th><th>Context</th><th>Severity</th></tr></thead>
+            <tbody>
+                <tr><td><code class="inline">handala.exe</code></td><td>Primary wiper (MBR + 4KB overwrite)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">handala.bat</code></td><td>Wiper launcher batch</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">handala.gif</code></td><td>Defacement propaganda</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">dra.ps1</code></td><td>ADRecon (renamed)</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">Carroll.cmd</code></td><td>AV evasion batch</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">OpenFileFinder.dll</code></td><td>BYOVD driver loader</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">ListOpenedFileDrv_32.sys</code></td><td>Vulnerable driver</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">senvarservice-DC.exe</code></td><td>PyInstaller exfil tool</td><td><span class="badge badge-critical">Critical</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">3.6 Attacker Hostnames</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Hostname</th><th>Severity</th></tr></thead>
+            <tbody>
+                <tr><td><code class="inline">WIN-P1B7V100IIS</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">DESKTOP-FK1NPHF</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">DESKTOP-R1FMLQP</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">WIN-DS6S0HEU0CA</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">DESKTOP-T3SOB36</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">WIN-GPPA5GI4QQJ</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">VULTR-GUEST</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">DESKTOP-HU45M79</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">DESKTOP-TNFP4JF</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">DESKTOP-14O69KQ</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">DESKTOP-9KG46L1</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+                <tr><td><code class="inline">DESKTOP-G2MH4KD</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="subsection-title">3.7 Telegram C2</h3>
+    <div class="card">
+        <table>
+            <thead><tr><th>Indicator</th><th>Context</th><th>Severity</th></tr></thead>
+            <tbody>
+                <tr><td><span class="hash">Bot: 6428401585:AAGE6SbwtVJxOpLjdMcrL45gb18H9UV7tQA</span></td><td>Operation HamsaUpdate - F5 phishing campaign (Dec 2023, REVOKED)</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">Channel ID: 6932028002</code></td><td>C2 exfiltration channel (HamsaUpdate)</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><span class="hash">Bot: 7277950797:AAF99Nw5rAT1BHnMmwY_tQNYJFU3dYJ5RHc</span></td><td>CrowdStrike-themed wiper campaign (Jul 2024, REVOKED)</td><td><span class="badge badge-high">High</span></td></tr>
+                <tr><td><code class="inline">Chat ID: 7436061126</code></td><td>C2 exfiltration channel (CrowdStrike campaign)</td><td><span class="badge badge-high">High</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- SECTION 04: KQL QUERIES -->
+<div class="section" id="queries">
+    <div class="section-header">
+        <span class="section-number">04</span>
+        <h2>KQL Detection Queries</h2>
+    </div>
+
+    <h3 class="query-group">4.1 Identity &amp; Access Detection</h3>
+    <div class="code-block" id="query-Q1">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q1: Admin Sign-ins from Threat IP Ranges</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: EntraIdSignInEvents &nbsp;|&nbsp; MITRE: T1078.004 / T1110</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre><span class="kw">let</span> ThreatIPs = <span class=<span class="str">"str"</span>>dynamic([
+    <span class="str">"<span class="num">107</span>.<span class="num">189</span>.<span class="num">19</span>.<span class="num">52</span>"</span>, <span class="str">"<span class="num">82</span>.<span class="num">25</span>.<span class="num">35</span>.<span class="num">25</span>"</span>, <span class="str">"<span class="num">31</span>.<span class="num">57</span>.<span class="num">35</span>.<span class="num">223</span>"</span>,
+    <span class="str">"<span class="num">146</span>.<span class="num">185</span>.<span class="num">219</span>.<span class="num">235</span>"</span>, <span class="str">"<span class="num">31</span>.<span class="num">192</span>.<span class="num">237</span>.<span class="num">207</span>"</span>,
+    <span class="str">"<span class="num">64</span>.<span class="num">176</span>.<span class="num">169</span>.<span class="num">22</span>"</span>, <span class="str">"<span class="num">64</span>.<span class="num">176</span>.<span class="num">172</span>.<span class="num">235</span>"</span>, <span class="str">"<span class="num">64</span>.<span class="num">176</span>.<span class="num">172</span>.<span class="num">165</span>"</span>,
+    <span class="str">"<span class="num">64</span>.<span class="num">176</span>.<span class="num">173</span>.<span class="num">77</span>"</span>, <span class="str">"<span class="num">64</span>.<span class="num">176</span>.<span class="num">172</span>.<span class="num">101</span>"</span>
+])</span>;
+EntraIdSignInEvents
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> IPAddress <span class="kw">in</span> (ThreatIPs)
+    <span class="kw">or</span> IPAddress <span class="fn">startswith</span> <span class="str">"<span class="num">188</span>.<span class="num">92</span>.<span class="num">255</span>."</span>
+    <span class="kw">or</span> IPAddress <span class="fn">startswith</span> <span class="str">"<span class="num">209</span>.<span class="num">198</span>.<span class="num">131</span>."</span>
+    <span class="kw">or</span> IPAddress <span class="fn">startswith</span> <span class="str">"<span class="num">169</span>.<span class="num">150</span>.<span class="num">227</span>."</span>
+    <span class="kw">or</span> IPAddress <span class="fn">startswith</span> <span class="str">"<span class="num">149</span>.<span class="num">88</span>.<span class="num">26</span>."</span>
+<span class="op">|</span> <span class="kw">summarize</span>
+    SuccessCount = <span class="fn">countif</span>(ErrorCode <span class="op">==</span> <span class="num">0</span>),
+    FailCount = <span class="fn">countif</span>(ErrorCode <span class="op">!=</span> <span class="num">0</span>),
+    Accounts = <span class="fn">make_set</span>(AccountUpn, <span class="num">20</span>),
+    Apps = <span class="fn">make_set</span>(Application, <span class="num">10</span>)
+    <span class="kw">by</span> IPAddress, <span class="fn">bin</span>(TimeGenerated, <span class="num">1h</span>)
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, IPAddress, SuccessCount, FailCount, Accounts, Apps
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> SuccessCount desc, FailCount desc</pre>
+</div>
+    <div class="code-block" id="query-Q2">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q2: NON-PIM Privileged Role Assignment + Intune OAuth Grants</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: AuditLogs &nbsp;|&nbsp; MITRE: T1098 / T1078.004</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre>AuditLogs
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span>
+    (OperationName <span class="kw">in</span> (
+        <span class="str">"Add member to role"</span>,
+        <span class="str">"Add eligible member to role"</span>)
+    <span class="kw">and</span> <span class="kw">not</span>(OperationName <span class="fn">has</span> <span class="str">"PIM"</span>)
+    <span class="kw">and</span> <span class="kw">not</span>(InitiatedBy <span class="fn">has</span> <span class="str">"MS-PIM"</span>)
+    <span class="kw">and</span> TargetResources <span class="fn">has_any</span> (
+        <span class="str">"Global Administrator"</span>,
+        <span class="str">"Intune Administrator"</span>,
+        <span class="str">"Intune Service Administrator"</span>,
+        <span class="str">"Privileged Role Administrator"</span>,
+        <span class="str">"Cloud Device Administrator"</span>))
+    <span class="kw">or</span> (OperationName <span class="fn">has_any</span> (
+        <span class="str">"Consent to application"</span>,
+        <span class="str">"Add OAuth2PermissionGrant"</span>)
+    <span class="kw">and</span> TargetResources <span class="fn">has_any</span> (
+        <span class="str">"DeviceManagementManagedDevices.PrivilegedOperations.All"</span>,
+        <span class="str">"DeviceManagementManagedDevices.ReadWrite.All"</span>))
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, OperationName, InitiatedBy, TargetResources,
+    Result, CorrelationId
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+
+    <h3 class="query-group">4.2 Credential &amp; Evasion Detection</h3>
+    <div class="code-block" id="query-Q3">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q3: LSASS Credential Dump via comsvcs.dll</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: DeviceProcessEvents &nbsp;|&nbsp; MITRE: T1003.001</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre>DeviceProcessEvents
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> FileName <span class="op">=~</span> <span class="str">"rundll32.exe"</span>
+<span class="op">|</span> <span class="kw">where</span> ProcessCommandLine <span class="fn">has</span> <span class="str">"comsvcs"</span>
+    <span class="kw">and</span> ProcessCommandLine <span class="fn">has_any</span> (<span class="str">"MiniDump"</span>, <span class="str">"minidump"</span>, <span class="str">"#<span class="num">24</span>"</span>)
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, ProcessCommandLine, AccountName,
+    AccountDomain, InitiatingProcessFileName,
+    InitiatingProcessCommandLine, ProcessId
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+    <div class="code-block" id="query-Q6">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q6: Defender Tampering via Registry</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: DeviceRegistryEvents &nbsp;|&nbsp; MITRE: T1562.001</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre>DeviceRegistryEvents
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> RegistryKey <span class="fn">has</span> <span class="str">"Windows Defender"</span>
+<span class="op">|</span> <span class="kw">where</span> RegistryValueName <span class="kw">in</span>~ (
+    <span class="str">"TamperProtection"</span>,
+    <span class="str">"DisableRealtimeMonitoring"</span>,
+    <span class="str">"DisableAntiSpyware"</span>,
+    <span class="str">"DisableBehaviorMonitoring"</span>
+)
+<span class="op">|</span> <span class="kw">where</span> RegistryValueData <span class="kw">in</span> (<span class="str">"<span class="num">0</span>"</span>, <span class="str">"<span class="num">1</span>"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="kw">not</span>(InitiatingProcessFileName <span class="kw">in</span>~ (
+    <span class="str">"MsMpEng.exe"</span>, <span class="str">"svchost.exe"</span>, <span class="str">"TiWorker.exe"</span>
+))
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, RegistryKey, RegistryValueName,
+    RegistryValueData, InitiatingProcessFileName,
+    InitiatingProcessCommandLine, InitiatingProcessAccountName
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+
+    <h3 class="query-group">4.3 Lateral Movement &amp; C2</h3>
+    <div class="code-block" id="query-Q4">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q4: AD Enumeration - ADRecon + Bulk LDAP</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: DeviceProcessEvents + IdentityQueryEvents &nbsp;|&nbsp; MITRE: T1087.002 / T1018</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre><span class="kw">let</span> ADReconHits =
+    DeviceProcessEvents
+    <span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+    <span class="op">|</span> <span class="kw">where</span> FileName <span class="kw">in</span>~ (<span class="str">"powershell.exe"</span>, <span class="str">"pwsh.exe"</span>)
+    <span class="op">|</span> <span class="kw">where</span> ProcessCommandLine <span class="fn">has_any</span> (
+        <span class="str">"dra.ps1"</span>, <span class="str">"ADRecon"</span>, <span class="str">"Invoke-ADRecon"</span>,
+        <span class="str">"Get-ADUser"</span>, <span class="str">"Get-ADComputer"</span>, <span class="str">"Get-ADGroup"</span>,
+        <span class="str">"Get-DomainUser"</span>, <span class="str">"Get-DomainComputer"</span>)
+    <span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, Source = <span class="str">"ADRecon_Process"</span>,
+        Detail = ProcessCommandLine, AccountName;
+<span class="kw">let</span> BulkLDAP =
+    IdentityQueryEvents
+    <span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+    <span class="op">|</span> <span class="kw">where</span> QueryType <span class="fn">has_any</span> (<span class="str">"LDAP"</span>, <span class="str">"Samr"</span>)
+    <span class="op">|</span> <span class="kw">summarize</span> QueryCount = <span class="fn">count</span>()
+        <span class="kw">by</span> AccountName, DeviceName, QueryType, <span class="fn">bin</span>(TimeGenerated, <span class="num">1h</span>)
+    <span class="op">|</span> <span class="kw">where</span> QueryCount <span class="op">&gt;=</span> <span class="num">100</span>
+    <span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, Source = <span class="str">"Bulk_LDAP"</span>,
+        Detail = <span class="fn">strcat</span>(QueryType, <span class="str">" x"</span>, QueryCount), AccountName;
+<span class="kw">union</span> ADReconHits, BulkLDAP
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+    <div class="code-block" id="query-Q5">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q5: RDP from Known Attacker Machine Names</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: DeviceLogonEvents &nbsp;|&nbsp; MITRE: T1021.001</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre><span class="kw">let</span> AttackerHostnames = <span class=<span class="str">"str"</span>>dynamic([
+    <span class="str">"WIN-P1B7V100IIS"</span>, <span class="str">"DESKTOP-FK1NPHF"</span>, <span class="str">"DESKTOP-R1FMLQP"</span>,
+    <span class="str">"WIN-DS6S0HEU0CA"</span>, <span class="str">"DESKTOP-T3SOB36"</span>, <span class="str">"WIN-GPPA5GI4QQJ"</span>,
+    <span class="str">"VULTR-GUEST"</span>, <span class="str">"DESKTOP-HU45M79"</span>, <span class="str">"DESKTOP-TNFP4JF"</span>,
+    <span class="str">"DESKTOP-14O69KQ"</span>, <span class="str">"DESKTOP-9KG46L1"</span>, <span class="str">"DESKTOP-G2MH4KD"</span>
+])</span>;
+DeviceLogonEvents
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> LogonType <span class="op">==</span> <span class="str">"RemoteInteractive"</span>
+<span class="op">|</span> <span class="kw">where</span> RemoteDeviceName <span class="kw">in</span>~ (AttackerHostnames)
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, AccountName, AccountDomain,
+    RemoteDeviceName, RemoteIP, LogonType
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+    <div class="code-block" id="query-Q7">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q7: NetBird + VeraCrypt + AutoIt Tool Stack</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: DeviceProcessEvents &nbsp;|&nbsp; MITRE: T1572 / T1486 / T1055</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre>DeviceProcessEvents
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span>
+    FileName <span class="fn">has_any</span> (<span class="str">"netbird"</span>, <span class="str">"netbird.exe"</span>)
+    <span class="kw">or</span> FileName <span class="fn">has_any</span> (<span class="str">"veracrypt"</span>, <span class="str">"VeraCrypt.exe"</span>, <span class="str">"VeraCrypt Setup"</span>)
+    <span class="kw">or</span> FileName <span class="op">=~</span> <span class="str">"autoit3.exe"</span>
+    <span class="kw">or</span> ProcessCommandLine <span class="fn">has</span> <span class="str">".a3x"</span>
+    <span class="kw">or</span> (FileName <span class="op">=~</span> <span class="str">"regasm.exe"</span>
+        <span class="kw">and</span> <span class="kw">not</span>(ProcessCommandLine <span class="fn">has</span> <span class="str">".dll"</span>)
+        <span class="kw">and</span> <span class="kw">not</span>(ProcessCommandLine <span class="fn">has</span> <span class="str">".exe"</span>))
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, FileName, ProcessCommandLine,
+    FolderPath, AccountName, InitiatingProcessFileName,
+    InitiatingProcessCommandLine
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+
+    <h3 class="query-group">4.4 Exfiltration Detection</h3>
+    <div class="code-block" id="query-Q8">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q8: Telegram Bot API + Cloud Exfil (Non-Browser)</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: DeviceNetworkEvents &nbsp;|&nbsp; MITRE: T1102.002 / T1041</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre>DeviceNetworkEvents
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> RemoteUrl <span class="fn">has_any</span> (
+    <span class="str">"api.telegram.org"</span>,
+    <span class="str">"storjshare.io"</span>, <span class="str">"storj.io"</span>,
+    <span class="str">"vultrobjects.com"</span>,
+    <span class="str">"ra-backup.com"</span>,
+    <span class="str">"icanhazip.com"</span>
+)
+<span class="op">|</span> <span class="kw">where</span> InitiatingProcessFileName !<span class="kw">in</span>~ (
+    <span class="str">"chrome.exe"</span>, <span class="str">"msedge.exe"</span>, <span class="str">"firefox.exe"</span>,
+    <span class="str">"brave.exe"</span>, <span class="str">"opera.exe"</span>, <span class="str">"Teams.exe"</span>
+)
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, RemoteUrl, RemoteIP, RemotePort,
+    InitiatingProcessFileName, InitiatingProcessCommandLine,
+    InitiatingProcessAccountName
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+
+    <h3 class="query-group">4.5 Destruction Detection</h3>
+    <div class="code-block" id="query-Q9">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q9: Intune Mass Wipe via Graph API</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: MicrosoftGraphActivityLogs &nbsp;|&nbsp; MITRE: T1531 / T1072</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre>MicrosoftGraphActivityLogs
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> RequestUri <span class="fn">has</span> <span class="str">"/deviceManagement/managedDevices"</span>
+<span class="op">|</span> <span class="kw">where</span> RequestUri <span class="fn">has_any</span> (
+    <span class="str">"/wipe"</span>, <span class="str">"/retire"</span>, <span class="str">"/factoryReset"</span>,
+    <span class="str">"/resetPasscode"</span>, <span class="str">"/delete"</span>
+)
+<span class="op">|</span> <span class="kw">where</span> RequestMethod <span class="kw">in</span> (<span class="str">"POST"</span>, <span class="str">"DELETE"</span>)
+<span class="op">|</span> <span class="kw">summarize</span>
+    ActionCount = <span class="fn">count</span>(),
+    Endpoints = <span class="fn">make_set</span>(RequestUri, <span class="num">20</span>)
+    <span class="kw">by</span> UserId, IPAddress, UserAgent, <span class="fn">bin</span>(TimeGenerated, <span class="num">10m</span>)
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, UserId, IPAddress, UserAgent,
+    ActionCount, Endpoints
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> ActionCount desc</pre>
+</div>
+    <div class="code-block" id="query-Q10">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q10: Wiper Preparation - Shadow Copy + Recovery Disable</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: DeviceProcessEvents &nbsp;|&nbsp; MITRE: T1490 / T1561.002</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre>DeviceProcessEvents
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span>
+    (ProcessCommandLine <span class="fn">has</span> <span class="str">"vssadmin"</span> <span class="kw">and</span> ProcessCommandLine <span class="fn">has</span> <span class="str">"delete"</span>
+        <span class="kw">and</span> ProcessCommandLine <span class="fn">has</span> <span class="str">"shadows"</span>)
+    <span class="kw">or</span> (ProcessCommandLine <span class="fn">has</span> <span class="str">"wmic"</span> <span class="kw">and</span> ProcessCommandLine <span class="fn">has</span> <span class="str">"shadowcopy"</span>
+        <span class="kw">and</span> ProcessCommandLine <span class="fn">has</span> <span class="str">"delete"</span>)
+    <span class="kw">or</span> (FileName <span class="op">=~</span> <span class="str">"bcdedit.exe"</span>
+        <span class="kw">and</span> ProcessCommandLine <span class="fn">has_any</span> (<span class="str">"recoveryenabled"</span>, <span class="str">"bootstatuspolicy"</span>))
+    <span class="kw">or</span> (FileName <span class="op">=~</span> <span class="str">"wbadmin.exe"</span> <span class="kw">and</span> ProcessCommandLine <span class="fn">has</span> <span class="str">"delete"</span>
+        <span class="kw">and</span> ProcessCommandLine <span class="fn">has</span> <span class="str">"catalog"</span>)
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, FileName, ProcessCommandLine,
+    AccountName, InitiatingProcessFileName,
+    InitiatingProcessCommandLine
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+    <div class="code-block" id="query-Q11">
+    <div class="code-header">
+        <div>
+            <span class="code-title">Q11: Wiper File Artifacts on Endpoints</span><br>
+            <span style="color:var(--text-muted);font-size:0.75rem;">Table: DeviceFileEvents &nbsp;|&nbsp; MITRE: T1485 / T1561.002</span>
+        </div>
+        <span class="code-lang">KQL</span>
+        <button class="copy-btn" onclick="copyQuery(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+        </button>
+    </div>
+    <pre>DeviceFileEvents
+<span class="op">|</span> <span class="kw">where</span> TimeGenerated &gt; <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> FileName <span class="fn">has_any</span> (
+    <span class="str">"handala.exe"</span>, <span class="str">"handala.bat"</span>, <span class="str">"handala.gif"</span>,
+    <span class="str">"senvarservice"</span>, <span class="str">"dra.ps1"</span>, <span class="str">"Carroll.cmd"</span>,
+    <span class="str">"OpenFileFinder.dll"</span>, <span class="str">"ListOpenedFileDrv"</span>
+)
+    <span class="kw">or</span> FileName <span class="fn">endswith</span> <span class="str">".BiBi"</span>
+    <span class="kw">or</span> FileName <span class="fn">endswith</span> <span class="str">".BiBi1"</span>
+    <span class="kw">or</span> FileName <span class="fn">endswith</span> <span class="str">".BiBi2"</span>
+    <span class="kw">or</span> FileName <span class="fn">matches regex</span> @<span class="str">"\.bb[a-z0-<span class="num">9</span>]{<span class="num">1</span>,<span class="num">5</span>}$"</span>
+    <span class="kw">or</span> FolderPath <span class="fn">has</span> <span class="str">"\\<span class="num">564784</span>\\"</span>
+<span class="op">|</span> <span class="kw">project</span> TimeGenerated, DeviceName, FileName, FolderPath, ActionType,
+    InitiatingProcessFileName, InitiatingProcessAccountName,
+    MD5, SHA256
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> TimeGenerated desc</pre>
+</div>
+</div>
+
+<!-- SECTION 05: PRIORITY REFERENCE -->
+<div class="section" id="priority">
+    <div class="section-header">
+        <span class="section-number">05</span>
+        <h2>Query Priority Reference</h2>
+    </div>
+
+    <div class="priority-grid">
+        <div class="priority-column">
+            <h4 style="color:var(--accent-red);">P1 &mdash; CRITICAL (8 queries)</h4>
+            <ul class="priority-list">
+                <li><span class="badge badge-critical">#1</span> Sign-in from threat IPs (Initial Access)</li>
+                <li><span class="badge badge-critical">#2</span> Admin role escalation (Priv Escalation)</li>
+                <li><span class="badge badge-critical">#3</span> LSASS dump (Credential Access)</li>
+                <li><span class="badge badge-critical">#5</span> RDP from attacker hostnames (Lateral Movement)</li>
+                <li><span class="badge badge-critical">#8</span> Telegram/Storj exfil (Exfiltration)</li>
+                <li><span class="badge badge-critical">#9</span> Intune mass wipe (DESTRUCTION)</li>
+                <li><span class="badge badge-critical">#10</span> Shadow copy/bcdedit (Wiper Prep)</li>
+                <li><span class="badge badge-critical">#11</span> Wiper file artifacts (Wiper Deployment)</li>
+            </ul>
+        </div>
+        <div class="priority-column">
+            <h4 style="color:var(--accent-orange);">P2 &mdash; HIGH (3 queries)</h4>
+            <ul class="priority-list">
+                <li><span class="badge badge-high">#4</span> AD enumeration (Discovery)</li>
+                <li><span class="badge badge-high">#6</span> Defender tampering (Defense Evasion)</li>
+                <li><span class="badge badge-high">#7</span> NetBird/VeraCrypt/AutoIt (C2/Tools)</li>
+            </ul>
+        </div>
+        <div class="priority-column">
+            <h4 style="color:var(--accent-blue);">P3 &mdash; MEDIUM</h4>
+            <ul class="priority-list">
+                <li style="color:var(--text-muted);font-style:italic;">No medium-priority queries for this threat.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 06: REFERENCES -->
+<div class="section" id="references">
+    <div class="section-header">
+        <span class="section-number">06</span>
+        <h2>Source References</h2>
+    </div>
+
+    <h3 class="subsection-title">Vendor Research</h3>
+    <div class="card">
+        <ol style="padding-left:1.2rem;color:var(--text-secondary);font-size:0.85rem;line-height:2;">
+            <li>Check Point Research - "Handala Hack" Unveiling Group's Modus Operandi (2026)<br><code class="inline" style="font-size:0.7rem;">https://research.checkpoint.com/2026/handala-hack-unveiling-groups-modus-operandi/</code></li>
+            <li>Check Point Research - Bad Karma, No Justice: Void Manticore (2024)<br><code class="inline" style="font-size:0.7rem;">https://research.checkpoint.com/2024/bad-karma-no-justice-void-manticore-destructive-activities-in-israel/</code></li>
+            <li>Check Point Research - MOIS Actors &amp; Cyber Crime Connection (2026)<br><code class="inline" style="font-size:0.7rem;">https://research.checkpoint.com/2026/iranian-mois-actors-the-cyber-crime-connection/</code></li>
+            <li>Palo Alto Unit 42 - Handala Hack Wiper Attacks (2026)<br><code class="inline" style="font-size:0.7rem;">https://unit42.paloaltonetworks.com/handala-hack-wiper-attacks/</code></li>
+            <li>Palo Alto Unit 42 - Iranian Cyberattacks 2026 Threat Brief<br><code class="inline" style="font-size:0.7rem;">https://unit42.paloaltonetworks.com/iranian-cyberattacks-2026/</code></li>
+            <li>Splunk - Handala Wiper Threat Analysis and Detections<br><code class="inline" style="font-size:0.7rem;">https://www.splunk.com/en_us/blog/security/handalas-wiper-threat-analysis-and-detections.html</code></li>
+            <li>Trellix - Handala's Wiper Targets Israel (2024)<br><code class="inline" style="font-size:0.7rem;">https://www.trellix.com/blogs/research/handalas-wiper-targets-israel/</code></li>
+            <li>Deepwatch - Handala Hacking Group Escalates Operations (2026)<br><code class="inline" style="font-size:0.7rem;">https://www.deepwatch.com/labs/ca-a-26-03-iranian-nexus-handala-hacking-group-escalates-disruptive-operations/</code></li>
+            <li>Critical Start - The Threat: Handala Hack Team<br><code class="inline" style="font-size:0.7rem;">https://www.criticalstart.com/resources/research-report/cssa260303-the-threat-%E2%80%93-handala-hack-team</code></li>
+            <li>7AI - Stryker Wiper Attack Analysis (2026)<br><code class="inline" style="font-size:0.7rem;">https://7ai.com/stryker-wiper-attack-what-security-teams-need-to-know-now</code></li>
+            <li>Cyclotron - Intune and the Stryker Cyberattack (2026)<br><code class="inline" style="font-size:0.7rem;">https://cyclotron.com/post/intune-and-the-stryker-cyberattack-protect-your-intune-tenant/</code></li>
+            <li>Google Cloud/Mandiant - Abusing Intune Permissions in Entra ID<br><code class="inline" style="font-size:0.7rem;">https://cloud.google.com/blog/topics/threat-intelligence/abusing-intune-permissions-entra-id-environments</code></li>
+            <li>Tenable - Analyzing Iranian Cyber Activity Following Operation Epic Fury<br><code class="inline" style="font-size:0.7rem;">https://www.tenable.com/blog/cyber-retaliation-analyzing-iranian-cyber-activity-following-operation-epic-fury</code></li>
+        </ol>
+    </div>
+
+    <h3 class="subsection-title">News Coverage</h3>
+    <div class="card">
+        <ol start="14" style="padding-left:1.2rem;color:var(--text-secondary);font-size:0.85rem;line-height:2;">
+            <li>Krebs on Security - Iran-Backed Hackers Claim Wiper Attack on Stryker (2026)<br><code class="inline" style="font-size:0.7rem;">https://krebsonsecurity.com/2026/03/iran-backed-hackers-claim-wiper-attack-on-medtech-firm-stryker/</code></li>
+            <li>TechCrunch - Pro-Iran Hacktivist Behind Stryker Attack<br><code class="inline" style="font-size:0.7rem;">https://techcrunch.com/2026/03/11/stryker-hack-pro-iran-hacktivist-group-handala-says-it-is-behind-attack/</code></li>
+            <li>NBC News - Iran Cyberattack Against US Company<br><code class="inline" style="font-size:0.7rem;">https://www.nbcnews.com/world/iran/iran-appears-conducted-significant-cyberattack-us-company-first-war-st-rcna263084</code></li>
+            <li>SecurityWeek - MedTech Giant Stryker Crippled<br><code class="inline" style="font-size:0.7rem;">https://www.securityweek.com/medtech-giant-stryker-crippled-by-iran-linked-hacker-attack/</code></li>
+            <li>Al Jazeera - Iran-Linked Hackers Hit Stryker (2026)<br><code class="inline" style="font-size:0.7rem;">https://www.aljazeera.com/news/2026/3/11/iran-linked-hackers-hit-medical-giant-stryker-in-retaliatory-cyberattack</code></li>
+        </ol>
+    </div>
+
+    <h3 class="subsection-title">Identity / OSINT</h3>
+    <div class="card">
+        <ol start="19" style="padding-left:1.2rem;color:var(--text-secondary);font-size:0.85rem;line-height:2;">
+            <li>FBI - Seyed Yahya Hosseiny Panjaki Wanted Poster<br><code class="inline" style="font-size:0.7rem;">https://www.fbi.gov/wanted/terrorinfo/seyed-yahya-hosseiny-panjaki</code></li>
+            <li>OFAC - Panjaki Sanctions Entry (SDN)<br><code class="inline" style="font-size:0.7rem;">https://sanctionssearch.ofac.treas.gov/Details.aspx?id=50695</code></li>
+            <li>OpenSanctions - Panjaki Profile<br><code class="inline" style="font-size:0.7rem;">https://www.opensanctions.org/entities/NK-QHJT3Zq4kzQr5rBiwFzAsE/</code></li>
+            <li>Iran International - Bermoudeh/Aftabifar Expose (Aug 2025)<br><code class="inline" style="font-size:0.7rem;">https://www.iranintl.com/en/202508153061</code></li>
+            <li>Nariman Gharib - Handala Hacker Exposed (Aug 2025)<br><code class="inline" style="font-size:0.7rem;">https://blog.narimangharib.com/posts/2025/08/1755123023755?lang=en</code></li>
+            <li>KELA - Handala Telegram Breach Analysis<br><code class="inline" style="font-size:0.7rem;">https://www.kelacyber.com/blog/handala-hack-telegram-breach-israeli-officials/</code></li>
+            <li>OP Innovate - Unpacking Handala (2025)<br><code class="inline" style="font-size:0.7rem;">https://op-c.net/blog/unpacking-handala/</code></li>
+            <li>SOCRadar - Dark Web Profile: Handala Hack<br><code class="inline" style="font-size:0.7rem;">https://socradar.io/blog/dark-web-profile-handala-hack/</code></li>
+            <li>Malpedia - Void Manticore<br><code class="inline" style="font-size:0.7rem;">https://malpedia.caad.fkie.fraunhofer.de/actor/void_manticore</code></li>
+            <li>MITRE ATT&amp;CK - HomeLand Justice C0038<br><code class="inline" style="font-size:0.7rem;">https://attack.mitre.org/campaigns/C0038/</code></li>
+            <li>CISA - Iranian State Actors vs Albania AA22-264A<br><code class="inline" style="font-size:0.7rem;">https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-264a</code></li>
+            <li>Intezer - Operation HamsaUpdate Wiper Analysis<br><code class="inline" style="font-size:0.7rem;">https://intezer.com/blog/stealth-wiper-israeli-infrastructure/</code></li>
+        </ol>
+    </div>
+</div>
+
+</div><!-- .main -->
+
+<!-- FOOTER -->
+<div class="footer">
+    <div class="footer-content">
+        <div class="footer-text">
+            <strong>Classification:</strong> Community / Public<br>
+            <strong>Author:</strong> CRIMSON7 Security Operations
+        </div>
+        <div class="footer-meta">
+            Last Updated: March 16, 2026
+        </div>
+    </div>
+</div>
+
+<script>
+// Smooth scroll
+document.querySelectorAll('.nav a').forEach(a => {
+    a.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});
+    });
+});
+// Active nav on scroll
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('.nav a');
+window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+        if (window.scrollY >= s.offsetTop - 100) current = s.getAttribute('id');
+    });
+    navLinks.forEach(l => {
+        l.classList.remove('active');
+        if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+    });
+});
+// Copy button
+function copyQuery(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add('copied');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
+        }, 2000);
+    });
+}
+</script>
+</body>
+</html>
