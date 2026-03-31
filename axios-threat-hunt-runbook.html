@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ======= REPORT META TAGS (required for auto-indexing) ======= -->
+    <meta name="report-title" content="Axios NPM Supply Chain RAT">
+    <meta name="report-description" content="Maintainer account hijacked, cross-platform RAT deployed via plain-crypto-js dependency">
+    <meta name="report-severity" content="critical">
+    <meta name="report-type" content="Supply Chain">
+    <meta name="report-tags" content="npm,axios,supply-chain,RAT,plain-crypto-js,sfrclak.com">
+    <meta name="report-date" content="Mar 31, 2026">
+    <meta name="report-queries" content="11">
+    <meta name="report-version" content="1.0">
+    <!-- ============================================================= -->
+    <title>Axios NPM Supply Chain RAT | Threat Hunt Runbook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-code: #1a1f27;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-red: #f85149;
+            --accent-red-bg: rgba(248, 81, 73, 0.15);
+            --accent-orange: #d29922;
+            --accent-orange-bg: rgba(210, 153, 34, 0.15);
+            --accent-yellow: #e3b341;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --crimson: #c62828;
+            --crimson-light: #ef5350;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 3rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--crimson) 0%, var(--crimson-light) 50%, var(--accent-orange) 100%);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo img {
+            width: 200px;
+            height: auto;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Critical Alert Banner */
+        .critical-alert {
+            background: var(--accent-red-bg);
+            border: 1px solid var(--accent-red);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .critical-alert-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-red);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .critical-alert h2 {
+            color: var(--accent-red);
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .critical-alert p {
+            color: var(--text-secondary);
+        }
+
+        /* Navigation */
+        .nav-container {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 1rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .nav a.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-number {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            color: var(--text-primary);
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: var(--bg-tertiary);
+        }
+
+        /* Severity Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-critical {
+            background: var(--accent-red-bg);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .badge-high {
+            background: var(--accent-orange-bg);
+            color: var(--accent-orange);
+            border: 1px solid var(--accent-orange);
+        }
+
+        .badge-medium {
+            background: rgba(227, 179, 65, 0.15);
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+        }
+
+        .badge-low {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .code-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.65rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .copy-btn.copied {
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        pre {
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: var(--accent-purple); }
+        .fn { color: var(--accent-blue); }
+        .str { color: var(--accent-green); }
+        .num { color: var(--accent-orange); }
+        .op { color: var(--accent-cyan); }
+        .cm { color: var(--text-muted); font-style: italic; }
+        .var { color: var(--text-primary); }
+
+        /* Inline Code */
+        code.inline {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--accent-cyan);
+        }
+
+        /* Attack Chain Steps */
+        .attack-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .attack-step {
+            display: flex;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .step-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--accent-blue);
+        }
+
+        .step-line {
+            width: 2px;
+            flex-grow: 1;
+            background: var(--border-color);
+            min-height: 40px;
+        }
+
+        .attack-step:last-child .step-line {
+            display: none;
+        }
+
+        .step-content {
+            padding-bottom: 1.5rem;
+        }
+
+        .step-action {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .step-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            background: var(--bg-tertiary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        /* MITRE ATT&CK */
+        .mitre-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .mitre-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .mitre-tactic {
+            font-size: 0.75rem;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .mitre-technique {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .mitre-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Priority Table */
+        .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .priority-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .priority-column h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .priority-list {
+            list-style: none;
+        }
+
+        .priority-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .priority-list .query-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: var(--text-secondary);
+        }
+
+        /* Impact List */
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .impact-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .impact-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .impact-icon.red { background: var(--accent-red-bg); color: var(--accent-red); }
+        .impact-icon.orange { background: var(--accent-orange-bg); color: var(--accent-orange); }
+        .impact-icon.blue { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+        .impact-icon.purple { background: rgba(163, 113, 247, 0.15); color: var(--accent-purple); }
+
+        .impact-text h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .impact-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Hash display */
+        .hash {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Back Navigation */
+        .back-nav { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; }
+        .back-nav a { color: var(--accent-blue); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem; font-family: inherit; transition: color 0.2s; }
+        .back-nav a:hover { color: var(--text-primary); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .critical-alert {
+                flex-direction: column;
+                text-align: center;
+                margin-left: 1rem;
+                margin-right: 1rem;
+                padding: 1rem;
+            }
+
+            .main {
+                padding: 1rem;
+            }
+
+            pre {
+                font-size: 0.7rem;
+            }
+
+            .back-nav { padding: 0.625rem 1rem; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); background: rgba(22, 27, 34, 0.9); }
+            .back-nav a { font-size: 0.85rem; padding: 0.25rem 0; }
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Back Navigation -->
+    <div class="back-nav">
+        <a href="index.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            Back to All Reports
+        </a>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="data:image/png;base64,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" alt="CRIMSON7 Logo">
+            </div>
+            <h1>Axios NPM Supply Chain RAT</h1>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Maintainer Account Hijack &amp; Cross-Platform RAT &mdash; Threat Hunt Runbook</p>
+            <div class="header-meta">
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    Version 1.0
+                </span>
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 1.5v1h7v-1h-7zM3 3.5V1a1 1 0 011-1h8a1 1 0 011 1v2.5h2a1 1 0 011 1v8a1 1 0 01-1 1h-2v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2H1a1 1 0 01-1-1v-8a1 1 0 011-1h2zm1 0h8v10H4v-10zm-3 2v6h2v-6H1zm13 0v6h-2v-6h2z"/></svg>
+                    Last Updated: March 31, 2026
+                </span>
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/></svg>
+                    Microsoft Sentinel / Microsoft Defender for Endpoint
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Critical Alert -->
+    <div class="critical-alert">
+        <div class="critical-alert-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+        </div>
+        <div>
+            <h2>Critical Supply Chain Compromise</h2>
+            <p>Axios npm package (~100M+ weekly downloads) compromised via maintainer account hijack. Cross-platform RAT deployed via phantom dependency plain-crypto-js@4.2.1. C2: sfrclak[.]com:8000 (142.11.206.73). Advisories: GHSA-fw8c-xr5c-95f9, MAL-2026-2307.</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav">
+            <a href="#overview" class="active">Overview</a>
+            <a href="#iocs">Indicators of Compromise</a>
+            <a href="#osint">C2 Infrastructure</a>
+            <a href="#queries">KQL Detection Queries</a>
+            <a href="#mitre">MITRE ATT&amp;CK</a>
+            <a href="#references">References</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- ==================== SECTION 1: OVERVIEW ==================== -->
+        <section id="overview" class="section">
+            <div class="section-header">
+                <span class="section-number">01</span>
+                <h2>Attack Overview</h2>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-top: 0;">What is the Axios Supply Chain Attack?</h4>
+                <p>On March 31, 2026, two malicious versions of the axios npm package (v1.14.1 and v0.30.4) were published after the lead maintainer's npm account (jasonsaayman) was hijacked. The compromised versions inject a phantom dependency (plain-crypto-js@4.2.1) whose sole purpose is to deploy a cross-platform Remote Access Trojan via a postinstall hook. The RAT targets Windows, macOS, and Linux with platform-specific payloads, communicating with C2 infrastructure at sfrclak[.]com:8000 (142.11.206.73, AS54290 Hostwinds LLC). The malicious versions were live for approximately 3 hours before npm removed them.</p>
+            </div>
+
+            <h3>Attack Chain</h3>
+            <div class="attack-chain">
+                <!-- Step 1 -->
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">1</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Pre-staging (Mar 30 06:00 UTC)</div>
+                        <div class="step-description">Attacker publishes clean plain-crypto-js@4.2.0 via throwaway nrwise npm account</div>
+                    </div>
+                </div>
+                <!-- Step 2 -->
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">2</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Domain Registration (Mar 30 16:03 UTC)</div>
+                        <div class="step-description">sfrclak.com registered via NameCheap, pointed to 142.11.206.73</div>
+                    </div>
+                </div>
+                <!-- Step 3 -->
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">3</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Weaponization (Mar 30 23:59 UTC)</div>
+                        <div class="step-description">plain-crypto-js@4.2.1 published with malicious postinstall hook</div>
+                    </div>
+                </div>
+                <!-- Step 4 -->
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">4</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Account Hijack</div>
+                        <div class="step-description">Compromised jasonsaayman npm account; email changed to ifstap@proton.me</div>
+                    </div>
+                </div>
+                <!-- Step 5 -->
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">5</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Delivery (Mar 31 00:21&ndash;01:00 UTC)</div>
+                        <div class="step-description">axios@1.14.1 and axios@0.30.4 published via npm CLI</div>
+                    </div>
+                </div>
+                <!-- Step 6 -->
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">6</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Execution</div>
+                        <div class="step-description">npm install triggers postinstall &rarr; setup.js &rarr; OS detection &rarr; RAT download from C2</div>
+                        <div class="step-code">http://sfrclak.com:8000/6202033</div>
+                    </div>
+                </div>
+                <!-- Step 7 -->
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">7</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">C2 Beaconing</div>
+                        <div class="step-description">HTTP POST every 60 seconds with Base64-encoded system fingerprint. Fake UA: mozilla/4.0 (compatible; msie 8.0; windows nt 5.1; trident/4.0)</div>
+                        <div class="step-code">packages.npm.org/product{0,1,2}</div>
+                    </div>
+                </div>
+                <!-- Step 8 -->
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">8</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Anti-forensics</div>
+                        <div class="step-description">Dropper self-deletes, replaces package.json with clean stub</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impact -->
+            <h3>Impact Assessment</h3>
+            <div class="impact-grid">
+                <div class="impact-item">
+                    <div class="impact-icon red">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Blast Radius</h5>
+                        <p>~100M+ weekly downloads; any npm install during 3-hour window at risk</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon red">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Credential Theft</h5>
+                        <p>All env vars, API keys, SSH keys, npm tokens accessible from compromised hosts</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon orange">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Persistence</h5>
+                        <p>Platform-specific RAT with 60-second C2 beacon; platform persistence mechanisms</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon orange">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Anti-Forensics</h5>
+                        <p>Self-deleting dropper, clean package.json replacement, process orphaning</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon purple">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Cascade Risk</h5>
+                        <p>Additional packages (@shadanai/openclaw, @qqbrowser/openclaw-qbot) distribute same malware</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 2: IOCs ==================== -->
+        <section id="iocs" class="section">
+            <div class="section-header">
+                <span class="section-number">02</span>
+                <h2>Indicators of Compromise</h2>
+            </div>
+
+            <p><button onclick="downloadIOCs()" class="copy-btn" style="font-size:0.85rem;padding:0.5rem 1rem;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download IOCs (TXT)</button></p>
+
+            <!-- Network IOCs -->
+            <h3>Network IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Type</th>
+                            <th>Context</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">sfrclak.com</code></td>
+                            <td>Domain</td>
+                            <td>C2 server</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">142.11.206.73</code></td>
+                            <td>IP</td>
+                            <td>C2 IP (AS54290 Hostwinds LLC)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">http://sfrclak.com:8000/6202033</code></td>
+                            <td>URL</td>
+                            <td>C2 endpoint</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">8000</code></td>
+                            <td>Port</td>
+                            <td>Non-standard C2 port</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">packages.npm.org</code></td>
+                            <td>Domain</td>
+                            <td>Decoy in POST body</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">mozilla/4.0 (compatible; msie 8.0; windows nt 5.1; trident/4.0)</code></td>
+                            <td>User-Agent</td>
+                            <td>RAT beacon UA</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- File System IOCs -->
+            <h3>File System IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Path</th>
+                            <th>Context</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">%PROGRAMDATA%\wt.exe</code></td>
+                            <td>Renamed PowerShell (Windows Terminal masquerade)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">%TEMP%\6202033.vbs</code></td>
+                            <td>VBScript launcher (hidden execution)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">%TEMP%\6202033.ps1</code></td>
+                            <td>PowerShell RAT payload</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">/Library/Caches/com.apple.act.mond</code></td>
+                            <td>macOS RAT binary (Apple daemon masquerade)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">/tmp/ld.py</code></td>
+                            <td>Linux Python RAT script</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">node_modules/plain-crypto-js/setup.js</code></td>
+                            <td>Dropper script (4,209 bytes)</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Package Hashes -->
+            <h3>Package Hashes (SHA-1)</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SHA-1</th>
+                            <th>Package</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="hash">2553649f2322049666871cea80a5d0d6adc700ca</span></td>
+                            <td>axios@1.14.1 (malicious)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="hash">d6f3f62fd3b9f5432f5782b62d8cfd5247d5ee71</span></td>
+                            <td>axios@0.30.4 (malicious)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="hash">07d889e2dadce6f3910dcbc253317d28ca61c766</span></td>
+                            <td>plain-crypto-js@4.2.1 (dropper)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Process / Command Line IOCs -->
+            <h3>Process / Command Line IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Context</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">wt.exe -w hidden -ep bypass</code></td>
+                            <td>Renamed PowerShell with bypass flags</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">wscript.exe *6202033.vbs</code></td>
+                            <td>VBScript launcher execution</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">nohup python3 /tmp/ld.py</code></td>
+                            <td>Linux RAT (orphaned to PID 1)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">codesign --force --deep --sign -</code></td>
+                            <td>macOS ad-hoc code signing by RAT</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">OrDeR_7077</code></td>
+                            <td>XOR cipher key in dropper obfuscation</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Malicious npm Packages -->
+            <h3>Malicious npm Packages</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Package</th>
+                            <th>Context</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">axios@1.14.1</code></td>
+                            <td>Compromised 1.x release</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">axios@0.30.4</code></td>
+                            <td>Compromised 0.x release</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">plain-crypto-js@4.2.1</code></td>
+                            <td>RAT dropper dependency</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">@shadanai/openclaw</code> (4 versions)</td>
+                            <td>Cascade package, same C2</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">@qqbrowser/openclaw-qbot@0.0.130</code></td>
+                            <td>Bundles tampered axios in node_modules</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Attacker Accounts -->
+            <h3>Attacker Accounts</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Account</th>
+                            <th>Context</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">jasonsaayman</code> (npm)</td>
+                            <td>Compromised lead maintainer</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">nrwise</code> (npm)</td>
+                            <td>Attacker throwaway account</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">ifstap@proton.me</code></td>
+                            <td>Attacker email on compromised account</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">nrwise@proton.me</code></td>
+                            <td>Throwaway account email</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Security Advisories -->
+            <h3>Security Advisories</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Advisory ID</th>
+                            <th>Package</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">GHSA-fw8c-xr5c-95f9</code></td>
+                            <td>axios</td>
+                            <td>GitHub</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">GHSA-2x9r-6wxq-hrr7</code></td>
+                            <td>plain-crypto-js</td>
+                            <td>GitHub</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">MAL-2026-2307</code></td>
+                            <td>axios</td>
+                            <td>CIRCL</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">MAL-2026-2306</code></td>
+                            <td>plain-crypto-js</td>
+                            <td>CIRCL</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 3: C2 INFRASTRUCTURE ==================== -->
+        <section id="osint" class="section">
+            <div class="section-header">
+                <span class="section-number">03</span>
+                <h2>C2 Infrastructure</h2>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-top: 0;">C2 Server Summary</h4>
+                <p>The C2 domain <code class="inline">sfrclak.com</code> was registered approximately 8 hours before the first malicious package was published. It resolves to <code class="inline">142.11.206.73</code> hosted on a Hostwinds LLC VPS (AS54290) in Dallas, Texas. The C2 operated over plaintext HTTP on port 8000 with no SSL/TLS certificate. The domain has zero web presence — never indexed by search engines, never archived by the Wayback Machine. The string "sfrclak" has no meaning in any language and appears nowhere as a username or identifier on any platform.</p>
+            </div>
+
+            <h3>C2 Domain WHOIS</h3>
+            <div class="card">
+                <h4 style="margin-top: 0;">sfrclak.com Registration Details</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Registrar</td><td>NameCheap, Inc.</td></tr>
+                            <tr><td>Created</td><td>2026-03-30 16:03:46 UTC</td></tr>
+                            <tr><td>Registrant</td><td>Privacy-protected (Withheld for Privacy ehf)</td></tr>
+                            <tr><td>Status</td><td><code class="inline">addPeriod</code></td></tr>
+                            <tr><td>Nameservers</td><td>dns1/dns2.registrar-servers.com</td></tr>
+                            <tr><td>SSL/TLS</td><td>None (plaintext HTTP on port 8000)</td></tr>
+                            <tr><td>Wayback</td><td>No snapshots</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 4: KQL QUERIES ==================== -->
+        <section id="queries" class="section">
+            <div class="section-header">
+                <span class="section-number">04</span>
+                <h2>KQL Detection Queries</h2>
+            </div>
+
+            <p>Deploy these queries in Microsoft Sentinel or Defender Advanced Hunting to detect indicators associated with this threat. 11 queries organized by detection category.</p>
+
+            <!-- 4.1 Network Detection -->
+            <h3>4.1 Network Detection</h3>
+
+            <!-- Query #1 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #1 [P1-CRIT]: C2 Network &mdash; IP, Domain, Port 8000</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #1 [P1-CRIT]: C2 Network — IP, Domain, Port 8000</span>
+<span class="cm">// Table: DeviceNetworkEvents | MITRE: T1071.001, T1571</span>
+<span class="kw">let</span> <span class="var">C2_IPs</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"142.11.206.73"</span>]);
+<span class="kw">let</span> <span class="var">C2_Domains</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"sfrclak.com"</span>, <span class="str">"sfrclak"</span>]);
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteIP</span> <span class="kw">in</span> (<span class="var">C2_IPs</span>)
+    <span class="kw">or</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="var">C2_Domains</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">RemoteIP</span>, <span class="var">RemoteUrl</span>, <span class="var">RemotePort</span>,
+    <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>,
+    <span class="var">InitiatingProcessAccountName</span>, <span class="var">InitiatingProcessParentFileName</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query #2 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #2 [P1-CRIT]: C2 in Azure Firewall / NSG Flow Logs</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #2 [P1-CRIT]: C2 in Azure Firewall / NSG Flow Logs</span>
+<span class="cm">// Table: AzureDiagnostics | MITRE: T1071.001</span>
+<span class="var">AzureDiagnostics</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="fn">extend</span> <span class="var">DestIP</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"destinationAddress_s"</span>, <span class="str">""</span>),
+    <span class="var">DestPort</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"destinationPort_s"</span>, <span class="str">""</span>),
+    <span class="var">SrcIP</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"sourceAddress_s"</span>, <span class="str">""</span>),
+    <span class="var">Fqdn</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"FQDN_s"</span>, <span class="str">""</span>),
+    <span class="var">Msg</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"msg_s"</span>, <span class="str">""</span>),
+    <span class="var">RuleAction</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"action_s"</span>, <span class="str">""</span>),
+    <span class="var">RuleName</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"ruleName_s"</span>, <span class="str">""</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">DestIP</span> <span class="op">==</span> <span class="str">"142.11.206.73"</span>
+    <span class="kw">or</span> <span class="var">Fqdn</span> <span class="kw">has</span> <span class="str">"sfrclak"</span>
+    <span class="kw">or</span> <span class="var">Msg</span> <span class="kw">has</span> <span class="str">"142.11.206.73"</span>
+    <span class="kw">or</span> <span class="var">Msg</span> <span class="kw">has</span> <span class="str">"sfrclak"</span>
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">Resource</span>, <span class="var">ResourceGroup</span>, <span class="var">Category</span>,
+    <span class="var">Msg</span>, <span class="var">SrcIP</span>, <span class="var">DestIP</span>, <span class="var">DestPort</span>, <span class="var">Fqdn</span>, <span class="var">RuleAction</span>, <span class="var">RuleName</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query #3 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #3 [P1-CRIT]: DNS Resolution of C2 Domain</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #3 [P1-CRIT]: DNS Resolution of C2 Domain</span>
+<span class="cm">// Table: DNS_Summarized_Logs_ip_CL | MITRE: T1071.001</span>
+<span class="var">DNS_Summarized_Logs_ip_CL</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="fn">extend</span> <span class="var">Query</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"Query_s"</span>, <span class="fn">column_ifexists</span>(<span class="str">"query_s"</span>, <span class="str">""</span>)),
+    <span class="var">Answer</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"Answer_s"</span>, <span class="fn">column_ifexists</span>(<span class="str">"answer_s"</span>, <span class="str">""</span>)),
+    <span class="var">ClientIP</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"ClientIP_s"</span>, <span class="fn">column_ifexists</span>(<span class="str">"clientIP_s"</span>, <span class="str">""</span>)),
+    <span class="var">QueryType</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"QueryType_s"</span>, <span class="fn">column_ifexists</span>(<span class="str">"queryType_s"</span>, <span class="str">""</span>)),
+    <span class="var">ResponseCode</span> <span class="op">=</span> <span class="fn">column_ifexists</span>(<span class="str">"ResponseCode_s"</span>, <span class="fn">column_ifexists</span>(<span class="str">"responseCode_s"</span>, <span class="str">""</span>))
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Query</span> <span class="fn">has_any</span> (<span class="str">"sfrclak.com"</span>, <span class="str">"sfrclak"</span>)
+    <span class="kw">or</span> <span class="var">Answer</span> <span class="kw">has</span> <span class="str">"142.11.206.73"</span>
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">ClientIP</span>, <span class="var">Query</span>, <span class="var">QueryType</span>, <span class="var">Answer</span>, <span class="var">ResponseCode</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- 4.2 File-Based Detection -->
+            <h3>4.2 File-Based Detection</h3>
+
+            <!-- Query #4 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #4 [P1-CRIT]: RAT File Artifacts &mdash; All Platforms</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #4 [P1-CRIT]: RAT File Artifacts — All Platforms</span>
+<span class="cm">// Table: DeviceFileEvents | MITRE: T1036.005, T1105, T1070.004</span>
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"6202033.vbs"</span>, <span class="str">"6202033.ps1"</span>, <span class="str">"setup.js"</span>, <span class="str">"ld.py"</span>)
+    <span class="kw">or</span> <span class="var">FolderPath</span> <span class="fn">has_any</span> (<span class="str">"ProgramData\wt.exe"</span>, <span class="str">"\6202033."</span>, <span class="str">"plain-crypto-js"</span>)
+    <span class="kw">or</span> (<span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"ProgramData"</span> <span class="kw">and</span> <span class="var">FileName</span> <span class="fn">endswith</span> <span class="str">".exe"</span>
+        <span class="kw">and</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"node.exe"</span>, <span class="str">"npm.cmd"</span>))
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">ActionType</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>,
+    <span class="var">SHA256</span>, <span class="var">SHA1</span>, <span class="var">FileSize</span>, <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>, <span class="var">InitiatingProcessAccountName</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- 4.3 Process-Based Detection -->
+            <h3>4.3 Process-Based Detection</h3>
+
+            <!-- Query #5 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #5 [P2-HIGH]: Node.js / npm Spawning Suspicious Processes</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #5 [P2-HIGH]: Node.js / npm Spawning Suspicious Processes</span>
+<span class="cm">// Table: DeviceProcessEvents | MITRE: T1059.001, T1059.005, T1204.002</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> (
+    <span class="cm">// Attack marker in any command line</span>
+    <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"6202033"</span>
+    <span class="cm">// wt.exe (renamed PowerShell) with hidden/bypass flags from ProgramData</span>
+    <span class="kw">or</span> (<span class="var">FileName</span> <span class="op">=~</span> <span class="str">"wt.exe"</span> <span class="kw">and</span> <span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"ProgramData"</span>
+        <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"-w hidden"</span>, <span class="str">"-ep bypass"</span>))
+    <span class="cm">// wscript launching .vbs from Temp (VBScript dropper chain)</span>
+    <span class="kw">or</span> (<span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"wscript.exe"</span>, <span class="str">"cscript.exe"</span>)
+        <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"Temp"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">".vbs"</span>)
+    <span class="cm">// node/npm directly spawning wscript (postinstall -&gt; VBS is abnormal)</span>
+    <span class="kw">or</span> (<span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"node.exe"</span>, <span class="str">"npm.cmd"</span>)
+        <span class="kw">and</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"wscript.exe"</span>, <span class="str">"cscript.exe"</span>))
+    <span class="cm">// plain-crypto-js reference in process tree</span>
+    <span class="kw">or</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"plain-crypto-js"</span>
+    <span class="kw">or</span> <span class="var">InitiatingProcessCommandLine</span> <span class="kw">has</span> <span class="str">"plain-crypto-js"</span>
+    <span class="cm">// T1059.006 — Python RAT on Linux (nohup python3 /tmp/ld.py)</span>
+    <span class="kw">or</span> (<span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"python.exe"</span>, <span class="str">"python3.exe"</span>, <span class="str">"python3"</span>)
+        <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"/tmp/ld.py"</span>)
+    <span class="cm">// T1059.002 — macOS AppleScript payload (osascript from node)</span>
+    <span class="kw">or</span> (<span class="var">FileName</span> <span class="op">=~</span> <span class="str">"osascript"</span> <span class="kw">and</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"node"</span>, <span class="str">"npm"</span>, <span class="str">"zsh"</span>, <span class="str">"bash"</span>))
+)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>,
+    <span class="var">ProcessCommandLine</span>, <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>, <span class="var">InitiatingProcessParentFileName</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query #6 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #6 [P2-HIGH]: Cloud-Managed Endpoints</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #6 [P2-HIGH]: Same Detection for Cloud-Managed Endpoints</span>
+<span class="cm">// Table: CloudProcessEvents | MITRE: T1059</span>
+<span class="var">CloudProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"6202033"</span>, <span class="str">"plain-crypto-js"</span>)
+    <span class="kw">or</span> (<span class="var">ProcessName</span> <span class="op">=~</span> <span class="str">"wt.exe"</span> <span class="kw">and</span> <span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"ProgramData"</span>
+        <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"-w hidden"</span>, <span class="str">"-ep bypass"</span>))
+    <span class="kw">or</span> (<span class="var">ProcessName</span> <span class="fn">in~</span> (<span class="str">"wscript.exe"</span>, <span class="str">"cscript.exe"</span>)
+        <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"Temp"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">".vbs"</span>)
+    <span class="kw">or</span> (<span class="var">ParentProcessName</span> <span class="fn">in~</span> (<span class="str">"node.exe"</span>, <span class="str">"npm.cmd"</span>)
+        <span class="kw">and</span> <span class="var">ProcessName</span> <span class="fn">in~</span> (<span class="str">"wscript.exe"</span>, <span class="str">"cscript.exe"</span>))
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">AccountName</span>, <span class="var">ProcessName</span>, <span class="var">FolderPath</span>,
+    <span class="var">ProcessCommandLine</span>, <span class="var">ParentProcessName</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- 4.4 Identity Detection -->
+            <h3>4.4 Identity Detection</h3>
+
+            <!-- Query #7 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #7 [P2-HIGH]: Sign-Ins from Attacker Infrastructure</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #7 [P2-HIGH]: Sign-Ins from Attacker Infrastructure</span>
+<span class="cm">// Table: SigninLogs | MITRE: T1078</span>
+<span class="var">SigninLogs</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">IPAddress</span> <span class="op">==</span> <span class="str">"142.11.206.73"</span>
+    <span class="kw">or</span> <span class="var">IPAddress</span> <span class="fn">startswith</span> <span class="str">"142.11.206."</span>
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">UserDisplayName</span>, <span class="var">UserPrincipalName</span>, <span class="var">IPAddress</span>,
+    <span class="var">AppDisplayName</span>, <span class="var">ResultType</span>, <span class="var">ResultDescription</span>, <span class="var">Location</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- 4.5 Supply Chain Exposure -->
+            <h3>4.5 Supply Chain Exposure</h3>
+
+            <!-- Query #8 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #8 [P2-HIGH]: npm install During Attack Window (Exposure Check)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #8 [P2-HIGH]: npm install During Attack Window (Exposure Check)</span>
+<span class="cm">// Table: DeviceProcessEvents</span>
+<span class="cm">// Attack window: 2026-03-31 00:00 — 04:00 UTC</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="kw">between</span> (<span class="fn">datetime</span>(<span class="num">2026-03-31T00:00:00Z</span>) .. <span class="fn">datetime</span>(<span class="num">2026-03-31T04:00:00Z</span>))
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"npm install"</span>, <span class="str">"npm ci"</span>, <span class="str">"yarn install"</span>, <span class="str">"pnpm install"</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">ProcessCommandLine</span>,
+    <span class="var">InitiatingProcessFileName</span>, <span class="var">FolderPath</span>
+<span class="op">|</span> <span class="fn">summarize</span> <span class="var">InstallCount</span> <span class="op">=</span> <span class="fn">count</span>(), <span class="var">Commands</span> <span class="op">=</span> <span class="fn">make_set</span>(<span class="var">ProcessCommandLine</span>, <span class="num">5</span>)
+    <span class="kw">by</span> <span class="var">DeviceName</span>, <span class="var">AccountName</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">InstallCount</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- 4.6 Persistence & Evasion -->
+            <h3>4.6 Persistence &amp; Evasion</h3>
+
+            <!-- Query #9 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #9 [P2-HIGH]: Registry Persistence &mdash; Run Keys, Services, Tasks</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #9 [P2-HIGH]: Registry Persistence — Run Keys, Services, Tasks</span>
+<span class="cm">// Table: DeviceRegistryEvents | MITRE: T1547</span>
+<span class="var">DeviceRegistryEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ActionType</span> <span class="kw">in</span> (<span class="str">"RegistryValueSet"</span>, <span class="str">"RegistryKeyCreated"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryValueData</span> <span class="fn">has_any</span> (<span class="str">"wt.exe"</span>, <span class="str">"6202033"</span>, <span class="str">"sfrclak"</span>, <span class="str">"plain-crypto-js"</span>, <span class="str">"ld.py"</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">ActionType</span>, <span class="var">RegistryKey</span>, <span class="var">RegistryValueName</span>,
+    <span class="var">RegistryValueData</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query #10 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #10 [P2-HIGH]: Obfuscation &amp; Deobfuscation &mdash; AMSI Script Content</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #10 [P2-HIGH]: Obfuscation &amp; Deobfuscation — AMSI Script Content</span>
+<span class="cm">// Table: DeviceEvents | MITRE: T1027, T1140, T1106</span>
+<span class="var">DeviceEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ActionType</span> <span class="kw">in</span> (<span class="str">"AmsiScriptContent"</span>, <span class="str">"AntiMalwareScanEventContent"</span>,
+    <span class="str">"ScriptContent"</span>, <span class="str">"PowerShellCommand"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">AdditionalFields</span> <span class="fn">has_any</span> (<span class="str">"OrDeR_7077"</span>, <span class="str">"sfrclak"</span>, <span class="str">"6202033"</span>,
+    <span class="str">"plain-crypto-js"</span>, <span class="str">"stq["</span>, <span class="str">"com.apple.act.mond"</span>,
+    <span class="str">"packages.npm.org/product"</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">ActionType</span>, <span class="var">AdditionalFields</span>,
+    <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query #11 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #11 [P2-HIGH]: Post-Compromise Discovery Commands from RAT</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Query #11 [P2-HIGH]: Post-Compromise Discovery Commands from RAT</span>
+<span class="cm">// Table: DeviceProcessEvents | MITRE: T1082, T1057, T1083</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">TimeGenerated</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="op">=~</span> <span class="str">"wt.exe"</span>
+    <span class="kw">or</span> (<span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"powershell.exe"</span>, <span class="str">"pwsh.exe"</span>)
+        <span class="kw">and</span> <span class="var">InitiatingProcessFolderPath</span> <span class="kw">has</span> <span class="str">"ProgramData"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"hostname.exe"</span>, <span class="str">"whoami.exe"</span>, <span class="str">"systeminfo.exe"</span>,
+    <span class="str">"tasklist.exe"</span>, <span class="str">"ipconfig.exe"</span>, <span class="str">"net.exe"</span>, <span class="str">"net1.exe"</span>,
+    <span class="str">"wmic.exe"</span>, <span class="str">"cmd.exe"</span>, <span class="str">"query.exe"</span>)
+    <span class="kw">or</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"Get-Process"</span>, <span class="str">"Get-ComputerInfo"</span>,
+        <span class="str">"Get-WmiObject"</span>, <span class="str">"$env:USERNAME"</span>, <span class="str">"$env:COMPUTERNAME"</span>,
+        <span class="str">"Get-ChildItem"</span>, <span class="str">"dir /s"</span>, <span class="str">"tasklist"</span>, <span class="str">"systeminfo"</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>,
+    <span class="var">ProcessCommandLine</span>, <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">InitiatingProcessFolderPath</span>, <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="fn">sort by</span> <span class="var">TimeGenerated</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Priority Reference -->
+            <h3>Priority Reference</h3>
+            <div class="priority-grid">
+                <div class="priority-column">
+                    <h4><span class="badge badge-critical">P1-CRIT</span> Direct IOC Matches</h4>
+                    <ul class="priority-list">
+                        <li><span class="query-num">#1</span> C2 Network</li>
+                        <li><span class="query-num">#2</span> Azure Firewall</li>
+                        <li><span class="query-num">#3</span> DNS Resolution</li>
+                        <li><span class="query-num">#4</span> RAT File Artifacts</li>
+                    </ul>
+                </div>
+                <div class="priority-column">
+                    <h4><span class="badge badge-high">P2-HIGH</span> Behavioral TTP &amp; Exposure</h4>
+                    <ul class="priority-list">
+                        <li><span class="query-num">#5</span> Suspicious Processes</li>
+                        <li><span class="query-num">#6</span> Cloud Endpoints</li>
+                        <li><span class="query-num">#7</span> Identity / Sign-ins</li>
+                        <li><span class="query-num">#8</span> npm Exposure Window</li>
+                        <li><span class="query-num">#9</span> Registry Persistence</li>
+                        <li><span class="query-num">#10</span> AMSI / Obfuscation</li>
+                        <li><span class="query-num">#11</span> Discovery Commands</li>
+                    </ul>
+                </div>
+                <div class="priority-column">
+                    <h4><span class="badge badge-medium">P3-MED</span> Additional Telemetry</h4>
+                    <ul class="priority-list">
+                        <li style="color: var(--text-muted); font-style: italic;">None currently &mdash; all queries are P1 or P2 for this threat</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 5: MITRE ATT&CK ==================== -->
+        <section id="mitre" class="section">
+            <div class="section-header">
+                <span class="section-number">05</span>
+                <h2>MITRE ATT&amp;CK Mapping</h2>
+            </div>
+
+            <div class="mitre-grid">
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Initial Access</div>
+                    <div class="mitre-technique">Supply Chain Compromise</div>
+                    <div class="mitre-id">T1195.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">PowerShell</div>
+                    <div class="mitre-id">T1059.001</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">AppleScript</div>
+                    <div class="mitre-id">T1059.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">Visual Basic (VBScript)</div>
+                    <div class="mitre-id">T1059.005</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">Python</div>
+                    <div class="mitre-id">T1059.006</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">User Execution: Malicious File</div>
+                    <div class="mitre-id">T1204.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Persistence</div>
+                    <div class="mitre-technique">Boot/Logon Autostart</div>
+                    <div class="mitre-id">T1547</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Obfuscated Files</div>
+                    <div class="mitre-id">T1027</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Masquerading</div>
+                    <div class="mitre-id">T1036.005</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">File Deletion</div>
+                    <div class="mitre-id">T1070.004</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Deobfuscate/Decode</div>
+                    <div class="mitre-id">T1140</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Hidden Window</div>
+                    <div class="mitre-id">T1564.003</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Native API</div>
+                    <div class="mitre-id">T1106</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Command &amp; Control</div>
+                    <div class="mitre-technique">HTTP Web Protocols</div>
+                    <div class="mitre-id">T1071.001</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Command &amp; Control</div>
+                    <div class="mitre-technique">Non-Standard Port</div>
+                    <div class="mitre-id">T1571</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Command &amp; Control</div>
+                    <div class="mitre-technique">Ingress Tool Transfer</div>
+                    <div class="mitre-id">T1105</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Discovery</div>
+                    <div class="mitre-technique">System Information Discovery</div>
+                    <div class="mitre-id">T1082</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Credential Access</div>
+                    <div class="mitre-technique">Valid Accounts</div>
+                    <div class="mitre-id">T1078</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 6: REFERENCES ==================== -->
+        <section id="references" class="section">
+            <div class="section-header">
+                <span class="section-number">06</span>
+                <h2>References &amp; Resources</h2>
+            </div>
+
+            <div class="card">
+                <h4>Source Intelligence</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Aikido Security</strong><br>
+                        <a href="https://www.aikido.dev/blog/axios-npm-compromised-maintainer-hijacked-rat" target="_blank">https://www.aikido.dev/blog/axios-npm-compromised-maintainer-hijacked-rat</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Socket.dev</strong><br>
+                        <a href="https://socket.dev/blog/axios-npm-package-compromised" target="_blank">https://socket.dev/blog/axios-npm-package-compromised</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>StepSecurity</strong><br>
+                        <a href="https://www.stepsecurity.io/blog/axios-compromised-on-npm-malicious-versions-drop-remote-access-trojan" target="_blank">https://www.stepsecurity.io/blog/axios-compromised-on-npm-malicious-versions-drop-remote-access-trojan</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>The Hacker News</strong><br>
+                        <a href="https://thehackernews.com/2026/03/axios-supply-chain-attack-pushes-cross.html" target="_blank">https://thehackernews.com/2026/03/axios-supply-chain-attack-pushes-cross.html</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>GitHub Issue #10604</strong><br>
+                        <a href="https://github.com/axios/axios/issues/10604" target="_blank">https://github.com/axios/axios/issues/10604</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>CIRCL MAL-2026-2307</strong><br>
+                        <a href="https://vulnerability.circl.lu/vuln/mal-2026-2307" target="_blank">https://vulnerability.circl.lu/vuln/mal-2026-2307</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>CIRCL MAL-2026-2306</strong><br>
+                        <a href="https://vulnerability.circl.lu/vuln/mal-2026-2306" target="_blank">https://vulnerability.circl.lu/vuln/mal-2026-2306</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>GridInSoft</strong><br>
+                        <a href="https://gridinsoft.com/online-virus-scanner/url/sfrclak-com" target="_blank">https://gridinsoft.com/online-virus-scanner/url/sfrclak-com</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Semgrep</strong><br>
+                        <a href="https://semgrep.dev/blog/2026/axios-supply-chain-incident-indicators-of-compromise-and-how-to-contain-the-threat/" target="_blank">https://semgrep.dev/blog/2026/axios-supply-chain-incident-indicators-of-compromise-and-how-to-contain-the-threat/</a>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>urlscan.io</strong><br>
+                        <a href="https://urlscan.io/ip/142.11.206.73" target="_blank">https://urlscan.io/ip/142.11.206.73</a>
+                    </li>
+                    <li style="margin-bottom: 0;">
+                        <strong>crt.sh — sfrclak.com</strong><br>
+                        <a href="https://crt.sh/?q=sfrclak.com" target="_blank">https://crt.sh/?q=sfrclak.com</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>Attribution Status</h4>
+                <p><strong>Status:</strong> UNATTRIBUTED</p>
+                <p><strong>Possible Connection:</strong> Shai-Hulud npm worm campaign (Unit 42, Microsoft) &mdash; similar operational pattern but no confirmed link</p>
+                <p style="margin-bottom: 0;"><strong>Attacker OPSEC:</strong> Proton Mail burner accounts, NameCheap registration, Hostwinds VPS, single-use identifiers, no username reuse</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                <strong>Community Threat Hunt Runbook</strong> | Created by CRIMSON7 Security Operations
+            </div>
+            <div class="footer-meta">
+                <span>Last Updated: March 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                target.scrollIntoView({ behavior: 'smooth' });
+
+                document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        // Update active nav on scroll
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY + 100;
+
+            sections.forEach(section => {
+                if (section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+                    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                    document.querySelector(`.nav a[href="#${section.id}"]`)?.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    <!-- Copy Button Injection -->
+    <script>
+    document.querySelectorAll('.code-header').forEach(header => {
+        const lang = header.querySelector('.code-lang');
+        const actions = document.createElement('div');
+        actions.className = 'code-header-actions';
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+        btn.addEventListener('click', () => {
+            const pre = header.closest('.code-block').querySelector('pre');
+            const text = pre.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.classList.add('copied');
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Copied';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+                }, 2000);
+            });
+        });
+        actions.appendChild(lang.cloneNode(true));
+        actions.appendChild(btn);
+        lang.replaceWith(actions);
+    });
+    </script>
+
+    <!-- IOC Data & Download -->
+    <script>
+    const IOC_DATA = {
+        "meta": {
+            "title": "Axios NPM Supply Chain RAT — Indicators of Compromise",
+            "date": "2026-03-31",
+            "advisories": ["GHSA-fw8c-xr5c-95f9", "GHSA-2x9r-6wxq-hrr7", "MAL-2026-2307", "MAL-2026-2306"],
+            "author": "CRIMSON7 Security Operations"
+        },
+        "network": [
+            {"indicator": "sfrclak.com", "type": "domain", "context": "C2 server", "source": "Aikido, Socket, StepSecurity"},
+            {"indicator": "142.11.206.73", "type": "ip", "context": "C2 IP (AS54290 Hostwinds LLC, Dallas TX)", "source": "Aikido, Socket, StepSecurity"},
+            {"indicator": "http://sfrclak.com:8000/6202033", "type": "url", "context": "C2 endpoint URL", "source": "Socket, StepSecurity"},
+            {"indicator": "8000", "type": "port", "context": "C2 port (non-standard HTTP)", "source": "All sources"},
+            {"indicator": "packages.npm.org", "type": "domain", "context": "Decoy domain in POST body (not legitimate npm)", "source": "Socket"},
+            {"indicator": "mozilla/4.0 (compatible; msie 8.0; windows nt 5.1; trident/4.0)", "type": "user-agent", "context": "RAT beacon spoofed UA", "source": "Socket"},
+            {"indicator": "packages.npm.org/product0", "type": "beacon", "context": "macOS platform identifier", "source": "Socket"},
+            {"indicator": "packages.npm.org/product1", "type": "beacon", "context": "Windows platform identifier", "source": "Socket"},
+            {"indicator": "packages.npm.org/product2", "type": "beacon", "context": "Linux platform identifier", "source": "Socket"}
+        ],
+        "file_system": [
+            {"indicator": "%PROGRAMDATA%\\wt.exe", "context": "Renamed PowerShell copy (Windows Terminal masquerade)", "source": "Aikido, Socket, StepSecurity"},
+            {"indicator": "%TEMP%\\6202033.vbs", "context": "VBScript launcher (hidden execution)", "source": "Aikido, Socket, StepSecurity"},
+            {"indicator": "%TEMP%\\6202033.ps1", "context": "PowerShell RAT payload", "source": "Aikido, Socket, StepSecurity"},
+            {"indicator": "/Library/Caches/com.apple.act.mond", "context": "macOS RAT binary (Apple daemon masquerade)", "source": "Aikido, Socket, StepSecurity"},
+            {"indicator": "/tmp/ld.py", "context": "Linux Python RAT script", "source": "Aikido, Socket, StepSecurity"},
+            {"indicator": "$TMPDIR/6202033", "context": "Temporary staging path (all platforms)", "source": "Socket"},
+            {"indicator": "node_modules/plain-crypto-js", "context": "Malicious dropper package directory", "source": "All sources"},
+            {"indicator": "node_modules/plain-crypto-js/setup.js", "context": "Dropper script (4,209 bytes)", "source": "Socket, StepSecurity"}
+        ],
+        "hashes_sha1": [
+            {"hash": "2553649f2322049666871cea80a5d0d6adc700ca", "package": "axios@1.14.1 (malicious)", "source": "StepSecurity"},
+            {"hash": "d6f3f62fd3b9f5432f5782b62d8cfd5247d5ee71", "package": "axios@0.30.4 (malicious)", "source": "StepSecurity"},
+            {"hash": "07d889e2dadce6f3910dcbc253317d28ca61c766", "package": "plain-crypto-js@4.2.1 (dropper)", "source": "StepSecurity"}
+        ],
+        "process_cli": [
+            {"indicator": "wt.exe -w hidden -ep bypass", "context": "Renamed PowerShell with hidden/bypass flags", "source": "StepSecurity"},
+            {"indicator": "wscript.exe *6202033.vbs", "context": "VBScript launcher execution", "source": "StepSecurity"},
+            {"indicator": "nohup python3 /tmp/ld.py", "context": "Linux RAT execution (orphaned to PID 1)", "source": "Socket"},
+            {"indicator": "codesign --force --deep --sign -", "context": "macOS ad-hoc code signing by RAT", "source": "Socket"},
+            {"indicator": "OrDeR_7077", "context": "XOR cipher key in dropper obfuscation", "source": "Socket"}
+        ],
+        "malicious_packages": [
+            {"package": "axios@1.14.1", "context": "Compromised 1.x branch release", "source": "All sources"},
+            {"package": "axios@0.30.4", "context": "Compromised 0.x branch release", "source": "All sources"},
+            {"package": "plain-crypto-js@4.2.1", "context": "Malicious RAT dropper dependency", "source": "All sources"},
+            {"package": "plain-crypto-js@4.2.0", "context": "Clean decoy (pre-staged 18h before)", "source": "Socket, StepSecurity"},
+            {"package": "@shadanai/openclaw@2026.3.28-2", "context": "Cascade package, same C2", "source": "Socket"},
+            {"package": "@shadanai/openclaw@2026.3.28-3", "context": "Cascade package, same C2", "source": "Socket"},
+            {"package": "@shadanai/openclaw@2026.3.31-1", "context": "Cascade package, same C2", "source": "Socket"},
+            {"package": "@shadanai/openclaw@2026.3.31-2", "context": "Cascade package, same C2", "source": "Socket"},
+            {"package": "@qqbrowser/openclaw-qbot@0.0.130", "context": "Bundles tampered axios in node_modules", "source": "Socket"}
+        ],
+        "attacker_accounts": [
+            {"indicator": "jasonsaayman (npm)", "context": "Compromised lead maintainer account", "source": "All sources"},
+            {"indicator": "nrwise (npm)", "context": "Attacker-created throwaway account", "source": "Aikido"},
+            {"indicator": "ifstap@proton.me", "context": "Attacker email set on compromised account", "source": "Aikido, StepSecurity"},
+            {"indicator": "nrwise@proton.me", "context": "Throwaway account email", "source": "Aikido"}
+        ],
+        "infrastructure": [
+            {"indicator": "sfrclak.com", "context": "Registered 2026-03-30 16:03 UTC via NameCheap", "source": "WHOIS"},
+            {"indicator": "142.11.206.73", "context": "Hostwinds LLC VPS, Dallas TX, AS54290", "source": "IPinfo"},
+            {"indicator": "hwsrv-1320779.hostwindsdns.com", "context": "VPS hostname", "source": "urlscan.io"}
+        ],
+        "safe_versions": [
+            {"package": "axios@1.14.0", "context": "Safe 1.x version"},
+            {"package": "axios@0.30.3", "context": "Safe 0.x version"}
+        ]
+    };
+
+    function downloadIOCs() {
+        let lines = [];
+        lines.push("=" .repeat(80));
+        lines.push(" AXIOS NPM SUPPLY CHAIN ATTACK — INDICATORS OF COMPROMISE");
+        lines.push(" Date: 2026-03-31");
+        lines.push(" Advisories: GHSA-fw8c-xr5c-95f9, GHSA-2x9r-6wxq-hrr7, MAL-2026-2307, MAL-2026-2306");
+        lines.push(" Author: CRIMSON7 Security Operations");
+        lines.push("=" .repeat(80));
+        lines.push("");
+
+        const sections = [
+            ["NETWORK IOCs", "network", (i) => `${i.indicator.padEnd(55)} | ${i.context} | ${i.source}`],
+            ["FILE SYSTEM IOCs", "file_system", (i) => `${i.indicator.padEnd(55)} | ${i.context} | ${i.source}`],
+            ["PACKAGE HASHES (SHA-1)", "hashes_sha1", (i) => `${i.hash.padEnd(55)} | ${i.package} | ${i.source}`],
+            ["PROCESS / COMMAND LINE IOCs", "process_cli", (i) => `${i.indicator.padEnd(55)} | ${i.context} | ${i.source}`],
+            ["MALICIOUS npm PACKAGES", "malicious_packages", (i) => `${i.package.padEnd(55)} | ${i.context} | ${i.source}`],
+            ["ATTACKER ACCOUNTS", "attacker_accounts", (i) => `${i.indicator.padEnd(55)} | ${i.context} | ${i.source}`],
+            ["INFRASTRUCTURE", "infrastructure", (i) => `${i.indicator.padEnd(55)} | ${i.context} | ${i.source}`],
+            ["SAFE VERSIONS (DOWNGRADE TARGETS)", "safe_versions", (i) => `${i.package.padEnd(55)} | ${i.context}`]
+        ];
+
+        sections.forEach(([title, key, fmt]) => {
+            lines.push(`--- ${title} ---`);
+            lines.push("");
+            IOC_DATA[key].forEach(item => lines.push(fmt(item)));
+            lines.push("");
+        });
+
+        lines.push("=" .repeat(80));
+        lines.push(" Generated from CRIMSON7 Axios Threat Hunt Runbook");
+        lines.push(" https://crimson7.io");
+        lines.push(" https://crimson7research.github.io/ThreatHuntingReports/");
+        lines.push(" https://github.com/advisories/GHSA-fw8c-xr5c-95f9");
+        lines.push("=" .repeat(80));
+
+        const blob = new Blob([lines.join("\n")], {type: "text/plain"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "axios-supply-chain-iocs.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    </script>
+</body>
+</html>
