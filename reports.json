@@ -89,5 +89,24 @@
     "date": "Mar 02, 2026",
     "queries": 10,
     "version": "1.0"
+  },
+  {
+    "file": "void-manticore-threat-hunt-runbook.html",
+    "title": "Void Manticore / Handala Hack",
+    "description": "Operation Epic Fury - Stryker Corporation Wiper Attack",
+    "severity": "critical",
+    "type": "APT",
+    "tags": [
+      "void-manticore",
+      "handala",
+      "stryker",
+      "intune-wipe",
+      "mois",
+      "iran",
+      "wiper"
+    ],
+    "date": "Mar 16, 2026",
+    "queries": 11,
+    "version": "3.0"
   }
 ]
