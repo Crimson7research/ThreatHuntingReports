@@ -1,5 +1,23 @@
 [
   {
+    "file": "axios-threat-hunt-runbook.html",
+    "title": "Axios NPM Supply Chain RAT",
+    "description": "Maintainer account hijacked, cross-platform RAT deployed via plain-crypto-js dependency",
+    "severity": "critical",
+    "type": "Supply Chain",
+    "tags": [
+      "npm",
+      "axios",
+      "supply-chain",
+      "RAT",
+      "plain-crypto-js",
+      "sfrclak.com"
+    ],
+    "date": "Mar 31, 2026",
+    "queries": 11,
+    "version": "1.0"
+  },
+  {
     "file": "notepad-chrysalis-threat-hunt-runbook.html",
     "title": "Notepad++ Hijacking Attack",
     "description": "Chinese APT (Lotus Blossom) compromised Notepad++ update infrastructure to deliver Chrysalis backdoor via DLL sideloading.",
