@@ -6,17 +6,17 @@ A collection of actionable threat hunting runbooks published as a static GitHub 
 
 | Runbook | Type | Severity |
 |---|---|---|
-| [Axios NPM Supply Chain RAT](axios-threat-hunt-runbook.html) | Supply Chain | Critical |
-| [Notepad++ Hijacking (Chrysalis)](notepad-chrysalis-threat-hunt-runbook.html) | Supply Chain | Critical |
-| [Rekoobe Backdoor via Go Crypto Module](rekoobe-backdoor-threat-hunt-runbook.html) | Supply Chain | Critical |
-| [SANDWORM_MODE npm Worm](sandworm-threat-hunt-runbook.html) | Supply Chain | Critical |
-| [Shai-Hulud NPM Supply Chain Attack](shai-hulud-threat-hunt-runbook.html) | Supply Chain | Critical |
-| [StegaBin / FAMOUS CHOLLIMA](stegabin-threat-hunt-runbook.html) | Supply Chain | Critical |
-| [Void Manticore / Handala Hack](void-manticore-threat-hunt-runbook.html) | APT | Critical |
-| [APT38 / Lazarus Group](apt38-lazarus-threat-hunt-runbook.html) | APT | Critical |
-| [Etelaat Team](etelaat-team-threat-hunt-runbook.html) | APT | Critical |
-| [Salt Typhoon](salt-typhoon-threat-hunt-runbook.html) | APT | Critical |
-| [Scattered Spider](scattered-spider-threat-hunt-runbook.html) | APT | Critical |
+| [Axios NPM Supply Chain RAT](https://crimson7research.github.io/ThreatHuntingReports/axios-threat-hunt-runbook.html) | Supply Chain | Critical |
+| [Notepad++ Hijacking (Chrysalis)](https://crimson7research.github.io/ThreatHuntingReports/notepad-chrysalis-threat-hunt-runbook.html) | Supply Chain | Critical |
+| [Rekoobe Backdoor via Go Crypto Module](https://crimson7research.github.io/ThreatHuntingReports/rekoobe-backdoor-threat-hunt-runbook.html) | Supply Chain | Critical |
+| [SANDWORM_MODE npm Worm](https://crimson7research.github.io/ThreatHuntingReports/sandworm-threat-hunt-runbook.html) | Supply Chain | Critical |
+| [Shai-Hulud NPM Supply Chain Attack](https://crimson7research.github.io/ThreatHuntingReports/shai-hulud-threat-hunt-runbook.html) | Supply Chain | Critical |
+| [StegaBin / FAMOUS CHOLLIMA](https://crimson7research.github.io/ThreatHuntingReports/stegabin-threat-hunt-runbook.html) | Supply Chain | Critical |
+| [Void Manticore / Handala Hack](https://crimson7research.github.io/ThreatHuntingReports/void-manticore-threat-hunt-runbook.html) | APT | Critical |
+| [APT38 / Lazarus Group](https://crimson7research.github.io/ThreatHuntingReports/apt38-lazarus-threat-hunt-runbook.html) | APT | Critical |
+| [Etelaat Team](https://crimson7research.github.io/ThreatHuntingReports/etelaat-team-threat-hunt-runbook.html) | APT | Critical |
+| [Salt Typhoon](https://crimson7research.github.io/ThreatHuntingReports/salt-typhoon-threat-hunt-runbook.html) | APT | Critical |
+| [Scattered Spider](https://crimson7research.github.io/ThreatHuntingReports/scattered-spider-threat-hunt-runbook.html) | APT | Critical |
 
 ## How It Works
 
