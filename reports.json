@@ -1,5 +1,24 @@
 [
   {
+    "file": "apt38-lazarus-threat-hunt-runbook.html",
+    "title": "APT38 / Lazarus Group (TradeTraitor) Threat Hunt Runbook",
+    "description": "North Korean state-sponsored financial targeting via fake job interviews. Detect BeaverTail, InvisibleFerret, compile-on-target tradecraft, and supply chain compromise targeting developers.",
+    "severity": "critical",
+    "type": "APT",
+    "tags": [
+      "north-korea",
+      "apt38",
+      "lazarus",
+      "supply-chain",
+      "github",
+      "developer-targeting",
+      "cryptocurrency"
+    ],
+    "date": "June 2025",
+    "queries": 8,
+    "version": "1.0"
+  },
+  {
     "file": "axios-threat-hunt-runbook.html",
     "title": "Axios NPM Supply Chain RAT",
     "description": "Maintainer account hijacked, cross-platform RAT deployed via plain-crypto-js dependency",
@@ -36,6 +55,23 @@
     ],
     "date": "Mar 31, 2026",
     "queries": 11,
+    "version": "1.0"
+  },
+  {
+    "file": "etelaat-team-threat-hunt-runbook.html",
+    "title": "ETELAAT TEAM Threat Hunt Runbook",
+    "description": "Iranian MOIS-affiliated operation with 18,000+ documented victims. JavaScript-based data exfiltration via Telegram Bot API with geolocation harvesting and Node.js RAT deployment.",
+    "severity": "critical",
+    "type": "APT",
+    "tags": [
+      "iran",
+      "telegram",
+      "javascript",
+      "exfiltration",
+      "nodejs"
+    ],
+    "date": "June 2025",
+    "queries": 8,
     "version": "1.0"
   },
   {
@@ -95,6 +131,25 @@
     "version": "1.0"
   },
   {
+    "file": "salt-typhoon-threat-hunt-runbook.html",
+    "title": "Salt Typhoon Threat Hunt Runbook",
+    "description": "Chinese State-Sponsored APT Targeting Telecommunications &amp; Critical Infrastructure",
+    "severity": "critical",
+    "type": "APT",
+    "tags": [
+      "china",
+      "apt",
+      "salt-typhoon",
+      "telecom",
+      "tacacs",
+      "network-devices",
+      "espionage"
+    ],
+    "date": "June 2025",
+    "queries": 8,
+    "version": "1.0"
+  },
+  {
     "file": "sandworm-threat-hunt-runbook.html",
     "title": "SANDWORM_MODE npm Supply Chain Worm",
     "description": "Self-propagating JavaScript worm spread through 23 typosquatted npm packages targeting developers. Steals credentials, injects CI/CD pipelines, poisons AI tool configs, and exfiltrates via DNS tunneling and Cloudflare Workers.",
@@ -137,6 +192,26 @@
     "date": "Feb 27, 2026",
     "queries": 7,
     "version": "3.0"
+  },
+  {
+    "file": "scattered-spider-threat-hunt-runbook.html",
+    "title": "Scattered Spider — Microsoft Sentinel Threat Hunt Runbook",
+    "description": "Hunt runbook for Scattered Spider (UNC3944): vishing, MFA fatigue, NTDS credential dumping, MEGA.NZ exfiltration, BlackCat/ALPHV ransomware, and 2025 Spectre RAT deployment.",
+    "severity": "critical",
+    "type": "Ransomware",
+    "tags": [
+      "scattered-spider",
+      "unc3944",
+      "vishing",
+      "mfa-fatigue",
+      "ransomware",
+      "blackcat",
+      "alphv",
+      "spectre-rat"
+    ],
+    "date": "June 2025",
+    "queries": 8,
+    "version": "1.1"
   },
   {
     "file": "shai-hulud-threat-hunt-runbook.html",
