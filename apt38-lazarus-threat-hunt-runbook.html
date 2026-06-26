@@ -1,0 +1,1751 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ======= REPORT META TAGS (required for auto-indexing) ======= -->
+    <meta name="report-title" content="APT38 / Lazarus Group (TradeTraitor) Threat Hunt Runbook">
+    <meta name="report-description" content="North Korean state-sponsored financial targeting via fake job interviews. Detect BeaverTail, InvisibleFerret, compile-on-target tradecraft, and supply chain compromise targeting developers.">
+    <meta name="report-severity" content="critical">
+    <meta name="report-type" content="APT">
+    <meta name="report-tags" content="north-korea,apt38,lazarus,supply-chain,github,developer-targeting,cryptocurrency">
+    <meta name="report-date" content="June 2025">
+    <meta name="report-queries" content="8">
+    <meta name="report-version" content="1.0">
+    <!-- ============================================================= -->
+    <title>APT38 / Lazarus Group (TradeTraitor) | Threat Hunt Runbook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #06090f;
+            --bg-secondary: #0c1017;
+            --bg-tertiary: #111820;
+            --bg-code: #0a0e14;
+            --bg-surface: #151c26;
+            --border-color: #1e2736;
+            --border-subtle: #171e29;
+            --border-hover: #2a3648;
+            --text-primary: #e8edf4;
+            --text-secondary: #7d8a9a;
+            --text-muted: #4a5568;
+            --accent-red: #ff4d4d;
+            --accent-red-dim: #e63946;
+            --accent-red-bg: rgba(255, 77, 77, 0.08);
+            --accent-orange: #f59e0b;
+            --accent-orange-bg: rgba(245, 158, 11, 0.08);
+            --accent-yellow: #eab308;
+            --accent-blue: #3b82f6;
+            --accent-blue-bright: #60a5fa;
+            --accent-green: #22c55e;
+            --accent-purple: #a78bfa;
+            --accent-cyan: #22d3ee;
+            --crimson: #dc2626;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.65;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ───────────────────────────────────── */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 2.5rem 2rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--crimson) 0%, #ff6b35 25%, var(--accent-orange) 50%, var(--accent-blue) 75%, var(--accent-purple) 100%);
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 80% at 10% 50%, rgba(220,38,38,0.06), transparent),
+                radial-gradient(ellipse 40% 60% at 90% 50%, rgba(59,130,246,0.04), transparent);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .logo img {
+            width: 160px;
+            height: auto;
+            filter: drop-shadow(0 0 24px rgba(220,38,38,0.2));
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+            margin-top: 0.85rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 500;
+        }
+
+        .header-meta strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* ── Critical Alert ───────────────────────────── */
+        .critical-alert {
+            background: rgba(255, 77, 77, 0.04);
+            border: 1px solid rgba(255, 77, 77, 0.15);
+            border-left: 3px solid var(--accent-red);
+            border-radius: 0;
+            padding: 1.25rem 1.5rem;
+            margin: 1.75rem auto;
+            max-width: 1200px;
+            display: flex;
+            align-items: flex-start;
+            gap: 1.25rem;
+        }
+
+        .critical-alert-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid rgba(255, 77, 77, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--accent-red);
+        }
+
+        .critical-alert h2 {
+            color: var(--accent-red);
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+        }
+
+        .critical-alert p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.55;
+        }
+
+        /* ── Navigation ───────────────────────────────── */
+        .nav-container {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+            background: rgba(12, 16, 23, 0.9);
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+        }
+
+        .nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.75rem 1.1rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+            letter-spacing: 0.2px;
+        }
+
+        .nav a:hover {
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .nav a.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent-red-dim);
+        }
+
+        /* Hide scrollbar on nav */
+        .nav::-webkit-scrollbar { height: 0; }
+
+        /* ── Main ─────────────────────────────────────── */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* ── Sections ─────────────────────────────────── */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-number {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.75rem;
+            letter-spacing: 0.3px;
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .section h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 2rem 0 0.85rem;
+            color: var(--text-primary);
+            letter-spacing: -0.2px;
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 0.85rem;
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+
+        /* ── Cards ────────────────────────────────────── */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+            padding: 1.35rem 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .card h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.1px;
+        }
+
+        /* ── Tables ───────────────────────────────────── */
+        .table-container {
+            overflow-x: auto;
+            margin: 0.85rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: rgba(255,255,255,0.015);
+        }
+
+        /* ── Severity Badges ──────────────────────────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge-critical {
+            background: rgba(255, 77, 77, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 77, 77, 0.2);
+        }
+
+        .badge-high {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-orange);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .badge-medium {
+            background: rgba(234, 179, 8, 0.1);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .badge-low {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        /* ── Code Blocks ──────────────────────────────── */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+            margin: 0.85rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.55rem 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.08);
+            padding: 0.2rem 0.45rem;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .code-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.55rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-secondary);
+            border-color: var(--border-hover);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .copy-btn.copied {
+            color: var(--accent-green);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        pre {
+            padding: 1.15rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            line-height: 1.7;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: var(--accent-purple); }
+        .fn { color: var(--accent-blue); }
+        .str { color: var(--accent-green); }
+        .num { color: var(--accent-orange); }
+        .op { color: var(--accent-cyan); }
+        .cm { color: var(--text-muted); font-style: italic; }
+        .var { color: var(--text-primary); }
+
+        /* Inline Code */
+        code.inline {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.82em;
+            color: var(--accent-cyan);
+        }
+
+        /* ── Attack Chain ─────────────────────────────── */
+        .attack-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .attack-step {
+            display: flex;
+            gap: 1.25rem;
+            position: relative;
+        }
+
+        .step-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-hover);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .step-line {
+            width: 1px;
+            flex-grow: 1;
+            background: var(--border-color);
+            min-height: 32px;
+        }
+
+        .attack-step:last-child .step-line {
+            display: none;
+        }
+
+        .step-content {
+            padding-bottom: 1.25rem;
+        }
+
+        .step-action {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.1px;
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            font-size: 0.84rem;
+        }
+
+        .step-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.65rem;
+            border-radius: 3px;
+            margin-top: 0.4rem;
+            display: inline-block;
+        }
+
+        /* ── MITRE ATT&CK ─────────────────────────────── */
+        .mitre-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+            margin: 0.85rem 0;
+        }
+
+        .mitre-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+            padding: 1rem 1.15rem;
+            border-left: 2px solid var(--accent-purple);
+            transition: border-color 0.15s;
+        }
+
+        .mitre-card:hover {
+            border-color: var(--border-hover);
+            border-left-color: var(--accent-purple);
+        }
+
+        .mitre-tactic {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 0.2rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mitre-technique {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            margin-bottom: 0.15rem;
+        }
+
+        .mitre-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Priority Grid ────────────────────────────── */
+        .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 0.85rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .priority-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .priority-column h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .priority-list {
+            list-style: none;
+        }
+
+        .priority-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.6rem 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+            margin-bottom: 0.35rem;
+            font-size: 0.82rem;
+        }
+
+        .priority-list .query-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            font-weight: 600;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 0.2rem 0.45rem;
+            border-radius: 3px;
+            color: var(--text-muted);
+        }
+
+        /* ── Impact Grid ──────────────────────────────── */
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 0.75rem;
+            margin: 0.85rem 0;
+        }
+
+        .impact-item {
+            display: flex;
+            gap: 0.85rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+        }
+
+        .impact-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .impact-icon.red { background: rgba(255, 77, 77, 0.08); color: var(--accent-red); }
+        .impact-icon.orange { background: rgba(245, 158, 11, 0.08); color: var(--accent-orange); }
+        .impact-icon.blue { background: rgba(59, 130, 246, 0.08); color: var(--accent-blue); }
+        .impact-icon.purple { background: rgba(167, 139, 250, 0.08); color: var(--accent-purple); }
+
+        .impact-text h5 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.15rem;
+        }
+
+        .impact-text p {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Hash display */
+        .hash {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        /* ── Footer ───────────────────────────────────── */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 1.75rem 2rem;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .footer-text strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .footer-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Scrollbar ────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ── Back Navigation ──────────────────────────── */
+        .back-nav { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 0 2rem; }
+        .back-nav a { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 0; font-family: inherit; transition: color 0.15s; letter-spacing: 0.2px; }
+        .back-nav a:hover { color: var(--text-primary); }
+        .back-nav a svg { opacity: 0.6; transition: all 0.15s; }
+        .back-nav a:hover svg { opacity: 1; transform: translateX(-2px); }
+
+        /* ── Tags ─────────────────────────────────────── */
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.85rem;
+        }
+        .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Responsive ───────────────────────────────── */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5rem; }
+            .header { padding: 2rem 1.25rem 1.5rem; }
+
+            .critical-alert {
+                flex-direction: column;
+                margin-left: 1rem;
+                margin-right: 1rem;
+                padding: 1rem;
+            }
+
+            .main { padding: 1.25rem 1rem; }
+            pre { font-size: 0.7rem; }
+
+            .back-nav { padding: 0 1rem; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); background: rgba(6,9,15,0.88); }
+            .back-nav a { font-size: 0.78rem; }
+        }
+
+        /* Links */
+        a { color: var(--accent-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- Back Navigation -->
+    <div class="back-nav">
+        <a href="index.html">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            All Reports
+        </a>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAV4AAAEYCAYAAAAUKp5rAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAhGVYSWZNTQAqAAAACAAFARIAAwAAAAEAAQAAARoABQAAAAEAAABKARsABQAAAAEAAABSASgAAwAAAAEAAgAAh2kABAAAAAEAAABaAAAAAAAAAEgAAAABAAAASAAAAAEAA6ABAAMAAAABAAEAAKACAAQAAAABAAABXqADAAQAAAABAAABGAAAAADPc68WAAAACXBIWXMAAAsTAAALEwEAmpwYAAACzGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNi4wLjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgICAgICAgICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iPgogICAgICAgICA8dGlmZjpZUmVzb2x1dGlvbj43MjwvdGlmZjpZUmVzb2x1dGlvbj4KICAgICAgICAgPHRpZmY6UmVzb2x1dGlvblVuaXQ+MjwvdGlmZjpSZXNvbHV0aW9uVW5pdD4KICAgICAgICAgPHRpZmY6WFJlc29sdXRpb24+NzI8L3RpZmY6WFJlc29sdXRpb24+CiAgICAgICAgIDx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgICAgIDxleGlmOlBpeGVsWERpbWVuc2lvbj4xNTAwPC9leGlmOlBpeGVsWERpbWVuc2lvbj4KICAgICAgICAgPGV4aWY6Q29sb3JTcGFjZT4xPC9leGlmOkNvbG9yU3BhY2U+CiAgICAgICAgIDxleGlmOlBpeGVsWURpbWVuc2lvbj4xMjAwPC9leGlmOlBpeGVsWURpbWVuc2lvbj4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+CoVTZ+MAAEAASURBVHgB7J0JgJxFmf7fPuZMAiQhHCEJQQMCAQIEdT1JUNcLREFYXe9j+a/X6qqooMAAoohyeO7KoqKoq7Igh4IHkggKogSSYMJhIJMTSAgh5Jirj//vqf5q6Ol09/Q1k5lMVdLzXXU+VfV8b731Vn1mwQUEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBAICAQEAgIBgYBAQCAgEBCoF4GsWazDLK5j+I09DHzd19uOQviAQEAgIBAQCAiMaQRiY7r0I7TwkmypmOwCs+Sk6XZo2qy1KWu96YwlsjHjcXC7OwIMb2LxuKXiMWtNZWzL0evsEZXZt43dvfy7e/mSu3sBR2P5rkW1QL7T881SS7L2H/sm7d+eSlsmmXD3R2ORQp6rREBv1wz/J1LnG7P2OS6/UmUUwfsIRiBIvCO0cv4xy1oOXmE9y6bajFTC7hoXswO2Z62H7LbwU79U3fkjp865a0nLnJSq28IwPmyx4wC/g8TrwyOU5yQzf6NEuEJ/A9JSWIXTkT+K0l0Pdi5/ZVxhGoXXPmjZ+yXK48LmPSsVh0/Dl8dfuzJyIVxikG7XnnFr25K2JbE+e9mcJ43qtyTPUj5AOI5eBCRZBTcCEZi1wnqzc61p9npbTYe7VL0Y1wQLuY5HB6RvOjLSUZ01w88dox7v7vtnOkbn3m//c/8s/5gff3Tuwhf6KXymPETp9Mefnx/5j356Oci5/OROB4b1Ceb58bcKww4oU5E8+byI7Hz6Di/FXfjDj8+Te+bjy7/v7+WH1T0F0D3vV/fy/eafy2/kLz//iiTF/ZbenIcvi3QX5EgXrVNwuwMC1G9wIxWBZbOtefYy610w01onp+2OCXF74bMZ6yW/zSM1zyFf9SGgDgnfdk+MW+vmjP32qDX2epEz94K0Wx+0Iyp0kHhHVHUMzIxId800a5vfad08+dI25LaESDeSegf6Dle7AwIQbB8TLyLdDOLwV0W6t6B24hhUDLtDBUdlCMQ7wivz7rXW28FkG5LPDQxBr2+nxhiXRoLRCM98yF61CMC7lh2vOs7aT+astj8ogtevCKRbLZAj3X8g3hFeQ6dj3fDP09yEmti2Y2vatiH+JOih0lsGt3shkGqNWfMzGXuGkc3XVLSVqJmo96Db3b3qOZgnjYb6fOla61IHPGqtPUB+/6uZnsh/vTQlIQW3GyBAfepFmmjiBHfVkWtt6b1Mrs7sdJYs7mb4s/sgECTeUVKXmybnpJ5kj12A1LsKMUhdNBDvKKm/wbKJGinTHrM4dbsae+1L5X/PLcb6iVDHg2E3Gp8H4h0ltXbcIuvTRNvsjbYNyj0/qrgg9Y6S+hskmxkY1i1mQn//jdmd9sRd1LXsuAcJFx6PUgQC8Y6iipu21ro7UDEcvcZ+sCNrf2JRhVyQeh0Mo/cPFZhF2jXqdOnmNfZ1laR53zChNnprdPCcB+IdHKMR40PDztNm5yQj1u+f2UOP5Z52Lgtu9CKQYSItIVsx6vFL8zEbu3eqtWuEM3qLFHI+GAKBeAdDaIQ9l22vJl3mrrO/0Fm/x7JSkW/opCOsnqrJjkwEezJ2OyOZn0O+8V+td3bb1UQR/I4yBOizwY02BNQ5qbjMkn1tHxYRr0jGbUKKyRnKEV6ko6sys7n3JtJuxl561Dq7ewHWK9GCmdFVkpDbqhAIHbUquEaGZ5GupF7W8G+Aas/dgxv8D1LvyKieinPBCzSjxRLprP1YpKsl4oF0K4ZvVHukvwY3yhGILZluS5hoO5Ltq3qp0GY6dHAjH4Esut0YKyO60yk79NjHbdUC9mOYH5YGj/yaa0AOg8TbABB3VRS/cFs3uA1UztQblGWmmmgLvLurKqTCdCNpJ8WmR3KXinS1H0Mg3QoB3A28RW1gNyjJGC/C0un2i73idtrTGeuiP7dFBNyo+mU0nHOKUOf5x+hRxYf8uBTIx+cjKLz290sdC+Mr5U/38+POPy8MU+xZ/r388/yw/r4/+me6losqJM0Ktea+rK1nr7lDor123VdHcr7C390dgfAFilFew3RoN9HWm7ZzN5udzPC1DZZM0YsbVrcyd/KbBYg4IvJwyOWfeyg9yehazz0J+fv5YXSef+3D6OhdufDej46F8eQ/K5e2j9/7z79WnIXX3l9het6fv++Pui/h1j9nZJKVtMtL8lyRrvT1sWA+5mEdE0ffNsZEYXfHQtKZ+yWlxdPs/L0Tdu5TSL1UbFu95VXjIP40x4R2apHZRHD1IYD1ickEcFPG/ob52Ivqiy2EHq0INEwqGq0AjPZ8w4dZ6Xq1ixkfR7wCKepfx8dsFhNt3TxrlZRVq9OXEMbFLUlcl3Vn7DbEtvHZtBPcao1yzIdjSXD6mbSNo17uERgdCMP8wjtNYIwhR98MbrQjQCdWPUryzTwwzd45LmHXsNlKirsa4epXq+vF3Kl5a8Z+h3T22lojCeGKI+BfmMWfhru7MwKBeHeT2l0QmSKJhB+Ybr9hou2f8yba6ill75SENT+Vso+xLeW3NPuujbkX5si+nnjHdNh5jFTofF51PqaxGIuFD8S7G9W6Jmm0xh8Lh1dCwAvRI8VYVqyFFU01FxN1QxPqBmbgN/el7ZDj1ttTHWF4XDOcIWBAQAjUMwwNCI4wBB5blNMV8pmgOyDeK/fI1W5d+kNZR0C6PXx8cWJTwi5QkY8P7WaE1XzIzmhDIEi8o63GBsnvP1AFaB/Xe6fb8xFz/8yKtn2ZHNO+ri2DBC33GB63mGZiMXE47qjVtogblX71dqy0MWEUXECgIgSCxFsRTKPH06wVud3Ljltjj8aydrmMfHHN/OqRfGPYMqRaaS3YoF7mYszFVwmpipDGwi+CJRwCAoMjUEnHGTyW4GNEIaDNVtz2kezrys5lf94zYUc/m2GNVI6A68mrNnWJb8vae/gC7o9WspPWQblPzxfGqXaVff3rX9/S1NQ0vaWlpTedTsf6+lBa4OLx3BbCiYS+2YktHMeurq7++8lksv++nm/fvt0K7/nr7u5u59df++OOHWwrjiN9d8w/37aNEuQ9I3/uurW1Nfvkk09a/rX8jRs3LtvZ2WltbVoQmHPkNz1lypQs6Wsk0U7YZ6+99lphHFxAYFAEAvEOCtHo9KBPx+gjmUtn2GnQ2y/EGBjvp9HZshCtNkdjyfChzTgbsK9hou1QJtp2LCiysUtHR0ecn5Ow3/KWt9wZi8Vens1mt5JqgmOWa09g7qh7ylF0f8Azbu90Le+FcUT+vF9Fp3N/XfSodAvj0XUmk9kpfu+PILJEAMdYM+fjOd/B72cQ8FduvfXWZzl3Lx2OwQUESiIQiLckNKP7QWQjKvLLsnvZTUy0nbQl41ahSb1Ua73LBCrLogpJvV9F6v1MKan3tNNOa5YECPEej0S7UGSW7yCu/MuGnDc6zvz4IFnULOxCxCoVpGp33tPT8wB+Lrj++uv/LyqACuVJviFlCpHsngg0vvXvnjiNylJ5qXfJgXYsGt4/I622Iq26JcB1FCjDrFoc6bmLOF40Z439fTDyffOb3/zt5ubmD6Nq6CaM9M2lyKnU/ZqyCynClbkoRaL+vMLIFND1D8L1Ej4G6bYrHtQmD/Dsa7/85S9/5OPKl/L9vXAMCJRCIEyulUJmN7gvVcMC9LBzVtl9UN13IV4xieq8HoKL6WsX6Hq1F8RFgulvnSbl7U5tafbs2fqUmNznId2NEFcr50pb6o5iPxlONOwHYcp+2f3yz/29ckcIVi8IlSmDhDuOF0c7UvuTqVSqg+tXeNI96aST2gPpglJwVSEQJN6q4Bp9nvsXVcywiey98ACb3RyA1Ktx/05EWUXp0tqxTP7ZCe2tc9bade4Djeh8C+M444wzmq688so+VA7vhrx+2IvDj5d6R2r7Ez7dkG87eTZUCt0Q9/ch3stvuummFSojqhS9eHpRp4TVZwIkuKoQGKkNv6pCBM/lEfCkuHiG/b9xZv/NfL+XeGuuf0bwKaTe5LaMLdkzaf8k6wZvTVEkN0onC/nehpXBq5B+67UrLpJEw25JHZLEsiFJPqVWuA5J/Wvocf+iFKS71jFYMAiF4GpFoB6pp9Y0Q7hhRkBfrYVpY0evtu9Cuve0x+qfeUfVGWdhhkG+c55N2ydVpOae4pN2kJVrZ0iM/ykyw8kEa6RJipLEu3kxtCLlJpFy70TKPfGGG254a0S6sXnz5rWKcCsg3ZpfaAInuN0fgdBAdv86diX0K9qwcHgFXz+4Az2tpp3qrf9eSLx5R8Y2MDZ/+TFr7R/SKc8vY9uL1HsR0uTZEJsm5+reM7gB1acXQC+WF22QrmEW9gjXX8JG96dSkSh+2SO/+MUv7vMmcrpXzEHMSdn2RuoHJ+UX8xfuBQTq7XgBwVGEgNf3smH6j1hU8a4tbB2J5KrJrFqdVBYpdkJr2pyx77N15AcUUbHtDv0EFNLveKTe+yG5WUxU7WqVg9QKrH1oFeFuRsK9mHx9F+LconKISHVcuHChnyTUZVEnaRh/is+pIyqQiovGE26ODQSCqmFs1LMrpd9EJxOzz7GSbTtmYSIWTSTV6tyLWyoHTt635AB7lSIaP2tnMod4syJfCGkbOtPPyCwLpwm6etJXHLU4SbJpVArOygLSvRxd7hGoFS4R6SqfIl0R7mCkK3+8TBIi3VNOOWV/JPqPKG5lSvHoGFxAoBABNzNdeDNc754IXMsEl6TeuQ/Zlv+3h6UmJuw1KH9FQvW0gwTM2c3uZU1dWZt+wrP24zc/bX1K58rHB5Iqw/D48uXLsw8++OBDhxxyyBGoHI6A8KRykMnXcDgRYhapNgnxx5G4f8ZL4HR0uD95+OGHtbJO0mriO9/5jpYID/ZCkM7XkbPKBOG+g+A387vpuuuuWyz1xFVXXTWopKw0gxt7CARVwxircwmnVLr0u/Gl02xZe9wOZcJN5FsP+TmS4gOOcb588UHMy74ndcNpSLNKKx9iT1Ynn3zy4ZDfX2UjC/l6E7N8r406V/ouD6TlJFAI93Ym+s658cYb74oSiSGd6tfvt0ziMU0WIhk7qfbUU0+dTVxfa29vfx37QyzAvvcEkTfPhcmAspeJMzwaYwiEodAYq3ARoUiRYyYbtzN1Agvzt3aSILDaUa9jrZh9Ycm+to++AWfzdpakIV4RUgzSW460+SXIUDVQV/qKoIhTOi4tJs7iIl0I9z5+J0GOrxLpShWgn8JyHIwovV83ecZqvL2Qci+DdP+OykKkqz0ePqq4Jk5E/q8DT8UR3O6NgBp8cGMMAQjSSb0qNlYON0ATJzfoM0HdfOW4dVPKLuYzQWcpftJyn5/XuXd+UQWSoSba7kDlcAzrKtxEl/dTx9FJooRPRKRukO1yJs6+jA73x4pXZLts2bKYl1rLpSW/URgRs1NFkOczkNbPJ99TsM5Io7pIkP9vEv9/UCa3R0W5OMOzgEAg3jHaBjwhQrxHAMFS2CWmrwojezoRtEZY+lAWN7GaLUV8c49ca0uLWTgobk9QSI0nI/neADHqtlaIaYGCu9CNKpwLAyEmkXBdMAj3IeK7HEK8MoonBuknvZlYubhFuEyY6devp2Xy7E3EdwGEO0f2yEi4XeS9jeNmiPf5v/71rzcrHD9H0uXiD8/GNgKBeMdo/cNS/VIv5mVfnpK0z21MWxcNombbWjUm4t2BBN2OedmNbKDzZsHbgdTLbwAZRXpQJ51Cvtdg0vVOrAu0HaOCVO0UToQLCWq12d+J4NubN2++yhMnKg6Ze8l8rSypiziRhpNIw9I7OwfhvgzC/QKS7es4SoKWdC6deAYSbiLfH4PcvzV37tymRYsWSV8eXECgLAK1tfKyUYaHowUBL43et59NSSTtXibaZjDR1k2jaC3LTuULqKBaTty0PWNv5vtvN3JjJ3WDoojIsBviPQRCuwNd6b6SJJEiy6cQPRXZigh1FOFy/ld+Vz7zzDM/9IQLwbexWU9PBVJoDEuEZvbUFeG64jNxdhTxfor43w3pGlKtSDXDdQvp9KHKaIKEH0BnPMeHibIWDgGBsggE4i0Lz+79EHaJnc+vAzJZPN3ev2fcvod9bx+NQp+GqIz9CiBSgyJsDyvaWljR9nB7q83RN+CUFs84DHDemiAD+b4EMpOlg9QNcY6KSs4duadb/fd07R7mtn5sgayfePrpp2/2hKtdw5CieyrR40rtwYRY1qsg3vSmN80ivo+Q3L8j0baix1VS2gBIowGlq3KkIOMmnr2Ribpb8iV4ngUXECiLgG/IZT2Fh7svAguiL0joOHGa/R7b3nmoCbpg3ee+c1Nl8SNm6p4Ut9ans3Y2G6Z/GaaSAYWf+BoQYyNJSxLuxo0b+zwBD0io4EKTfEixiauvvtqtOINwp0K4/x4R7pRIjyvC1d4S+bbOXUjnbYS9EWnXqVMKog6XAYGyCATiLQvP2HjolxJr5VksbrdJ1IUh67btJZ44it2edMpecOzjtgryLapyEMpacDB+/Pi4vm/GN9aqapc+TKWEK6JHL9ty8803u20sZRpGFmSp8CEIdWakJ3aSN/c12Zfv9PIQCWch6aNZLLE0TKjlwxPOK0GgqgZeSYTBz+hDIF8aReXwPSTV9yP11rWPghoW8fagvmjhk0M/Y6Lt7Qsi6XoXIhRDBdHmCRcCbkZq/aDUCmgNDle+kHJlxSBylZRbzO1A/dCOiuEypN1PRR6i4hbzHu4FBHZGoCY93s7RhDujGQFYI63dy1SGWNou2Zy2jW3oaLnsn9mvtnyQrpxIN0Ncb1syw141H72opOvco+H9q4k8iDbuSRcp951MjN0N4X5bpAvhZvnpZSNpthTp9mA5IdJ9AsuJS1UCSc8couLqTnABgcER0Js6uICAmCNm89DDLrQUUu8X+DjmhVshzQiaml/QGB2k+ThmAguHJUevtaMVn9Ki4Q0LWUmPi1mZFku4lwhLlU9Cwv0sv5fJ/AzylTWEnsl+uVw5ld8+VBGSkj+OtPsNrn3/GZaykF5wuwkC9RjL7yYQhGIIARHhso054tnWZV+Ptdnp7L1wJOQrUirUc1YMGgybwEQtzTaUc+4/wD5xzDq7onMmEmXxPXsrjncwj5EkmsBSwREuVhMvJ8w56HH/WYSLxOrVCiLPSsrXHU2oLYKsr1L6SNHalax/gYXuBRcQqAQB/8auxG/wMwYQ8F8mZgOdf2VLmZ+wmo3lbPV/mZgPbcbZzOFpaPywOU/aBj+hNwSQatewfkJEwj0S6bYDwj3FEy4SrreuyLdUKJcVN6EWSchvZbHEdaThdiYrFyg8CwiUQqDc0KpUmHB/N0bgJWtzel32Wvgpnw7+DWoC72oeTvN2j0G6GdQXk9DwXqQIN2wpO6z3aVZ1lHUBAbKSQtHhzkTK/T6kuxQd7imKCEk1A+lKfSLCrZR0FbSPCTWFv1mkqxvBBQTqQSBIvPWgt5uG9VIvS4lfhKrgTqTVZlZApGks1ZBVIToZ9FpxpGfMsOzlR66yu3w6hR5ruZZqQYslINt9CP85CPZjkKX7YGUk4YqUa2nv+ixQM6qJPqTm+ezd+2eZvrHCza2qqCWvIUxA4Dl5JmAREIgQeOla67oFKwcmw/7KrataJLLmJp5qlnqJJwbpZlhKHEPmdFKv0iHCesjc5VhEKNLVEl9uPALh/ieSbpJJsBSkKz9KoxbSdcvlpGLAfU+kqxPsjYNeV0AEVzMCgXhrhm73DnhgS87qIN1nHUywPQn5irjqIl4hxjJiQ4Ket2SafUDXa6dVNLElr0Wd1Av6EKUesvDhG0yA7Ym5Vw/nymu9k8d9kK5Wtz0JgX9NaaDb1ZeGvY5Yt4ILCFSNQCDeqiEbGwFmL7PeNdOs7dgnbCNC40URg9VLvnFtGam42Gnhc0tn2MTpSL3ehrgWZNkNrFUb4KBieA8keTwkqWiaUQvUIuHmZ0G6YMUjc7Nvodt9FHVGM/pjt7w432M4DwhUi0Ag3moRG0P+v7c2t7kNKodv8kHL+9j4RmTmbXtrQgIei2Nepom2WWwo9llFsmVPvoZRgypARKgFEeyxMAGC/ELEtZJG6yVd7XiW1kbqEPlyJueuqKmwIVBAoAQCgXhLABNuu310MytmRaqAjH0mGl/X22bikGwaiwnR44ew7T36uEXW1ynb3irdtm3bHMEi6Z7NT5+Lz8VaZTxFvKuoTdqzAQL+CqqFbdrtjKMTp4v4D7cCAlUhUG8nqiqx4Hn0IaAtHWVzO2ed/YEvEv8cSVVkV+9m303E1cuG6Xtg4XC2UDmIBRULqtDJIu22ybIAafcoVAEfjibRRJj1tmmRt99UXR+v/BGXMW0xqfvBBQQagUC9jbQReQhxjHAE5i7KqRcyKfssE23dNBrtt+AIquasZy3O3r+a/ToNs7W3KJ59ZldGmpHpmD4LL4L8AlYMe2DuJUuDui0kiEOWDAlJz0i85ykN0gsTagIiuIYhEIi3YVDuvhEh4qYl9WprR7jyInYck+t14/waCRhdb5K4urRAg70iz1o501o1oVfJJjps/yjiN1alvQWSPE375kYuypK/rProXibRRzKvYYPzOyNTNUfyVccWAgQESiAQiLcEMOH2QASQep3t6iN72CV8kXhFK7uXwVJivJrILhKXW5/hixeoL174bNrcFovS93aUURdoQk2WBdK5Yqt7FhNfsjqQGqBe0zFXYOKMQ+RbkXjP0Q1sdqOsusfhT0CgIQgE4m0IjLt/JLBr1n2jDamU7wJ9BltcubpJSdEoEn7OTItj7LzS8cq7m+NDxfAhSPeFWB24iTDuN8JliFdEfinWEqvf+973SsUQJtQagWyIYwACgXgHwBEuyiFwWmRKxmfbf4mEestecWfxoC8T1+p6iKOJPXv/tL7FvqVIFs21JPGJi3dySLtNWryAtHsQKoZPRxNqksQb0Y5Fugmk3c599tnnS0p85syZgXR3qoVwoxEINKLBNiIfIY5RgIAIEUZ0bQap92wIU3qGNoxwnRRaZRH6YNhWxYG78A1YTyybbc1SNRSLJ5pQc0SIpHsmVgb7oQ6QlFy1GVqx+LmXQcug1W+f10cvpdLQwowSfsPtgEBdCATirQu+MRnYSaNHrLMlsNJlk3O7IPiJtkoBcXFMgLWJ4/tHr7HfKeDhy0oTOBNq+DaL9tX9EKuCZWPbCCsGRdsHmWtDnTuZUPsp1/0bp+thcAGBRiMQiLfRiO7m8UVSryO8RNIueSpt68fF3BeJexwzVlb+PsI08V23J7FocBvmLMCqgfBFJWdJu3kbjnewH4P0sDv4OeuGypIs6cuZj0WLJT4jX6QX+kVJuMKDRiAQGlgjUBx7cbglvkeutCfZc+GCaKJNK9KcJDsIHCJX/8WHrx212h7TXg3zS3+RQtKni5c9dt8F6b4KaVfqiLZB0qn0cQ9xxlFbXM3uY3/RpjvSI1caOPgLCNSCQCDeWlAb42Ek9S6MFis0TbAfYBL2Z02SAcugE20oibN8Usi2Ze1vD6+xywWl9mrQsZiDCCVIZ6JPsH9Rkqmu+VUhYCtIUZdCXdEKkXexAOM8+SC9oh7DzYBAIxEIxNtINMdQXPOjLwZr0QNy7he3QYU0pnZE4XJ71aabWDghv7GsnXu6FmZMtfZSE2qCEyJ00i4E+Vkm1GYgmWoxQ6Mm1NyXJYjvIpmPcXQkzzG4gMCQIhCId0jh3b0j90uJ56y137DpzY+RerUKrRTxikBjbfiBnH+iMFqlNne9lVwVBumqfWZZoXY4x89qQg3XKNLtYYVaW3d396NIu/pisEi+EVK0ogouIFAWgdDQysITHg6GgPSz2khnyXQ7Ar93MEM2URvgcO71uD6KDLpgffByc1+aHcnW22of1nsoclT7zGLJcDN62BOxOuhmQq21iL9qb+kl4D/V/k42wvkJ147kOToJu9oIg/+AQDUIqLEFFxCoGYFZK6x3Act156yxv8NY30KVICerB6eMdVeQmW5HTPwlka5UDCLs6PlOB7704PZLR7f7Zky9TmSFWl+DSFdpdUHkzcT5B0j3p7qBJYMjeZ0HFxAYagQC8Q41wrt5/LBVtmtWblcw1AyXs3vZg3xXTcSbr3LIIAnHebYYgnaf0EHFUO5LDjGZj4l8WdTw1WhCLUfp9eOpCbV2pGeZpH2R6LJKJ1gy1A9siKFyBALxVo5V8FkCAa060xeDMQ3DNNcuQZ2gcXszB2+WFXcnWfukopCKARbNl4gHxMyOYE44njRpkjbBmYUOVuZjTgIe4LG2C6kYRLo/4HM+CxXFlClTyGpwAYHhQyAQ7/BhvVun1LM2t9T3mDV2NcR7m7Z7jERU7T4W68nYNUevswVZJtQGUzFog3M0DDMhx7MlmeJEunL1Sr36VHsbk3SbkaKd5K2lwUHazYEb/g4fAoF4hw/r3Tql+agW1iD1qpCZmHWwiY4+apmAKZs435posjP17NpoU3WdF3NIn65Nog64BGm3FfKVsFwv4Sqp/k+1E+e3WBq8XFYTs2fPzleJFMtSuBcQaDgCgXgbDunYjXD6WuvWRjfHrLY/x+J2tbYZ06bpjOPP1io3mY/JdrcUQn4bxlNPPfW16Hb9BueNaqO9mI/pU+2PQOjfVB7uueeeJsi3pMqjVD7D/YBAvQg0qlHXm48QfvdAoF9XyuclPtuVsTSr2h7kK8Vuy0e/mXqxomo/hquvvtpNuKHTvVg7heEaJe0qnhYkXW2scxmqhY1SMUilUSwv4V5AYKgRCMQ71AiPsfi1kk2TZ7PX2tOw8Fn8/lMQdLi1FWVtZN2EGja7n0QiPZoVagrWCBWD4klrQo04/3zUUUf9j25MnDix/yWh6+ACAsOJQKMa9nDmOaQ1ChCA1fisWo5o88+LZV3fNYu+GDyVya/7+O2L1CsptRHbPqaQnpPR7mMnshHOr5F225B6S66YK5bHcC8g0EgEgsTbSDRDXP0IiHRFuIORLgFiGzZscHpWdLDnIe3uC0nquhFtk+QtBpErX/8n0o0m1IKKQYgEt8sQaETj3mWZDwmPbAREvl7qLZVTpM/WRYsW9bEfwyvQwb5Pgi5HES9B63b6qoQ+1b6deC9UbJ2dneHLEnXDGiKoF4FAvPUiGMLXjMDcuXP1DTU35Icgz0EP24Sw6xdL1BxvFFDSblzSLnH+z0033bSUFWqtfgKv3shD+IBAPQgE4q0HvRC2LgT4qKRrf0yovQ+CfE20WKJRbTJLnDHiXI/6wkm7hxxySElTtroKEgIHBKpEoFGNvMpkg/exjoCfUOOLwXuDxWdkPoaKQbrXRkyoOd0upmOK88tI1U9rQk0fsRzruIfyjwwEAvGOjHoYU7nQBJe3oWVC7ROoGA5FMhUpRhuY1Q1Hlnhj6HYXsx+DsyFmhVqYUKsb1hBBoxAIxNsoJEM8FSOwfv16J9WyH8PRSKQfy1mOuU1zGjGhpkUSknSVn7P0R9J1WKEmJIIbKQgE4h0pNTFG8sGQP+GH/BDkZ/iczx4Q7w6K36gvS6SQduPEeSN77f5GE3heuh4jEIdijgIEAvGOgkranbLIkN+JolGZHsqZ7LoPZebfr7XIiiPJfgxZdMafUyQTJkxoRLy15ieECwgURSAQb1FYws2hQkBD/jPOOENfJDYk08tQ7S6WGRmXjdDB9ra0OMH5suuuu+4hSbvaUH2oyhLiDQjUikAjZpBrTTuEG6MIsGDCke8111zTfdhhh20Bhrfy0567IslahQEtDW5mQm0j5mNvXb58ec/jjz8epF0ADW7kIVBrIx95JQk5GlUIPPLII44U0cP+DLK8BbJU/uvZojGtONAbn4P52BbpkokvEO+oahVjJ7OBeMdOXY+okkoFoP13lSnI8svoZfV1CJmT1WJr2wPptvBlifvYj+G7ihPyrYfEFUVwAYEhQyAQ75BBGyIeDIGZM2f2yqYXqfdPmH9dreW9OLXJaiRVEWxS5mNM1J2tCBRnlXEoWHABgWFDIBDvsEEdEipEQBNtSL5+0YSk3g1MuCWQgKuZEOtmQi3BJN11fM7nt4VphOuAwEhEIBDvSKyVMZQniLdbKgdWmHVCuF9X0ZFepfCtRFXQR5h2VAxppOULFFa6XRG6zoMLCIxUBALxjtSaGUP5wpzMbV7T1dV1KZLrcqRelb4SdUMqMh+7HPOxpQpUYCesW8EFBEYcAsGcbMRVydjLkMzL2Cyn/de//rXMy54GAZmXSSiQ5Fp0GTGSbjcE3YZ6Yh3n//bggw8+y7aPSbZ9DDuQAVpwIxuBIPGO7PoZM7m7+eabu6QmkHkZy31viybaSpVfhJzQjma4S7BkWKsJNdQWgXRLIRbujygEAvGOqOoY05nJbtu2zekYsE44C9veLJKs2mcxlYPMx/Sp9r9t3779e0It2ninmN8xDWoo/MhEIKgaRma9jMlcrVixIq2dxFA5rEHlsD/cehwkLOk2X0BIQcjuU+1Ixp+45ZZbliApN7MKrhb73zGJcyj0rkcgv0Hv+tyEHIx5BJhgc+qC7u7uc5ho24w6oXAFmluhBh9jPXbj/wmwjRs3BiuGMd9yRhcAgXhHV33t9rnVirbo6xQbKeyFkYWDt+vtQ/fbgoqhm2dfERgyRVMYnQcXEBgtCATiHS01NYbyyf65vSouE22XQ7LLIF/Z9UqV4CfUrubZ3ZqM0+o3+Q0uIDCaEAjEO5pqa+zkNSvTMBUXlcJn0OnqNA0Bx1E/PMH1xboxbty4prBYQkgEFxAICAQEGoeAY1y+QnzD2972tuypp56a5fzzil4qhsYlE2IKCAwvAkHiHV68Q2pVIIA064hXX5OQcQO/hzdv3ux0u361WxXRBa8BgYBAQCAgUAEC/avWkHQv5eOYH1MYrXKrIGzwEhAYsQg4PdqIzV3I2FhHoH9BBPrdz3gwtMrNn4djQCAgEBAICAw9Av1S8NAnFVIICAQEAgJjGwERbiDdsd0GQukDAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgIBAQCAgGBgEBAICAQEAgI1InAiPxcdpbPeF9rFp8yBJ/z3miWPd0sXYgbaSYWDkF6heko/dPMMgBPktW5Ynmcl4srUywm4biQchV7ln+vnjzlx6NzpVlp3c2jHqrBQXGTRHzhMNTTH8G1gx/p1eSqwaFYAvNy7aOmduLjK1X/jaxvn5Y//oL2VthvlV6xPufDcIzPmzcvnne9S0+nTJmSvfbaa3fiiF2aqaFMvIMKiDrXUCYzIuKmnBWXdTBMhFthoQYLU+hf1wrTkYtLBFeVywtbVbiOInkvjEBx89upjIX+Gn1dSd4K06wVh8J4/HWt8Smcj6PUUX74+XY4qP9S8fj75dIs9ayjo2PY69Xnd1cek7sycZ+2rxRqXlKG3TXNJrXH7IWcHkHz2YdfU+2yh+uxWdLIZmM2jlq+/6jVdqXSXmCWnG+WuneuNSU32idphTO43YXfhjcGypaOxeypTNYWp9J2Z2y97VAelJbKrfNijucJhb13qrU3Je3jBJjGvS75JeB44rv+6DX2O+9P97PzLImom1pyoB1Ewf+dMMBp3dk40q9PSSXMWh9l3shvWSpl98aeMIQTZWnwfMmPXAfZOA/vxK9w2WVTbHy6xeZm4nYU11Opu5b8NGMZrmLkj3DZjP1kzlq7R/gft8j68L+TI1KPT3YZ7aIvZq/B0xFkv12eKQ5RNcYRZ5Z8x8hjCzH+bM4au7Nc3vJTJZ+x8/mRGSGc/dPeNmH8ODsObI/i3n7Uk+Is78gA/lPEtYkwy3vi9rdYpz1BIGGrPx6LsvEozzHwvG9/OzDRZB8hrlbS7+XYQ8C16awt7zZ7ILbWns5F6+JW/vPrsmwa+Q9Vdl3zJ7t0hv0bbe4Y7rk2yr02etN9sVV2VWH+kXKTEG/qzW9+8+vj8fhJ2Wx2G9FkOMZwGX6cquvSd6Ojv+efZzIZeXY/f+79ez/5Yb0ff490lZ77cZ7kfA9+q5qamm5A6u3Si4Gf7zVE3Ri3y4kXVB2xqDiLptmsZNw+RWWdBlNMbuKE/zk36IDZeyx+FHJ70bBX9dlfOHXEO3OmJa3TUvY4DTVpn5jWZPttxSPehsSpBfXyZ0fM1t0/w77xzGq7jPKlNDwrNRS7dRZ5XGHpcTFrg5k+RR4nb4mawd5g8mifPUO0v1s+G1JdllOh3L2CFxXxxtI2oy1hn9mLWt5GGFfZ+TiSuPIkxtsety2LZ9jNlP0KXkyLeERfdXWj1ORtJxc9T3fwRCRPmI/BGv/SFrOpLVzwP+fy0sxwrnpVXp7I2kMc7tn3SXe5E/EKF7y6IR95+1zK7DN7xG2iouuPO5dCQ/6qkIp3HOitSdlqTu8slbf8BAnnCTG7/EDbvy9jn+RN9A7eDPu3AGhVecWz8kFZReFbKfdNmbR99dh1toRHvk7KDoN9npubbFprzM6cQB52qLKIUnH36DxrmxZPtz+iy/jfTMpuiQSB7Hlkt1x7VLYK3fmEIZycWPJ9M5rsJc/Saji3PUl7dcr+xOlVi+aShUXuxSS/xpCep+QlkVgBIX5g3LhxzX19fby9qkJMUfQ7SLP/fLAT7xfCtWQyaSmkj56ent8T7gtDSbrKl+uLg2VwqJ4vIH0gdm1syQykObOvTk5Yk4hle4b7secqqZ48kIaqI0ODa6NDbPJxpZI5QumNW7Y5a08+mbb9+rLuTZ1HFd53w46x5pgdAIF8JT7DTv+b2ekvXG2Pkb9+kslP6cCWXB77crKq8jgZ8nbSMpJLOwXbmu9f5z1RuWjmvYjvW3pStqcg5ZEIeSdHHHEqYk/y9M5tWXsnUss3sz12VuxJ2646mldEF+ulakUG6X6aXH5xUsJa9OKik6dJtxQ56D4QWEJeFd7Xg869851/wUxrnZS2X+6TsNc9TQDi7/V+huBINVgMDJrBRNJX0bzlp5v/cqANv5u6+ebeSdtDxDMIDvnR7HSuOqFBTIC43vGs2TsgyQsZ2ZwLbmnVyfyo3+wUkBsez1TG+nihbt2RtgkUTBKoa9ecJ6iAyQz/TuH8lC1JexRB4FvppP0g9phtwZ9LY16ReudZWUd8T9NGJWB0c67hYysH1+e2Lsq1ZR8B5NZ70kkntV933XX/eMtb3vL2HTt2XAcZpiDeFEdHyt5vA49A6HjFtUNJuRHh/oH75/zyl7+8O0orNhSSri/HUBXOx1/yuCCv8dCovo/0dgWtomlT2nYgNaUhXZGyOmjdPxqAhnktigjXTz5rRe246fwg5OZmXeT86rTudIvlnXibenmpbKScSOBzSeiepTPtUPy6xq4MFHNIrIyAySMeVR793IgglutMxcJAzKpfF4ZAEkKLlwusaYXpzRnr4sWToS4+lm2xvyhf8+nHC+mopEfwnHND2YWoMva1cZDNjXvH7ask1KK64+WmCTO9RAbgR0h3zbGFelbHV4Su/T0e1UMUvcoX8yOAyRm7aUrSXreBuMmb6yyFcTfqWnlTXMobIqwjqcK8+Tzq6F8OOqcNf21i3H5I2D2eSlsXxONw4JErd9V5pE6o7wwvmy4Knd0naefwQvzVSl5E86mTBfQfpVvM+TyTJv+j+o/KpmtuJoTlMxnrQcjpZYTy/CkJu7wpZfdRn+9RnEqDQ6xcOvJXxPW3UdLJtT3f5+bt7Pvmm2/uOu2005ohvOsh2180NzdruO/aKb6H4qhMNCPhtvNLImkv5/cu0n+1SPf1r399yxlnnCGOoBk+1+YVqJGuZOU1MpHCuNRgo4o1KvpHSDPvomPpDZmgJ7arxJHL0Piy6L3ybvlHlR8dgjFLQ+jqWE7CLgzNfYQM5/rT4gTdj7NAKPRe0zUjKBENWkRDo2JJGv52hoF7b0vbb++faXOO6bRn8jtzYSI+jx4Pl9FYaWx4c6G8isrFuS8YxzShpPPWoI7/bqgsomlTmTembBvj+SPI313LZtoJsztt8YJcR3cdXvrYv8yyPWK9disjlJdCNDuIvBmyavd5Jh6ll1Feo3RE3sqsy4fOSzmGpEmGpH1I0hdNjttraBtdZFJ6aucULxHRNBrshBdY0E4S5NnFv78fPRQkRR6UHVcM2vAVvKw+Dg7wmSrY4ehDKE6Hg79R9pgrZK6dEFUUVxoMeugnb+T4a9J4Nd7IZr+Ko2SU+PN4u7x6j9xXfbs6QSrtRSqWOut5vMyvXjLd3k69nYkO+AH8ZJbNtubZy0qPNM7D0/k+Yo5RQkrXpa085D0uPM1OnDjRP/8YQ/0TUD3sDRkKf+HQKKeRUoy4m6RaQKWxBoL/FrrcKyR569l73/velquvvhr1t5nI98orr/TqL4pQtgwKUpVrZMEqShiEJc24Ro3+6lwarEiXurcmMtOkGuAnyaYbT1lJR4hPSTq1++m82HXhffn393QkPifxgmC/xDtYhvGrIXjR9ArzUypPPh86qjykqQkO3yDHMSTt2ithM+IZu0r5wdSsYqfWMFgFkqC8DXCEcZgKWx4oT3rpOdLgPA4bj4d0t/JSmMhw9dYHptr0+XR0Sbo64jfR1mM3oVoQ6TIyt3aVTxHh9GJT400XpKNnzu2UIf+Ao5/Mum+GHU7OziZ+FUDDVe+cqiEfb18XHuv8ei/nz4fr90PboKHkpHHIVwl66dEn7o8rZjnJMbP0QPsoI5eP87JSuYkq14Y5d21Yx1JtuD9dsPN5BzMnDBGPMPR1onjbGSVtRzI9AWJ0beXaInVLmAGOOiHoTg6B3Kl6eb84D5KC21CN9NAee3jpvpZJxr+QzocUUqT7j1nlJwfPy7UjJZafnl7sgzoRHFJvGxLnBjx/UsSIi5rToMEH8+DaI3EiTDc3pdPpzZDu11BnvPiGG264xKs7UCvERLpz585tktTrSVfXDcxLf15dCfuvhudEdZG9b7q9EsX/+XQsASwJ0L19echkriUYtrXSoBMQn6tJGqZ7vTsRLTrXPX/tj95f/jMV0v9ITKeVONcoXTz49vEWpuOvdSz04+/xyPVIlWd83DVgNQaEUVe2ts1pSyHOnYrkdBJ+07cM0sgJVo/LdTYSErbodRMQaCuSjhqYOrt/KUzYCqlSD/tlkvZjJegtD+iQ/4Me83hUC9Ibj1f5ol7So2hVd+gmk+rNDgMFrtC1dec6LmT1GbBSvCIwn4RwauaF4OrQ451/zK8Pf57/3J/7utF1/zkJuecceUkqzaJOJHTwCutZOs2OBKyvS59LHPLv25ZeDnHq2+FQqg33p0tInw8xrMoH+bWCgepEL2rvxtFfenlRv19SqdQxkkb9wwqPWXBtBkep30Tseul6ApYKqxmV03aGhu17JOw76H5/KIsalXclao4K0iiJW7mwmsyah5UDZHgNxHgDkqhefO4ly5FsVe3UbnZAsMmWlpZWBOhe3Pc5Hg/Bn3n99dc/LrKXZIu6YwfEm9X1okWL+m699dYeLC1mnnLKKW/StVLmua/bqjNSLIB7uxZ7MBT3QE9tLaPhNA3scnVMar0bhNtou3I9kHGLWAnd1u8p6W007NU0Zy/yO09V/yGdLAT/tCZNYrbWh99nXPHhqvJIPuKI4TeR/jf57U04mePwvwangOhbmbWYSRN6Dw1/NjpbFVk/qR5kS6nm9Xn+3vz6Fa5DCKtaGpxiKuUydKg44s4FmLT9hfgnwpT74/llJHYiZNmKzk9Yq5ElyNd4OuEO1Amv1Ojk6NV2AS+Hd0Mo7xMB4McN/8mk8tnLZE2LRCnC3M6d2yGTVRRwC/gdQFzfEJFI9cF5UbcA0pZ0dd9+NgUPJ4oR8Kq8KP4susjk9qytQNl9GYA9gUitPOpZY1yUr2fSjE6yKDtwa9f2d36XhssS9aMLpn+uoMzx7bw4yYfrSzzvA+NmXTBquJOy/w5/K8HCDWFdJGX+oJdIqk4o9MvxdoowZaJZWDuVPngmNDwkvcswWfsVeG3lUryttlSJi9H27sfjVF64+2r4wotDBKzFGiJjtbtx1GMPvyYk7Hc/lbVDMU07/aBOW4WpZ9tL1+ZMxYolRjwRisWeVnYP6fTDkKRUDntAlCJQkXClTjgI6zYIt514rLu7+zoI+AoI90+KRGT7yCOPJET2ukbF0NrZ2Zny10z0vYfbn0YVcYGeSwcN8fqXgG7V7VxjqTuWyiNQpWQPnWHvRyo6VhMHNLB+0o0a2RNU3Ufp5NdVHm3VPl0+Dp/yXGNVg4laDByZa+U7MrYEW87bqo69TADsXP9rW5v9gLK+lfjVSCT5xkQySEYvZgLl1bHVdtsCSRedlXXWMskNeEQSWUlfqA9+dexaw6Ci3126eJq9iBfDRUjAr6YjSrfN7LJTj7QgkYv9zkL6uZsQF6jj8zxObxdWKkOKcC2Ee4jrM+esxjwpjwgewqa1p90u515ZNc/MmZBXJ5PyzTaPl7KsN7zLRi/Cx5oT9urDV9oq/2Aojx0U20/y+XTunmatIp7FB9opFOYE6lBUkyMGMGuNWxN1qYnAjzy9xn48P6d68cGrOV6xlFEh8f8XL+rDGX2I3CUQJzQ5izS6X7bNziTCc1F7NGFymC8Zl0yHl4J0DOd1JeyvT6XsA9ThW6m7Y8S81OsOAkqqFZG3ULT00+iWIegXbTa744FpdtKRa23pGsh3egnyJVzNbuHChSmRHAT4ONLmx5n7+gHEKTlM+Ko1lIteNSEMmkW4kaXCbyDxK5Cif8t950SyqBHkr08ETPwJr9eFcF8C2Z5F+JPQNf8Kokab49IU+TfUDSfxiticoj611T6LPknOp9+joQ9v4nXYGL1BlauHeEkw0RL3w0/dq9dtWGaZ+VFnWLQ1V5FriHQcb0mRH068IqkQAQvjb5yM4VsPtO568tHVisTGMBoJRWZKpzFUXDguYccjzShVEViWThvDXOq9XN9WShrnWc1OrRbClNJxsiJZCbn/rdP6RC5Hr7W/cus15Ovb5OvDIhR1PAhXZl/SU7YS9JfEMY6Om6FnSqfLf0szNG5GUr69J22nv3hdznSIB3ERgoao6Vbb16WtRCtw5PFFUviTjuKXXVFcLZ+Ls0S6sqbom8ZsfKSWqCDKqr0cvowXT97LQxGoTIyXcpJr1j7aTMYgLOBx7ShDnpMiXSrzdUex+MKHkf1qpXlVO5HZ1XzaKHHccd9+Nm9rk/1+fMLm0D9kKaERkpN66VBn3Ps8uxSMt5A3kfKgBIEftYHef1ppT3L6JbD8+rOt9nYKdx4jm2mojyQEq+wakEr9F2cE0wPRz+DFevsD0+1109fYvVI/HBctAlI5FW/k8k79rcqPkK4kyxiqgKshwlPRy54IOarP6IUgrL0ja/1O9+HLljZ0uLLFvZ3ryyHOX3N0/qS3HT9+fEokK7XBsmXLRMCSePtQKzwfifhszt/e3t7e1tXVtQ0C/hjXknZbvSSs60Y5T3yNiq9kPKpAaiSdetZO2TNhz5cZC9eYz1ofY6gWOnqK4fz7RLrSoW3ZE5AXWQq94qCNqWSiFT5o1lqquB1wAGjQuOBgp2ez1Zkc8e67l/UeXGJlVYVJ9Ht76AU24dCHbWs6Yx/fHrO7eCBy1xtYZC+JcL5WaEHQTy/gxaSOyL2GOobqkiJMpHsajVnpGNLmfCRsJPyPQL4tdLQPUEdYpLnGnqASMtTTOIhG+XGqETpwGn9NSGN/mZy1E6evs64FkPmEydQZdTcrGpL3NFmfIhisR25SuE7XU56XX2hJaV0Ze2TzGrte+U7ubX1zGlQfiq9Sh7TbImn3/gPtpZDryyWR6z/ZU9t2IybufxAM7yxow1WpyogztoBivmCqNU9dbxsXH2Cn01buRuqfxMtI/SEuCRVhZd+ulL2N6++St2ZeCm7oXK48BFOena5WdTWn0+npr1ryfLtpU59dhHT9QdLQC0VtsoWfqq2ZftHLC3YygsFvsXR5lSxdPPkiFsqPyE+krvO6HGQXh+zSSK0fIaITINTxItRo0m2nuHVfCy+0+EESLoR7K55UVNPk2IQJE7LS2+paEi/Eq5dn1xvf+MaJEPtnOf9/6JT3Qq1hUk1AupcjJXeSj7ahIF3lY9iIl7QcECJXV0NUFjeoJ4tLUYiR+DeOWW2/l/53LSu15tc+RFO5KnKPRatoHptoqRdstS+zqm0Svecpms6OZ1LWx6v/PkXkCaSiSAfxJNJVgz+205YsmWG/h+xPZijfop4pgBCi9ksl7GhObzfIkOOQvniAXsmmNMT3+ru+fexDWzbYkZDqi+hoXuerzq68IPy6iku1IeEhhW3i7nunr7cuSaKuI3fKh4uY6J9zAy6eu20y2SITMcjalZU6mJhrLblJH7EaTx+eTz5l9TB70UC9a15UQ3o6pTVHLligvAUJtImyq77UjjPS9XJ9LaT7v8rjLF4MZDtq6tVli3C5Olmfs5Wes84eQc1zIWlJXSMpVPpYR/ic8+6070oXzbnIX2FLOp4r0+7Fq1M8qz6zsUdNFgX/Rjq/I50fQMDjKI+kT03eKVgzbUHkOwkSvgXJ9xVHrrFHV9KWZ3Y+p+bAo/Coy4l0iSDGpNdqpN6XQoaHQooiTuVF+U0goZJNd651xe1cL4dwb+eec5BmYuPGjTHUF+6lx7VUGH2SeDWJN2nSpI8T7pMQ7lQRLsSdgrRl19vJvUsUCWZu/TjlYm3c32EhXipCfSez5ACbRtZfyfBaTtJdL7aDGqY+gfj7bd184UxrOqjBuk3FW8x5/d3pORvFK4r5Ie9qzDV1oGLx6Z5XIyB5Xr4+5XTcU2ite9O8D5hEB4aI5+DtdmYZ1eCdoyOInNISQbmr/PQ/y/mo/6+kufUMIacush28FM6mo/1O1g4sgfWTR450ScmpGtTyydTFc9bbw5Heb3s9uTg/CkwR+3XBEf4iCOkfd5nLzkMFv9B6FiCs0CCOdxnRvgoM+8FBE1aqH1cEqRWonIa0maMOg9RQCrC8/FusdPx39F8vcDp2MhCJ0cc9ONNmHtZpnc7CoYy9rfJMHsWMru2oHXKiJiWydKoKhJ9rWbp//1azG5lEPXxLpFtWMH5NkG4f9/enz96A7fkr6KvPSPI1r3bI2YbjtW7nsgqZLiEm/SpykRohFpG3VAWJ2bNnZ/3kWDRx9nn0xwdHhKt4RbAJSc5I1l8k7DZJu5EqoqJ0q/WkvjPkzq3RVioJ+ycIRBt2qKC8cNyySD25WctmJe3+sHPXSDPKhFzUCNUQ3Y/WpgbQUKeZ+w5eRkettT/5TXK3AAAtR0lEQVSyL8JrmUg8Ntlth5PWwejYXksP+K0SfMla6/G6QZYvQb02WRsVQIbSvzlyakjvzivdn9Zbj/LGBNkfSO8GhrfqcvrbjwMnsjDQktiHkIq/peDP7pmTVnVeiyO67OG5zq3gXTlqcDGJ0HS5t67mMkrhWvkZVtfZmRsd7nUAGzeZvUCK0Mhl2sW8ZrdQj8ucRD4I+fmAlRwh+5ReavMhB9j8J2JHnHvnKQ80hD0ZibxMN7s21zaCJUpJz46Alf+5a23FZlZVQq63Ybom4Uyl1U8vlCT3+5gcPwLJ/yfcM+l6FU7neFK/aZRzaRKZSj3oT6TLz23pqHOFEQFznoFwT+S3CMK9GmuJg5Fws5Csuo/SiHM/xr17UDF8LwrnVBOcD4kbFonXkwcleIXQ845O64zuMaGRTsaeN9VaTvdvTu9pmI/kr4HtpnTmO5CISEgN2aU3e6ObdNtGiMcUiudulPCLaOObTW22bWqvXfp4n82jCU4j3P4Q8GQ2wmmR/1IOf0pHznO0l1pzdwv+ahQgCaaDeiDAjxidnIIlRIJOruGfwqqTuv5PD/uJRidO2l02uH6xIKn+S79IYXa00Q89ZgNpyOmQiUjuSCaapmgHtZUMb410O3IEJH81u/Ny5VH4CKbiUfk8xpnkAo89IDvlzpGMy6TZzxUyr60Xj6iGu+6ltpaAabthW8zOBXwt8WbA5IjXejL2Yk5/smd7/S8/1D19IlHmVqQHfQ0jn/9Dwj0V0zjfflRcTbiluf8G5gO+inrlTG/jHdUbXhrmStVLYVKSao2f9ljQucsvZPtycnIBxDpfOUJvPKAcUS5jkn5xn9MfJuKavU5Y10PhhoV4ZUmgzIPUYZKUmCpPyqqBoex6xJnfosy/wxVuf0ZP64eimIPHSXbi0SSB8yzFGU4k4ysqd6eBf4l7QKPiwm0ivpz7HVG6IkLdj+XMhb5C8voZ+tR9NrY66Uu6OdMsvI5yM91fIsEmFPYeJ6kVBWBzdPs5j/5G4TGqh+Zu+0Nfq/2D8AdrWEs0clkIXxvJSCr9pW50R7pPndfjtmxxxK6EZJYmpyRjmuxhHmCfbc2myZaOmdGoqKMBdUMcqgSlo5eK051yHOD0fNG+wAb5cX64JvsoP6csQaXd0I572HXNteH8ehgQSR0X10Z1ywjpAYjwIfA/wqmccuXXC/owRc9chNPzdqIzryM5t1BmAZLtfHiKkc9bSfMXkOxpIlvSUnrSM/dR7gSWHZ9mn4p72cDn59yLoRPgvTksrrCMZIt+A+kqdSwVjkbvew7S7SnR5JsEB7kBggd++tDpNjEx93Ok3YXRUuEhlXaViSEnXlUGiDhS4HwKy4M7Of4CUeFX61rsr2+I7A+5F4/tgplqgSBHHksRrKvQnK/G/qXMCZvnOr0tXOjizuaTrk+NDOA1t5x27gReBgvpEE+6yZDbdb8j1xn6878jWhjC9MNGOuhd6OWOJIJ2CCPB5AhGprl6j14uimKAQ3rxk1jbWDhxDxLWwdSXOpReRG5MCREvp1MuU8BGTT76ySsK8metF4+A1yFNegny8PmlM2xZDD2k0m2Ui/B1Lzipu/Syy4+bxOKnR20TEGYKCJxbc8m2j1po88ixkW0xcfXXQ85b/X87iNPvl0A9LhHxyvRR/yO9ywEapcQYpSxoUJ+eT59VXDpSz6cj2d6Cmuv1SL4idzQc1gRI3byUW5mfuYJl5XeR/prFuQmw+gtdXQxkJ9dHkHAP4fyzEOr74VNZKaBRcCqF/nmDvKgpCptWYSuMn7N0f/NmXi/D4IaceH0Z1HB6n7Uznllj96sy/X2nU6Kjg9ywFNinW+6ozqdJvk48zWdIW85vrc+ocUkOaVtYeQzoN/0LTA0tJt25dJ4unrxopEMm/lhslT3I7Zc9NN2msg77UMjssCcz9lLo3knJPFPDK+ayvdEeucT9Nzr5O/EkGY9dp5mE4CbjXGdrLbOpWIXG+8USyr/nCXzzKrtz0gx7lBfF8ymIdLxuNy3ZyXLxCySwm3ibP8roUBvzVN1ufACKobifIYbFzKsshNBZJ2DpBRHh+Lw9D1tyWVx0UGf43y+676aoIEEZfj+ie8VIO/Jb92HDdvfiU4ZVp/1OZSFPkzjKNnvHPrMtjt+GuPl55ItN8Um89P7KYotjeZFLIpSKqxVV1A5Wt+33lNmXuX4nL8cdkUhJtnJCBcchdVgpJBay+AIpV+T5JczPZFomSwX1XZnODZBy8zLTizlZC36/ggXFSpmeyfIh7/mQnQ458apxk3stHJBpyt9UkpXo6LRn6P0rnJ3usBRU6RY631H0Uuh71r5MXmfjR51RS2f3mZib5PrkgoKOWBhPtddKl7TS2Gcewor0ZDJlG1IT7dkIIwHWr/vNj1tY8izhNj3nAfpEOW7t7CK/Lp5D1zgFznp83c7v2/IdpaF+W9RNj+7SkVZpM2/9Z8gv/ymOTXSph+WFvJNUZa5oRvOCElFGRH4wRL44Zj9EmrqAtCR9Ssh05IufOBM7bxKAjdqxVZuDYJXwKCvFvgjBXD0/j3CUPa+3ffXeNo4K2DOvHNrEScOA1fI3ZQiJZlqkPkC/vDpS2oOAaw9Kuh3Tiokc1zT3WMz71YN6nbCQcKTR6OKMvenZrN3fGrcpvIy1L4fb24HNe7Ta6B28EG8AG6B0TnXmoOKP8jokTgsjpI9lpdsr0eN+CclVpLuDxFqZvXf2yiUSTqGGEOmuY2GFXhrGvgz9AmGJMA27PeTEG+XUVYA6FVJNKjZQinQNqGElqiIiL8loNphtqd4xPWn78jZ3TkPytSlbowtJEblBde5ZPX9X8tI5iPKDxR472FaRmp7GS+gxtjPfiK5sE0y5AMnrG76xAo7DzqfJddp/acLfk99Cf3qme3qGZJycvIkNhyBJTdRA8LIxHRCvj8sfvd6W/K2jJz2F9Lk3s/dJjkbHM8zg9OWLaohXeRzUeam3aYdd/mybfYj09qeT95GkhoriuQyDQY20XW8uW4i81JR2Mb9RnpJY2zyfzvADVCvHYp3wH/MhHP9iXgWZKar2pLVSCK3gG+gy7hM6A+81+Ko32hAfjtscsYPLU5SXZpTN45QkbbahxKs4NXEm8j16ka2DXN9OF7mN2y00LresnDy4xVDc+yKZ0pJpOeUvxYgljj8JXVbN6M75H+QP+lxZMeTiNrtUE2T8JI23DxJUj9MQbxKi/vw111yzXWZn3gStgrB1exku4nUZlSSjkw6klnewnHRjN1LUWuubTwU5D8P8R/pSJakvUNCr169L2b40KlkWxJj8G8fTp/W82tVjROrITmHzXdNaa0b/6iT87T12LqY6z9PEEdLboaR/KJvU2CrsegnzDaTaJknACyJp233LrM1NLolBHuJVsIGZjsebx9n6WAnzJaKOL5xpzft0W2YmE1L0hMxzWwTl52zncwjQNejMPrYk86SdQHovIN1DWEF1OJYUR0JAkqArmlhr6bEsL5deSEMSknPqlcXGf8qjOjmLJLaxf8RH2W3mOjCS9YuTsAgGSm45d3887qSCP0qz0EX5yfJy6eJZC8Pmj/EC7GWy6NP+xezDtLZYEmuG/D7DgMA5hR0WR+EjXssl59JnC0tmu/Lz1fC8SM1FWnGEgj9Avh3Ym3fwAtQ9pdtMf1G7foHImM4siVPV28SknD0pG3XcvHn8WcivQQ4JVRLtDlQMH4VEj8NiQXBIBTKY60b/24q0excTaj+UZ0g3ErkGC9qY50NaWYVZ1JBe0uVj2Ip6EpYf0CoqsRWGb/S136thOhHDsK2Rbao2Yo8xzJVY6BTyfqhZafoE1d5WxVQofTKGp2O/H93kpyRdk1a3/uCyqDfamOFxDcHP8HfNogEzSmBGv4VWdub+7LPwBAxGA99OZ0unttmnCHuVyMqb9CiyDnUSES3Sta7l5Eff47qbVU6FE0g5H8/9VRlcveTK8QBP9HNOK9QmRZ8f9QTtnxU7ppooQ9YQKskQu7yRfT5RiEkUm9PLf+Fm4yoHaSdia+16sDqHTVouZAuuFrqVtJfas1maBv43xClban9tIg12XYuR0U8tPtDuQsK7XqM0t3wdT1jjMK/v1C0uYVWby0TUTtzNof5DWvkFj9J3m60PZdKkk2UEIKwM2/MLId/XoO99GS+sTeAwgdtuH8dWVGeMUhyv7KB9M5nO14fszwq3cKH+NsYhoWol2g6OUyDcz2tRAK6/SsqkIoJtiszHPi9/keS82xKv1/M6SQpp5gCGR69jdJCOoVdzAFCxHSKLXeDUsFRr/HwNqk07Yqg2O0QQWwg5SEXRzqTIpl6+atBuyfaUTWV7yg/QWz+Nrk7sovidHkrTxAzL1iV67Salx+IJh5P/5lob31wj3g3MKrMtghMnxk2lefNRxufJf/7LgeeOdLXnA2RxEOL8mjksCY2I2b0QlEeVWWFLOT2XPza7aZafWdOoq4XOosJN31QSh4ub5ddQ7xZeZnvBmO1aIq4ezAjDDY+lAnH+Bv5x7QDJ84voXrejR72UTVy0jNXt4I3XsnkfGFXZq24KmSQHuR/kywshiSh7MYLCrw5eZj1uZRbVlexl6JwYODpzmeDLz2VTaMBD6W4VDQy7p5bK6dT9zf1Js5jBjRoH0+8WAzovnrKnelnr5S197wNZ+wT7Z/xtv6RNZoLNib5Ivd2cr2PrzkfI7WJwXUJvvv/pdajScPMbOLLdtg2LZhykewHS635MpKm9VFK8bibf2tkq8scyH1McEG8+lro15G64JF4Bkn3gINuXhvNqSnkiFfLSSTGb8XTM/sSzq1XS8wCuQycjwLkarHKv147oxbHkQJs3KWvfYUMgBFdrTSYt0dTrbB/3Y43/RJlK5S3DFbtpO8Ek2/39F2Zi2xfMRJeYJ6kKDggnJh2r8sWvG8bOssqtje4n1cgAtxD1giRdVCiHQSA3QHu9SI4PEHAlYR9Gjv9pDCKmHiojXyTu80mvY4Uj/3hkTSGbTjX2ks4/P2qdPX7fNDt+R9wO5EU7Y2vMDuHZLNh3lQL3LxDIi4nnkrCcaRcTXpcvmWZ3IVp9nDK8Ct7ZB7EPLznXf+JvlDmqh8m/P7LHQqtGHrwEZVmTlNWG1D+8HA7e/qy9H6//zauxSVGyQWE3s2ndOd5z8cQc28Xcp+xtXo0vasVdqSNrB0jcVwF0UF447eWLEVsVh3TBGyILCF3jRy9PHd2cHOXs/6yRnlfrUDk4YYR9Gu6lTX2ahSXHE8ftEP+qTNJWog96/MUr3QIYJdvvuBi0rfV7HuQEKddtXoPp2Evw+gFNqOGUnq8aXRdzfdj0tmvyDdXERfIw3Lpdn6nhIF6nB1MjYUvjHzNpJeJ1syXqtZzLRMdVykLXPrg5Ulxuy8aKc3MePjv4QS77Hdhkh2q2N39cKENRCJS/NF5JVZyIdLXZDGqGlak1dgm3bF5nNBmhizwn/wKKHuSIQFIyOted6nBmFIbHmDPa3gzVtbvXVIXX8tYNKWf+dAuXaqiu1UZBBhx8vRDO+ZG0s2KL26ZTZdCvIufC57b6dCZoPlBH1FGky/b38o+SsCLyzcxZa/fw7F/1GSJKP53JgnIz1vnR7Hyet4MWX2CeA9meA5Z7MeKQWkbtkYEJZnJmb+L6v9vacqvy9FJkiK0XlpwOcXAVqc2+5wBWEbIlZgf3+JV9IRGudhezWWpHOI1ctKpPPLyRT7Rv0E03H+HGIy6D8ukUnxwTtMU4e6PYs+lc+/GThgpXqSO4CNz1V0YjlxJOv6IOf25bV21GRbiS7axo4BI3I6L0OvXzkXabkHb1/is2ZVAYS1r+kXYv5cvGD+mh9nFAZVHob8ivd+q0Q5CiKl+gyODc6YEYLqvRSGJS55m8eKbtiYT2TCOtB4i3bkfrch2o6gYat16ZYTML0sVyTvcdOZ8ZdADq2A53vKRJI3eesfcdR2fyQznvv9iRN5kwdY74+s/9vc7oBELRRxa30tEm0Oo1KZMgM64OvN9SR/y6zqX8xDfYlGPW2OOFC1y8n1Jx5N2PLSDtjXABZCpMCepeUv2dOM/vgFORbwdkdjzh50MiR2Kkjwf9GuX+wCd8fs/o4C+8oNo1GlEG9YKi7l6xbKrN4MWw+i72S9AmQjx6Qo2ZtpukENonOMPcwCTUZsdw+7YTsa3uiHa947ohjnRi6Pndy4l0X6w3Anls1luTCVpZmKTYLwFTWreXRfruabk2hbldEy+U8ZqvwAwsy2LZbVtiaGoy2gzQzKuxdF6NIzpJ0a59+HDCgnM0URabx3NRmX7P49dgMzupvbqQdt+D1PoaVA1cqjrcT+elnJ9Qewxp5FvyhP1vEjWDi6BUoKG6PxzES2ugUnJDlOWU8nhqTZKYSxvEptIND6KA90sfOlQFrSVeGjftqQZH+STO8l+fpnGSrY8lL0JnIiVLBkj63/kixB95ligkNx+upmNOstPHOiX2iC/crBXinLilrJMJmiYIM5tsMpLSHRjPaznofQT6O2S+hJ3RF6IOeaajMgkvO08vXlxUfrc8+zT4g6zlQSIfO7uOHBe6T0bpKeGy53M8Txc1OIWVI3xW5TxqkT1A+T7BF1E+Sm5EcEl0OeOou3RvEgnbbPWkcbn2ynmn3mBRpnm35Uh6R8pez+lt+bp2rhvilEfp5++faTOxKJlMe3mSdMmubduewlolm9vrpCNHfln/uSJmMR8ig2/gpbI1FbenMr22vanZtmIu54i31EijkkyTflbpHU4zX845JBsTwc7LQeNfsBjH9tf7AKKuJI1CP7LZRTrtwophL559LtpNTPUlMi7n1N7dKJFJuK+g292wq1QMPpPDQryLotRorPc6Zs3p52IM7VBm8lkYraaCeH2mRsqRxjUoQRXLK0Tn9GrFnkX3sugWmzR1L9KlI3yXUzXMmtIrlQ6Mn42Gpc4LaehzPRU5TyCI5wqxNy8I7YKlz3+/VTfI979w+MU/szl4R5kNuKNyiaA4zTmd0FmrdpJ+8wN15F/UcK7w2ZyZVAwzqf/hUj/nhJV02Vv5GoRuvODhnC596w67NNZuP+LllWR/hmQT+2E8lWHkls3ZNbNXg0ZzDXUy5VKEGE4/MTVtc1N91r1ho3XP532an1AH7YefnKo9JtUH57e6O0Pwp6NMe5WK6AUH2gxweQWdIcEE+g/wX48aJqYvSETF+CQrzg5lqa/6SyUcphVqrfj/M5qGqxUHe+2Kiga0J90fLldJpuvOi99wnLf1n5+FDOiEkr5kAqMPAzZ1xexkrr99EBNCCwCysEHVnYHaI3CdrurgqBfYxUrOh9eRYruyq/xxZn/vhtT+Az3ZvTzUMznvP3c1Av4yaaLXZB8z1pKW+8ihzIV8fncyBcvPssqFx6xskHvH2d6yOZaUpXsqawd/+NXTGYmhPhflRRkaIJFxX19A6X8Ryp/z85SbxHITWYUpF8ZR+LzWa5/H+fQP4ug3D8yLDy8D204UBmHYbbwU0yhBUqnCVDrSyIu/6GlHVHdSRzVtsrm8jA5jf5BZ5OQIfofxOxDzx+bH0+4zSD+oRw2jHcOQdntQMWhbzo9F5mAi4uaimXvuJos8Yq3ogXXnYuLoRdptZq9dScq7zA0L8XpJRRtms9nGA0wmHUVHlv5RCxXUGl7NDOlrIaHfYrLUhJG/f7PtMmCUMD3NdbyDK8zF+ZE/ejDmoM4JX8Uhva77fhnnvH/sXUi5P5YP7ksTsMvevMpDOeckXvTS6rHkNY6YoFPphLgs7xbmXrCpvjY7mg+33dm31VYwOfUoIR8l8KNEegM2oY+NBAwolCPWwhLpvr/n/ZwPBuf5m9GRewKmn6gLHtd1SQaI2jntXufOIU85vcSVZn8e3d3n/rj7Il38lfLznO8qz453zcAyUoPQry9mQvl4RkLuDabRrFQyzOcoYbfK0Y8eqkzG6WL9No2oCs5qbW3dC8sELcZqqSCuDNKulhFfy6bqv5J/vkwxJPVUQV76vbiRf//VEJ4siIYEVMJNUvbz3y03RPfYwzBW0sZZJB+bzrB1JeZUQ5iViqMmT1VV0HlR44ZMbsN64ZvYnUrudW9W4tJWevoEusr+Gp8JTUAMpyMP6oU6VOT0csSjfrk/FYUa6Alrn5QmhJiEmkX5XzslaR/GBvlSxsOvk8+1+l7YLnSAEdPQmCz4srrtOakbvTBd2X32uJCkrnYhDPv9n8f5Atq4//Gw7r5FHJJY3dhJ6fLLSIjRj/Oy5nwKqzxH4bgc6PzzgXeru5pPH/Z9lQ78E+yy9c3CNNtF6sOxEibSkir4nxv/zasufu/7kEMOIQqzk08++Q1MqP0rKgNd5uLUWWnXh/9mrBi2S7crb/rmmjbUKR1keJ4Mi8SrosyLSAwd4f9iOvUFbulDl2oQTVynJ/DFXb73dBGfHjn7IKkcIN8JfPwQ/VamUeRUICWQ9CCuCoJSTLQOSU2SDjPXr7ZPvHmGzUWT9FLe+ju4pxVx+k5X374Je/diJD+k3gs07OP+gGHuILka1seoF+LMSriGr8rSibuoIhdsspOWPpuXrJZK9LGXbRMFVtvboWhYTqyo+x0XIi2R35C4qB24WXdtvh4tuS456uggP/z6X8K6BgNdlwzDM9NKzcOn4G9hbpZf98o55Utl1pEl44nz2Ye3o0wa4BQ7nx9++vNGUIHp8vcP9gPp7rVXMoO5nxZegPlkHh7E74esCvyNVATRohoFq8l1RqEwy7uD5d1PYf+8NyZ2el2LGNW21V50qMnJ8gC1QB/HVibTzmEjHG31KOuStnIRQrRZVAzucz4cr0LaXaS4+OaaJOVd7oaNeKOGGpu92pYz3NT3nE6GkGSM3orkk4KQJBGdBSFtgZC+Ml/6rM5diw+tZUCDriQ3KueCSE/9RlQKlPFvMjdi60BXVlpi7EmsCrh3PosK/kYHuFX+iXvY38KVEFuiGRKUnhfn/lQCQoEfOj72/YTPkW0cKSguUw+kIt02/3UHH0wY+vMhP0Zf+JCqi3Qn8ubsQbTMkD9t4sqXCeyhY9baP2gLjsw4Ugz2x51hh6M1nIROM8Vkl/RF2jIzi4gcpzI3zebzOfVYDfiNkB6YZkdhFvZi0pUJ7h7kbwKY6CW+H1Ym93ewso/zAeqqu5nwRF3X1dVnsynHzXuDshTrKoCsaB7rdbsE/kYbJxGXU37WivO8zlz4F0qNOMOWkt4J4CCMyFbtbSbKTwzp1L3c9tprrw+iMvgnSFfi7qAjYkhau4/JxnctCywuUXxtbaz/3AX9TGkXumEjXiXcQT3wy9IRL6HTnUzNyMbVfTiRYx96oSbemBdDvtqE5bLkePt7XY1XiZZxfpOcUl5oPDURwHyklAWQqb4jh+7rfZT3RuJqJbJeGj9fk3erXluScbuGD4AezVdk18o/4YaefAGa1sffypx0vHgm+9W7eVE6LHFNQ2DOEZdGBZVnIBdsSP9CGB9HFXKF1CFI5U6MVQ8Vm7FHxIc5/ceiqXR2NhrvnAmpIRQgwb8WtcllTJKmqUcVSShJ0tNGOptow99Eyvzf5j1tVS1tGPM2vQTeRtu5CJXVROVL+dGbSiYL7JNgnSn7nZK9dRYvbr7MrXM5v/eFzAaxWdzOQp5xwL+dRzFUAe0cte/wTiMN3avWkaU0krXbypNs3Us6J3BPWXXSbrXx5ftnEsx95p0tH6chwJ6Tt0KN6Mu6DP4ZqKmxZa+46aab1hPXkH2qvWxOSjwcbuJ1DfSYVXYXEsbV6PreyyyUFl2P59dETaUYQ8TZ+egdKOnfmt5q99CA19CcnVKnRBkquq2GQKcYT2P+K5N4lynQ8o05iatkBNHkWsnnpR9k5+UaXgwzmpvoRBcgaZyL9Mv+4W6SrYUXTxdS/+QtZj8lmlfOpx90UHZ+EUVxd4hcfw+tIH6sGuJ0fuCr3bGqKiORV5GoARRG1k8UPOJZFiI8C49Hct4FGIXea89IFFLkpXg5Sko9hDmHl0sVwuIJzTtoG8OMlnDvyLAaLGM3K1jbRF6K6yG7ztzLsWkP+/aOrXYG9XqolhxLgpfTW4WVDXtD4uczo/Qfqa22hDb8eCVtWPkiP1poJHI8ZlzCDhPJsjTcWYJwqlR2sChir819divtOGeGGC2u4Fkx50YXlE9SYkLzK9XUf7EIC++1ssug7vGGXoxpqBOjSYOi1FV3/V8Khjw/x/4K+2ipL8kIm8FcVioJFlcsxnzsCnlmQq0uyX6wBKt9PqzES+bULt2Qjc1GzoJ0X4eEux+bamjX+nYavfKj/VZ7aFwtjK1e6Xpi1OKqLZz3T3DHZvpCb2evzeTSEe+GQRZsEE5Ba3I0Ore9oRYhMNl2Hp1vLi+UN1I2ONdZB7TRYbu59wqI5vI5q+0/6zG3qSmTZQL51XpIWhXb/paKDuKmOzosgaW4AxOnr4z8vWN6k81mksb13JKBikdV0V1VrNqWxDJeiPRtXoi5VYXoBs1tcI6X77jRCPMNSK3OjGs+L8gF0fV90+1d1OE9ShCcJByo/WZRK2X4xVEnTYboTlA6lbYkny+9CCi/cNMoSNKbYumD4PeC3NKxpP0n17Ywx3MDRkoFqhv1Nw++yqnFSwP8K556XL+OPm4Pg4NeDO2S0JVurY4VZe6jlUyovZgMfwTSFTQtFcSXkW43Mje7EPOx9EknndTOFybcfEIF4YfFy3ATryrDrUB6Uac9wWTau3kN/Y5WxcZdxh4q1k5L09uzBbWDVA96OddTf/kgpmG8dmLb6G8OtpMTLVYNv2aniQs/DKODnwHp/pnh6UwkKXVibajdwvKjDPc+gUrinjmL7Gcr6dQHSb+dK7caW2NdlWhK4uWf1A1VO69DjkvVkFvmLA4qGdV5POvIpbKBrS9nQz4eh6rTriKA8tNMxnxf6GVbyGbmHB54eLV90cUTSbk+zvnUT1Sv9/JC/QQvz29QtyIFFojllogTqQi4VyTM/YpRjzx6jJoJ65YGE4mIXao4qT/efdRKe7iWyTFF7KRqjo1y/ht/1PM6LFg2S4hS3L4QNaQj0nV9D13txUitmlBTWyg7oeaTRLerz/7cwgq16zWhBulqMm5EOTdEGO4cMWub6YBgsWD4PeT6bg3TGJqJdLcpL2p8/DCAcMMjNeiG/HgTyzndj07WFt+OUI+co+G4yvfXtRy17/ACyPRYPr9D8v+GTlATNyJdfQVCOcqAgc6+z/aDh4p01am5U0e7LZNTYkUBN2jcB0dRsJeu2kgOuejeoIELks/0OcFSQ8+KSkX8WF4615B6J6aS8ZAnDcG9VNhDOxTp9rKvwTtltqW6mJ+TOnM5iv5qH2LyGWci+JvPZNnUnpcTDZaFbCbTdDfMJm41OcVfMv3CZ4TVZvEKI62A659IHxJKmlFrxLam7VN8bfinSrsWiwTCaROnhmob/FfE4+22GSA3ke+BDYbrapx0u/KPbvddTKjNg3RliTAY6bokkHbjqBhUvs/rRjShpmKPKOcKONw5omKy55EoaMRouNd0pe0UBhI72KRkPLc1ytIeqRoOifgEmn5y+cf8+/nP/Ln36677Peff1ZPIeYaNHntf/ui91XT8Y6f1SjqRfS9lP8u/AEhTtpiajOlDympj95qf/wJedGSdG7YOSM9lhj86+p/P9wCPeRfCOu/SXVQzzuQNQRQ5NyAif7OCI2Jgv82pz3e5YMpzlFa+9wHJ+4uofM6/v1ck7v7nkR8d3I8/ksU1Mt7ByEMjLSX+prnspiZzMNVFkfgEisI7d9Qqu3Az+yxTj73aaIeb0mB080fx+jYsvwrjwrk/z8XRf9/7UdvgXFJeD6QuKwbbkrIPskWmU5Odz3WFziXFkMUd9UeWGAr7jwojGMwbQ0gXtyYRKfOzTrWSC+RwH6yNFsTvdLuQ7yT0Il+OJtQq5amMdLuE+y7S7mL/PbaC+EfEZaUFanhmabiqDzdjfvRa+yUzsMcwifBr9LpN2L62YvupoV9//iL/yoerZJ1ETtf+Xv951DH8tZpdvh8ftv8o//IQNVB3ToiGSAYdlNWv2oF8L0Hq/T/NSsuRppJtQp+X3jNhR71ghn1P9+fN09/nHMScVd5cHpFYady5PD7npdSZ9+cwUHiGgjpU5GAOl1MXIEpf59UAw8Sa6lrzRNKruvzonIhdtJwWOu9Hz92vsD79tY9A1/6eD5N3dESp56TpeCDyq3Rjamt88qcdFdDjJPxKraAk3sRg1gjE0b9xD2G+Txs+EgL+BVJzQm24jXhJz+Env0oscj6vuvRFUB593mKKgzbSyjaqLdi530GAuWyN6doGAeIdA+OLos0d/GRldDNX/7lRjjtnhread++AuItdMIJVvGTfuS6VyBVK7SX3wF3awshHmQOqAZonQ4xU6gOsUDsA4pWaoH+UWiZoFrVEAul4M1LvufLX1YVIN0KdaxS7Km++oVEr8aPX2SNIvyeiazgBvefVSMArJTHAvjEkRA3j4vzceXTdf67r/J/8yb+/p3OG9+5DjTSPaBT7XKn55LleAC00dg3Dk3l+XSN4zmftZ/NpS5EKwZJd9j4mZR6GTLWarb+zaXacF8970Pd+OLYwN4njU2TJLaXK5ZFK40vn1qSxKC3c6ya9V5sZncF0qt9WlYuTZl8ucNX9ihzpCoM2xeHDuzFwtNtZwUTOgDjVIXUD9lEZHb7Kt+LSDzHY5b0wDjpri9Kg3twesqpH0u6vT1+v/qj69ufljvKntqCj4tORfGVpa518ouZiynrEnDV2p9oj9129cCzrpI6Qf34xtWFerP/CYoKXoPP9b6wkHiGSHgDsT09p5udR1/6nPPFzli9s/7KGSb+fb8naiUy8Hj9nld2nNJQWmS6bN49nfv2TB20RKQz7ebFswap4eH7Or7AUoHFeZK7uKEtS9ch/1+fmzct5LPcX4vVl+xUrznogUakY/L1yQdOSdiHfC1gssUnS7khYoVYqww6sUg+H8b4alEYo/QCLpLp6+TxQ1iZhi9hUiV5ysPxiV6nvfG2au8oelN8OGgk/eMjiyw6yI/vSfBeMYbGeyS+7T605dqWt8v50v17n93VlRvw4ynQXHaGJ4a3S1HfJUpK+IIJekHilNv/WZ2fYa3XHAvhrr5lsPpKxceQxJ7GkadBsoK6Z9wg/Ds+V66EX2ITu7XYYcw1JNqFnPy23ICCRTtrfj3vM6NMOcxemsFwdETbrSX9j3I4EiwQ9PkNnjiF+xJIpe/gwdr8i8KBEcAt1ObXb5rBxkPv6AXWqMDG+WLBCnyQqjIMJq9nc28vXRWHeGnbNzC6rHba0NtljXqUQ5YVD7qVRaVoEUF8a0Ia5l1w806ZB6JO1N24lcWUxvYOlNiN9r1O9+zDKF+f5krJ/tNNRftWXtDlRqsVmq+5kWaK3nBZ48KmN5cd0Gqrp0vW/U6SD31D5s0tn2qHokPf26gy9uBnxbDqqky0qK0yPibW4JtfYEOdcpN7zIWCpXKT3LuVSkG4SKflBSPfwyJPLT6kAu/q+MjdinCrmfH7nVdjAhiPjlTaWavKycmbOcgGCOQOp97uoHuRIynXePoaXUj081Je0fxJBLsD/fCbdnK8if4rlsdi9/KCDPZffwfwM9jw/vVLnjYijVNzV3O+Ak85rQLtTeRrVhuuJazBcB3teDXbeb7k4yz3z4fOOjjRlBgafLuM3E1KVVYeTnPP8+dMUlg9JLBlO0kY4SM3JkSztKtN6i44YB9oyJ+LlnCMhzjWEa9hPE1eKs1iBlY6e+/Sic0kw3GqsOwgS1WQbqpUrt6fte0yeyHl9VJKZ6xT3DkWqvFIPRLryT0bcZi6V5NFjKL+1lsuXvZ44lH+5/DiUn3L45vvV+VD/yF6s47l2p+zW7IRZx3NxKd6q8x+FcW0vLy6rxjWi/qtJT36jsu/U3jrAwLelCuPMSuqV7S32uJ9HfeCD0RR2cj1YPiTR7d4i0tXTkU66yiN4BLcrEBDxSD+otFlAcR9S7jFIuTIxk0mSrAASSMO2LW1nonf82oJ5lvzjQmeGl5OPd0WmQ5oBgWFCwKsblBwqh9sh1/mQqybapPMVAYu71Bfi6IHRmcTm8B21pfnheDZiXSDeXVg13gB+6Qx7Hi1pKfrecaxKSmmCjxbVy6RLMyZKGa5ffcQqWyC9t9dF7sJsh6QDAsOCgCdRiPflSL13RqvRcvMhuRzsQAesT7V/A2n341GmxGnFJONhyXOlifTL8JUGCP4ah4AM4GUrykz4Y0zmvUuzL7y8WSzm1C0i3S6k3jgTWlctm2n7iXTlv3E5CDEFBEY+ApDqnyDdqyBZZVaWDjr2skJNpLuJ64t1Q0TNYcSTrvIaJF6hsIvdAma/52NuhsrhSxjgn/V02k2kuVZGK+piSWob5kk3Ylb0ZmXV+9/F2Q7JBwSGHAE/UXbqqaceDPneA9lOxLbXLWph45wWiPcTLJb4OhnxXDYqiDdIvEPedAZPYF6k64VYz2YRye+ZWBPpapmoWlMLpNuLQf7JS6fbFxTbH5GIO9Bt6Ty4gMDujADEKz1uDP2tFtpdioWDiqtPtbewcc5iSPh/dCNaZjwqSFf5DZ1XKOxiB7lmJcUqG3yK+90Yzq9nZyvtXSHydXUE+WohwoXasLsD4j0+1N0urrWQ/HAggPogc8YZZ7i+Aen+FxLuAxz3xLxMy+K+KMsHSDfBLmQi6FHjAvGOkKqaj6ohi+WCdm3DSv6dbgeW3G5tMqJvQnOV20AoZldL3yv/sowYIdkP2QgIDBkC+vQP5NsEuT6NPvdC6Xoh3V+jYrguL9FRI+0qz4F482pul58utHQHdXI0FgzskfAp7R/Mxi3tbAUY2yO3gdD/b+eOURQGogCADrjdottYbCPeJmDllXIKb2GzlUfxHqlERP8PESSVjZDZvECYxECcvD/+jGEmZfNVfmOG3em8LsscjhatLTrMFgLzEIge71/Xdcd43nvIKx4Scj8ssyYBP9qJRSsSaT/ds41yvy27GOKwiummlxiFn5M77nHwFq8s/Lkuyil7x1H9jGFVd/uJkatOZQJN03znqyKHiRLaf2Xxm2x12/f/ibhxTjaKKvYhgdc2/7r9oa9z2lkJ5COENhJwluN1VhAulsBIYBivW3XSrbryo3j8y91MuhmkKPvluR3l86PhiIIAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBCoV+ABJRqFUUwct/cAAAAASUVORK5CYII=" width="160" height="auto" alt="CRIMSON7 Logo">
+            </div>
+            <h1>APT38 / Lazarus Group (TradeTraitor)</h1>
+            <p style="color: var(--text-secondary); font-size: 1.05rem; margin-top: 0.4rem;">North Korean State-Sponsored Financial Targeting via Fake Job Interviews &mdash; Threat Hunt Runbook</p>
+            <div class="header-meta">
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <strong>Version</strong> 1.0
+                </span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <strong>Date</strong> June 2025
+                </span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <strong>Platform</strong> Microsoft Sentinel / MDE
+                </span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <strong>Severity</strong> Critical
+                </span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <strong>Queries</strong> 8
+                </span>
+            </div>
+            <div class="tag-list">
+                <span class="tag">north-korea</span>
+                <span class="tag">apt38</span>
+                <span class="tag">lazarus</span>
+                <span class="tag">supply-chain</span>
+                <span class="tag">github</span>
+                <span class="tag">developer-targeting</span>
+                <span class="tag">cryptocurrency</span>
+                <span class="tag">beavertail</span>
+                <span class="tag">invisibleferret</span>
+                <span class="tag">compile-on-target</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Critical Alert -->
+    <div class="critical-alert">
+        <div class="critical-alert-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+        </div>
+        <div>
+            <h2>Critical Threat Alert</h2>
+            <p>North Korean state-sponsored APT targeting developers and financial sector employees through fake job interviews and GitHub skill assessments. Billions stolen in cryptocurrency via supply chain compromise and custom malware (BeaverTail, InvisibleFerret, ForexProvider). Uses "compile-on-target" tradecraft to evade IOC-based detection.</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav">
+            <a href="#overview" class="active">Overview</a>
+            <a href="#iocs">Indicators of Compromise</a>
+            <a href="#queries">KQL Detection Queries</a>
+            <a href="#priority">Priority Reference</a>
+            <a href="#references">References</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- ==================== SECTION 01: OVERVIEW ==================== -->
+        <section id="overview" class="section">
+            <div class="section-header">
+                <span class="section-number">01</span>
+                <h2>Attack Overview</h2>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-top: 0; margin-bottom: 0.75rem;">What is APT38 / TradeTraitor?</h4>
+                <p>APT38 (also known as Contagious Interview, Famous Chollima, or TradeTraitor) is a North Korean state-sponsored threat group with a primary motivation of financial gain through cryptocurrency theft and financial fraud. They are responsible for billions of dollars in stolen cryptocurrency and specifically target developers with access to critical systems and code repositories.</p>
+                <p style="margin-bottom: 0;">Their signature tactic is the fake job interview &mdash; using elaborate fake identities, AI-generated employee photos, and front companies (<code class="inline">BlockNovas LLC</code>, <code class="inline">Angeloper Agency</code>, <code class="inline">SoftGlide LLC</code>) to lure developers into running malicious code disguised as skill assessments.</p>
+            </div>
+
+            <!-- Attack Chain -->
+            <h3>Attack Chain</h3>
+            <div class="attack-chain">
+
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">1</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Reconnaissance &amp; Identity Fabrication</div>
+                        <div class="step-description">Threat actor builds elaborate fake recruiter identities using AI-generated employee photos; registers front companies (BlockNovas LLC, Angeloper Agency, SoftGlide LLC) to establish credibility.</div>
+                    </div>
+                </div>
+
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">2</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Initial Contact via LinkedIn / Email</div>
+                        <div class="step-description">Fake recruiters approach developers with job offers. Email/message subjects include "technical assessment", "skill assessment", "cryptocurrency position" to attract developer targets.</div>
+                    </div>
+                </div>
+
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">3</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Malicious GitHub Repository</div>
+                        <div class="step-description">Victim is directed to clone a GitHub repo presented as a "skill test". Malicious code is hidden via whitespace off-screen tricks or backdoored JavaScript dependencies embedded in seemingly legitimate projects.</div>
+                        <span class="step-code">git clone https://github.com/[front-company]/[skill-test-repo]</span>
+                    </div>
+                </div>
+
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">4</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Code Execution / Compile-on-Target</div>
+                        <div class="step-description">Victim runs the cloned project. <code class="inline">csc.exe</code> (C#/.NET compiler) is invoked by a non-standard parent process (e.g., Java/Maven) to compile payloads directly on the target machine &mdash; this avoids IOC-based detection since no pre-built binary is transferred.</div>
+                        <span class="step-code">java.exe → csc.exe [malicious .cs payload]</span>
+                    </div>
+                </div>
+
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">5</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Payload Staging via Java</div>
+                        <div class="step-description">Java process drops executables (<code class="inline">Edgebrowser.exe</code>, <code class="inline">MusicUtil.exe</code>, <code class="inline">rcmdun.db</code>) to world-writable locations (<code class="inline">C:\Users\Public\</code>, <code class="inline">%TEMP%</code>) using proxyloaders via <code class="inline">rundll32.exe</code>.</div>
+                        <span class="step-code">rundll32.exe C:\Users\Public\rcmdun.db,#1</span>
+                    </div>
+                </div>
+
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">6</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Privilege Escalation via UAC Bypass</div>
+                        <div class="step-description">Techniques including <code class="inline">fodhelper.exe</code>, <code class="inline">eventvwr.exe</code>, CMSTPLUA COM interface abuse to escalate from Medium/Low to High integrity level. Registry hijacking used to intercept trusted binary execution paths.</div>
+                        <span class="step-code">Medium Integrity → UAC Bypass → High Integrity</span>
+                    </div>
+                </div>
+
+                <div class="attack-step">
+                    <div class="step-indicator">
+                        <div class="step-number">7</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-action">Persistence &amp; Exfiltration</div>
+                        <div class="step-description">Custom malware (BeaverTail, InvisibleFerret, ForexProvider, OtterCookie) established for long-term access. Lateral movement via Windows Registry Run Keys; Linux LaunchAgents for cross-platform persistence. Cryptocurrency wallets and developer credentials exfiltrated.</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Impact -->
+            <h3>Impact Assessment</h3>
+            <div class="impact-grid">
+                <div class="impact-item">
+                    <div class="impact-icon red">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Cryptocurrency Theft</h5>
+                        <p>Billions stolen via supply chain compromise of developer environments and direct access to crypto wallets and exchange infrastructure.</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon orange">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Code Repository Backdoors</h5>
+                        <p>Malicious commits to upstream repositories affecting downstream users and organizations that depend on compromised packages.</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon blue">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Credential Harvesting</h5>
+                        <p>Developer credentials enabling lateral movement to CI/CD pipelines, production systems, and financial infrastructure.</p>
+                    </div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon purple">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    </div>
+                    <div class="impact-text">
+                        <h5>Persistent Access</h5>
+                        <p>Custom RAT (BeaverTail, InvisibleFerret) providing long-term persistent access to financial infrastructure and development environments.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MITRE ATT&CK -->
+            <h3>MITRE ATT&amp;CK Mapping</h3>
+            <div class="mitre-grid">
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Initial Access</div>
+                    <div class="mitre-technique">Phishing: Spearphishing Attachment</div>
+                    <div class="mitre-id">T1566.001</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Initial Access</div>
+                    <div class="mitre-technique">Phishing: Spearphishing Link</div>
+                    <div class="mitre-id">T1566.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Initial Access</div>
+                    <div class="mitre-technique">Supply Chain Compromise: Software Dependencies</div>
+                    <div class="mitre-id">T1195.001</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">User Execution: Malicious Image</div>
+                    <div class="mitre-id">T1204.003</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">Command and Scripting Interpreter: Python</div>
+                    <div class="mitre-id">T1059.006</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Execution</div>
+                    <div class="mitre-technique">Command and Scripting Interpreter: JavaScript</div>
+                    <div class="mitre-id">T1059.007</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Compile After Delivery</div>
+                    <div class="mitre-id">T1027.004</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Masquerading: Match Legitimate Name or Location</div>
+                    <div class="mitre-id">T1036.005</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Defense Evasion</div>
+                    <div class="mitre-technique">Signed Binary Proxy Execution: Rundll32</div>
+                    <div class="mitre-id">T1218.001</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Privilege Escalation</div>
+                    <div class="mitre-technique">Bypass User Account Control</div>
+                    <div class="mitre-id">T1548.002</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Command &amp; Control</div>
+                    <div class="mitre-technique">Application Layer Protocol</div>
+                    <div class="mitre-id">T1071</div>
+                </div>
+                <div class="mitre-card">
+                    <div class="mitre-tactic">Resource Development</div>
+                    <div class="mitre-technique">Acquire Infrastructure: Domains</div>
+                    <div class="mitre-id">T1583.001</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 02: IOCs ==================== -->
+        <section id="iocs" class="section">
+            <div class="section-header">
+                <span class="section-number">02</span>
+                <h2>Indicators of Compromise</h2>
+            </div>
+
+            <p>Known indicators associated with APT38 / TradeTraitor campaigns. These should be used alongside behavioral detections &mdash; the compile-on-target tradecraft means pre-built binary IOCs may not be present.</p>
+
+            <p>
+                <button onclick="downloadIOCs()" class="copy-btn" style="font-size:0.82rem;padding:0.5rem 1rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    Download IOCs (.txt)
+                </button>
+            </p>
+
+            <!-- Process / Executable IOCs -->
+            <h3>Process / Executable IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">Edgebrowser.exe</code> (non-standard path)</td>
+                            <td>Masquerades as Edge browser; dropped to <code class="inline">C:\Users\Public\</code></td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">EdgeWebView.exe</code> (from C:\Users\Public\)</td>
+                            <td>Legitimate-looking name; drops <code class="inline">rcmdun.db</code> stager</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">MusicUtil.exe</code> (from C:\Users\Public\)</td>
+                            <td>Stage 2 payload disguised as audio utility</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">desktop-build.exe</code> (writable path)</td>
+                            <td>Malicious executable using developer-looking name</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">rcmdun.db</code></td>
+                            <td>Win32 DLL disguised as database file; executed via <code class="inline">rundll32.exe</code></td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">csc.exe</code> (unusual parent process)</td>
+                            <td>C# compiler invoked by Java/Maven - compile-on-target tradecraft to avoid IOC detection</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- GitHub / Repository IOCs -->
+            <h3>GitHub / Repository IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Repos with "skill assessment" or "interview test" content</td>
+                            <td>Fake hiring test repositories used to deliver malicious code</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Repos with large whitespace blocks before JS code</td>
+                            <td>Malicious code hidden off-screen via excessive whitespace</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Front company repos: BlockNovas, Angeloper, SoftGlide</td>
+                            <td>Known APT38 front company GitHub organisations</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Network IOCs -->
+            <h3>Network / Domain IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Type</th>
+                            <th>Context</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">blocknovas.com</code></td>
+                            <td>Domain</td>
+                            <td>Known APT38 front company domain (BlockNovas LLC)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">angeloper.com</code></td>
+                            <td>Domain</td>
+                            <td>Known APT38 front company domain (Angeloper Agency)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">softglide.com</code></td>
+                            <td>Domain</td>
+                            <td>Known APT38 front company domain (SoftGlide LLC)</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- File Path IOCs -->
+            <h3>File Path IOCs</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline">C:\Users\Public\*.exe</code></td>
+                            <td>Executables dropped to world-writable Public folder</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">C:\Users\Public\*.db</code></td>
+                            <td>DLL files disguised as .db files executed via rundll32</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">C:\Users\Public\Edgebrowser.exe</code></td>
+                            <td>Specific masquerading executable path</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">C:\Users\Public\rcmdun.db</code></td>
+                            <td>DLL stager disguised as database file</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">C:\Users\Public\MusicUtil.exe</code></td>
+                            <td>Stage 2 payload dropped by Java process</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline">%AppData%\Local\Temp\*.exe</code></td>
+                            <td>Stage 1/2 payloads written to temp directory</td>
+                            <td><span class="badge badge-high">High</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 03: KQL QUERIES ==================== -->
+        <section id="queries" class="section">
+            <div class="section-header">
+                <span class="section-number">03</span>
+                <h2>KQL Detection Queries</h2>
+            </div>
+
+            <p>Deploy these queries in Microsoft Sentinel (Log Analytics) or Microsoft Defender for Endpoint Advanced Hunting. Queries are ordered by detection fidelity. Prioritise compile-on-target and masquerading binary detections as these cover the core tradecraft.</p>
+
+            <!-- Query 1 -->
+            <h3>3.1 GitHub Supply Chain Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #1: Suspicious git clone from Non-Corporate Repositories</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+<pre><span class="cm">// APT38: Detect git clone targeting non-corporate GitHub repositories</span>
+<span class="cm">// Replace &lt;YourCorporateGitHubName&gt; with your org's GitHub names</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">"git"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">"clone"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="op">!contains</span> <span class="str">"&lt;YourCorporateGitHubName&gt;"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="op">!contains</span> <span class="str">"com.microsoft"</span>
+<span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">AccountName</span>, <span class="var">DeviceName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>, <span class="var">ProcessCommandLine</span>, <span class="var">FolderPath</span>, <span class="var">FileName</span>, <span class="var">SHA256</span>
+<span class="op">|</span> <span class="kw">summarize</span> <span class="fn">count</span>() <span class="kw">by</span> <span class="var">AccountName</span>, <span class="var">DeviceName</span>, <span class="var">ProcessCommandLine</span>
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> <span class="var">count_</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 2 -->
+            <h3>3.2 Recruitment Lure Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #2: Suspicious Recruitment Emails (LinkedIn Lures)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+<pre><span class="cm">// APT38: Detect recruitment spearphishing targeting developers</span>
+<span class="cm">// Focused on typical first-touch from fake recruiters</span>
+<span class="var">EmailEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">SenderDisplayName</span> <span class="op">has</span> <span class="str">"LinkedIn"</span>
+    <span class="kw">and</span> <span class="var">Subject</span> <span class="fn">has_any</span> (<span class="str">"job"</span>,<span class="str">"offer"</span>,<span class="str">"position"</span>,<span class="str">"interview"</span>,<span class="str">"opportunity"</span>,
+        <span class="str">"technical assessment"</span>, <span class="str">"skill assessment"</span>, <span class="str">"cryptocurrency job"</span>)
+<span class="op">|</span> <span class="kw">project</span> <span class="var">Timestamp</span>, <span class="var">SenderFromAddress</span>, <span class="var">SenderDisplayName</span>,
+    <span class="var">SenderFromDomain</span>, <span class="var">RecipientEmailAddress</span>, <span class="var">Subject</span>,
+    <span class="var">DeliveryAction</span>, <span class="var">DeliveryLocation</span>
+<span class="op">|</span> <span class="kw">order</span> <span class="kw">by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 3 -->
+            <h3>3.3 Compile-on-Target Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #3: csc.exe Invoked by Non-Standard Parent Process</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+<pre><span class="cm">// APT38: Detect "compile on target" tradecraft - csc.exe with unusual parent</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"csc.exe"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="op">!in</span> (<span class="str">"cmd.exe"</span>, <span class="str">"powershell.exe"</span>, <span class="str">"msbuild.exe"</span>,
+    <span class="str">"devenv.exe"</span>, <span class="str">"Developer Command Prompt for VS"</span>)
+<span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">AccountName</span>, <span class="var">DeviceName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>, <span class="var">ProcessCommandLine</span>, <span class="var">FolderPath</span>, <span class="var">FileName</span>, <span class="var">SHA256</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">AccountName</span> <span class="op">!in</span> (<span class="str">"local service"</span>,<span class="str">"network service"</span>, <span class="str">"system"</span>)
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">ParentProcess</span> <span class="op">=</span> <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="kw">summarize</span> <span class="fn">count</span>() <span class="kw">by</span> <span class="var">AccountName</span>, <span class="var">DeviceName</span>, <span class="var">ParentProcess</span>, <span class="var">ProcessCommandLine</span>, <span class="var">FolderPath</span>, <span class="var">FileName</span>
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> <span class="var">count_</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 4 -->
+            <h3>3.4 Suspicious Executable Locations</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #4: Common-Looking Binaries in User-Writable Paths (Union)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+<pre><span class="cm">// APT38: Masquerading executables in writable locations + rundll32 DLL proxy</span>
+<span class="kw">union</span>
+(
+    <span class="var">DeviceProcessEvents</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">in</span> (<span class="str">"edgebrowser.exe"</span>, <span class="str">"EdgeWebView.exe"</span>, <span class="str">"explorer.exe"</span>,
+        <span class="str">"musicutil.exe"</span>, <span class="str">"desktop-build.exe"</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">FolderPath</span> <span class="op">contains</span> <span class="str">@"\Users\Public\"</span>
+        <span class="op">or</span> <span class="var">FolderPath</span> <span class="op">contains</span> <span class="str">@"\AppData\Local\Temp\"</span>
+        <span class="op">or</span> <span class="var">FolderPath</span> <span class="op">contains</span> <span class="str">@"\TEMP\"</span>
+    <span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">AccountName</span>, <span class="var">DeviceName</span>, <span class="var">ProcessCommandLine</span>,
+        <span class="var">FolderPath</span>, <span class="var">FileName</span>, <span class="var">SHA256</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+),
+(
+    <span class="var">DeviceProcessEvents</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"rundll32.exe"</span>
+    <span class="op">|</span> <span class="kw">where</span> (<span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">".db"</span> <span class="op">or</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">".dll"</span>)
+        <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">@"\Users\Public\"</span>
+    <span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">AccountName</span>, <span class="var">DeviceName</span>, <span class="var">ProcessCommandLine</span>,
+        <span class="var">FolderPath</span>, <span class="var">FileName</span>, <span class="var">SHA256</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+)
+<span class="op">|</span> <span class="kw">summarize</span> <span class="fn">count</span>() <span class="kw">by</span> <span class="var">AccountName</span>, <span class="var">DeviceName</span>, <span class="var">ProcessCommandLine</span>, <span class="var">FolderPath</span>, <span class="var">FileName</span>
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> <span class="var">count_</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 5 -->
+            <h3>3.5 Java Process File Dropping</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #5: Java Process Dropping Executables to Writable Locations</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+<pre><span class="cm">// APT38: Java process dropping executables/scripts to suspicious locations</span>
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">60d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FolderPath</span> <span class="op">contains</span> <span class="str">@"\Users\Public\"</span>
+    <span class="op">or</span> <span class="var">FolderPath</span> <span class="op">contains</span> <span class="str">@"\AppData\Local\"</span>
+    <span class="op">or</span> <span class="var">FolderPath</span> <span class="op">contains</span> <span class="str">@"\Temp\"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">matches regex</span> <span class="str">@"java.*\.exe"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">ActionType</span> <span class="op">in</span> (<span class="str">"FileCreated"</span>, <span class="str">"FileModified"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FolderPath</span> <span class="op">!contains</span> <span class="str">"Android"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">!contains</span> <span class="str">".jar"</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="fn">has_any</span> (<span class="str">".exe"</span>, <span class="str">".dll"</span>, <span class="str">".db"</span>,<span class="str">".js"</span>,<span class="str">".py"</span>,<span class="str">".ts"</span>)
+<span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">ActionType</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>, <span class="var">FileSize</span>,
+    <span class="var">InitiatingProcessAccountName</span>, <span class="var">InitiatingProcessFileName</span>,
+    <span class="var">InitiatingProcessCommandLine</span>, <span class="var">InitiatingProcessFolderPath</span>,
+    <span class="var">InitiatingProcessId</span>, <span class="var">SHA1</span>, <span class="var">SHA256</span>
+<span class="op">|</span> <span class="kw">summarize</span> <span class="fn">count</span>() <span class="kw">by</span> <span class="var">DeviceName</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>
+<span class="op">|</span> <span class="kw">sort</span> <span class="kw">by</span> <span class="var">count_</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 6 -->
+            <h3>3.6 Malicious Script Execution</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #6: Node.js / Python / Java Script Execution (Rare Executions First)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+<pre><span class="cm">// APT38: Detect execution of downloaded/malicious scripts via interpreters</span>
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+<span class="op">|</span> <span class="kw">where</span>
+    (<span class="var">FileName</span> <span class="op">=~</span> <span class="str">"node.exe"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="fn">matches regex</span> <span class="str">@"\bnode\s+\S+\.js\b"</span>) <span class="op">or</span>
+    (<span class="var">FileName</span> <span class="op">=~</span> <span class="str">"npm"</span> <span class="kw">and</span> (<span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">"start"</span> <span class="op">or</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">"run"</span>)) <span class="op">or</span>
+    (<span class="var">FileName</span> <span class="op">=~</span> <span class="str">"python.exe"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="fn">matches regex</span> <span class="str">@".*\.py"</span>) <span class="op">or</span>
+    (<span class="var">FileName</span> <span class="op">=~</span> <span class="str">"java.exe"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">"-jar"</span>)
+<span class="op">|</span> <span class="kw">where</span>
+    <span class="var">ProcessCommandLine</span> <span class="op">!contains</span> <span class="str">"surefire"</span> <span class="kw">and</span>
+    <span class="var">ProcessCommandLine</span> <span class="op">!contains</span> <span class="str">"_in_process.py"</span> <span class="kw">and</span>
+    <span class="var">InitiatingProcessFileName</span> <span class="op">in</span> (<span class="str">"cmd.exe"</span>,<span class="str">"java.exe"</span>)
+<span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>,
+    <span class="var">FolderPath</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="kw">extend</span> <span class="var">ScriptPath</span> <span class="op">=</span> <span class="fn">extract</span>(<span class="str">@"((?:\w:\\|\\\\)(?:[^\\]+\\)*[^\\]+\.[jspyjar]{2,3})"</span>, <span class="num">1</span>, <span class="var">ProcessCommandLine</span>)
+<span class="op">|</span> <span class="kw">summarize</span> <span class="var">FirstSeen</span><span class="op">=</span><span class="fn">min</span>(<span class="var">TimeGenerated</span>), <span class="var">LastSeen</span><span class="op">=</span><span class="fn">max</span>(<span class="var">TimeGenerated</span>),
+    <span class="var">ExecutionCount</span><span class="op">=</span><span class="fn">count</span>() <span class="kw">by</span> <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ScriptPath</span>, <span class="var">ProcessCommandLine</span>
+<span class="op">|</span> <span class="kw">order</span> <span class="kw">by</span> <span class="var">ExecutionCount</span> <span class="kw">asc</span></pre>
+            </div>
+
+            <!-- Query 7 -->
+            <h3>3.7 UAC Bypass Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #7: Trusted Binary UAC Bypass (fodhelper / eventvwr / sdclt)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+<pre><span class="cm">// APT38: UAC bypass via trusted binaries with registry hijacking</span>
+<span class="kw">union</span>
+(
+    <span class="var">DeviceProcessEvents</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"fodhelper.exe"</span>
+    <span class="op">|</span> <span class="kw">join</span> <span class="op">kind=</span><span class="str">inner</span> (
+        <span class="var">DeviceRegistryEvents</span>
+        <span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryKey</span> <span class="op">contains</span> <span class="str">@"\Software\Classes\ms-settings\shell\open\command"</span>
+        <span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryValueName</span> <span class="op">==</span> <span class="str">"(Default)"</span> <span class="op">or</span> <span class="var">RegistryValueName</span> <span class="op">==</span> <span class="str">"DelegateExecute"</span>
+    ) <span class="kw">on</span> <span class="var">DeviceId</span>, <span class="var">DeviceName</span>
+    <span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>,
+        <span class="var">RegistryKey</span>, <span class="var">RegistryValueName</span>, <span class="var">RegistryValueData</span>
+),
+(
+    <span class="var">DeviceProcessEvents</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"eventvwr.exe"</span>
+    <span class="op">|</span> <span class="kw">join</span> <span class="op">kind=</span><span class="str">inner</span> (
+        <span class="var">DeviceRegistryEvents</span>
+        <span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryKey</span> <span class="op">contains</span> <span class="str">@"\Software\Classes\mscfile\shell\open\command"</span>
+        <span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryValueName</span> <span class="op">==</span> <span class="str">"(Default)"</span>
+    ) <span class="kw">on</span> <span class="var">DeviceId</span>, <span class="var">DeviceName</span>
+    <span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>,
+        <span class="var">RegistryKey</span>, <span class="var">RegistryValueName</span>, <span class="var">RegistryValueData</span>
+),
+(
+    <span class="var">DeviceProcessEvents</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"sdclt.exe"</span>
+    <span class="op">|</span> <span class="kw">join</span> <span class="op">kind=</span><span class="str">inner</span> (
+        <span class="var">DeviceRegistryEvents</span>
+        <span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryKey</span> <span class="op">contains</span> <span class="str">@"\Software\Classes\exefile\shell\runas\command"</span>
+            <span class="op">or</span> <span class="var">RegistryKey</span> <span class="op">contains</span> <span class="str">@"\Software\Classes\AppX82a6gwre4fdg3bt635tn5ctqjf8msdd2\Shell\open\command"</span>
+        <span class="op">|</span> <span class="kw">where</span> <span class="var">RegistryValueName</span> <span class="op">==</span> <span class="str">"(Default)"</span> <span class="op">or</span> <span class="var">RegistryValueName</span> <span class="op">==</span> <span class="str">"IsolatedCommand"</span>
+    ) <span class="kw">on</span> <span class="var">DeviceId</span>, <span class="var">DeviceName</span>
+    <span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>,
+        <span class="var">RegistryKey</span>, <span class="var">RegistryValueName</span>, <span class="var">RegistryValueData</span>
+)
+<span class="op">|</span> <span class="kw">summarize</span> <span class="fn">count</span>() <span class="kw">by</span> <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>,
+    <span class="var">RegistryKey</span>, <span class="var">RegistryValueName</span>, <span class="var">RegistryValueData</span>
+<span class="op">|</span> <span class="kw">order</span> <span class="kw">by</span> <span class="var">count_</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <!-- Query 8 -->
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #8: COM Interface UAC Bypass (Techniques 41, 43, 65)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+<pre><span class="cm">// APT38: Elevated COM interface UAC bypass - integrity level escalation detection</span>
+<span class="kw">union</span>
+(
+    <span class="var">DeviceProcessEvents</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"dllhost.exe"</span>, <span class="str">"rundll32.exe"</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessCommandLine</span> <span class="op">contains</span> <span class="str">"CMSTPLUA"</span>
+        <span class="op">or</span> <span class="var">InitiatingProcessCommandLine</span> <span class="op">contains</span> <span class="str">"{3E5FC7F9-9A51-4367-9063-A120244FBEC7}"</span>
+    <span class="op">|</span> <span class="kw">where</span> (<span class="var">InitiatingProcessIntegrityLevel</span> <span class="op">==</span> <span class="str">"Low"</span> <span class="op">or</span> <span class="var">InitiatingProcessIntegrityLevel</span> <span class="op">==</span> <span class="str">"Medium"</span>)
+        <span class="kw">and</span> <span class="var">ProcessIntegrityLevel</span> <span class="op">==</span> <span class="str">"High"</span>
+    <span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>,
+        <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>,
+        <span class="var">InitiatingProcessIntegrityLevel</span>, <span class="var">ProcessIntegrityLevel</span>
+),
+(
+    <span class="var">DeviceProcessEvents</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">7d</span>)
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"cleanmgr.exe"</span> <span class="op">or</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"dllhost.exe"</span>
+    <span class="op">|</span> <span class="kw">where</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">"DiskCleanup"</span>
+        <span class="op">or</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">"{77137B0F-F36B-466C-B00E-B6A8AFEFC392}"</span>
+        <span class="op">or</span> <span class="var">ProcessCommandLine</span> <span class="op">contains</span> <span class="str">"{B41DB860-8EE4-11D2-9906-E49FADC173CA}"</span>
+    <span class="op">|</span> <span class="kw">where</span> (<span class="var">InitiatingProcessIntegrityLevel</span> <span class="op">==</span> <span class="str">"Low"</span> <span class="op">or</span> <span class="var">InitiatingProcessIntegrityLevel</span> <span class="op">==</span> <span class="str">"Medium"</span>)
+        <span class="kw">and</span> <span class="var">ProcessIntegrityLevel</span> <span class="op">==</span> <span class="str">"High"</span>
+    <span class="op">|</span> <span class="kw">project</span> <span class="var">TimeGenerated</span>, <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>,
+        <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>,
+        <span class="var">InitiatingProcessIntegrityLevel</span>, <span class="var">ProcessIntegrityLevel</span>
+)
+<span class="op">|</span> <span class="kw">summarize</span> <span class="fn">count</span>() <span class="kw">by</span> <span class="var">DeviceName</span>, <span class="var">AccountName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>,
+    <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="kw">order</span> <span class="kw">by</span> <span class="var">count_</span> <span class="kw">desc</span></pre>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 04: PRIORITY REFERENCE ==================== -->
+        <section id="priority" class="section">
+            <div class="section-header">
+                <span class="section-number">04</span>
+                <h2>Query Priority Reference</h2>
+            </div>
+
+            <p>Run queries in priority order. P1 queries cover the most distinctive tradecraft and have the highest signal-to-noise ratio for this specific threat actor.</p>
+
+            <div class="priority-grid">
+
+                <div class="priority-column">
+                    <h4>
+                        <span class="badge badge-critical">P1 &mdash; Critical</span>
+                    </h4>
+                    <ul class="priority-list">
+                        <li>
+                            <span class="query-num">#1</span>
+                            <span>Suspicious git clone from non-corporate repos</span>
+                        </li>
+                        <li>
+                            <span class="query-num">#4</span>
+                            <span>Masquerading binaries in writable paths + rundll32 proxy</span>
+                        </li>
+                        <li>
+                            <span class="query-num">#5</span>
+                            <span>Java process dropping executables</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="priority-column">
+                    <h4>
+                        <span class="badge badge-high">P2 &mdash; High</span>
+                    </h4>
+                    <ul class="priority-list">
+                        <li>
+                            <span class="query-num">#3</span>
+                            <span>csc.exe compile-on-target detection</span>
+                        </li>
+                        <li>
+                            <span class="query-num">#6</span>
+                            <span>Malicious script execution (rare executions first)</span>
+                        </li>
+                        <li>
+                            <span class="query-num">#7</span>
+                            <span>UAC bypass via trusted binaries</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="priority-column">
+                    <h4>
+                        <span class="badge badge-medium">P3 &mdash; Medium</span>
+                    </h4>
+                    <ul class="priority-list">
+                        <li>
+                            <span class="query-num">#2</span>
+                            <span>Recruitment lure emails (LinkedIn)</span>
+                        </li>
+                        <li>
+                            <span class="query-num">#8</span>
+                            <span>COM interface UAC bypass</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 05: REFERENCES ==================== -->
+        <section id="references" class="section">
+            <div class="section-header">
+                <span class="section-number">05</span>
+                <h2>References &amp; Resources</h2>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-bottom: 0.85rem;">Source Intelligence</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-subtle);">
+                        <strong style="color: var(--text-primary);">SilentPush: Contagious Interview Front Companies</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">Infrastructure analysis of APT38 front company domains and recruitment lure tradecraft</span><br>
+                        <a href="https://www.silentpush.com/blog/contagious-interview-front-companies/" target="_blank" rel="noopener" style="font-size: 0.82rem;">https://www.silentpush.com/blog/contagious-interview-front-companies/</a>
+                    </li>
+                    <li style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-subtle);">
+                        <strong style="color: var(--text-primary);">FalconForce: Detecting UAC Bypasses (0xFF16)</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">Detailed technical analysis of UAC bypass techniques used in APT campaigns including KQL detection logic</span><br>
+                        <a href="https://falconforce.nl/falconfriday-detecting-uac-bypasses-0xff16/" target="_blank" rel="noopener" style="font-size: 0.82rem;">https://falconforce.nl/falconfriday-detecting-uac-bypasses-0xff16/</a>
+                    </li>
+                    <li style="margin-bottom: 0;">
+                        <strong style="color: var(--text-primary);">MITRE ATT&amp;CK: APT38</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">Official ATT&amp;CK profile covering techniques, software, and campaign attribution for APT38</span><br>
+                        <a href="https://attack.mitre.org/" target="_blank" rel="noopener" style="font-size: 0.82rem;">https://attack.mitre.org/</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card" style="margin-top: 1.25rem;">
+                <h4 style="margin-bottom: 0.85rem;">Threat Actor Profile</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <tbody>
+                        <tr>
+                            <td style="padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); width: 180px; font-weight: 600;">Also known as</td>
+                            <td style="padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary);">Contagious Interview, Famous Chollima, Lazarus Group, TradeTraitor, UNC4899</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-weight: 600;">Attribution</td>
+                            <td style="padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary);">North Korean state-sponsored (DPRK) &mdash; Reconnaissance General Bureau</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-weight: 600;">Active since</td>
+                            <td style="padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary);">2009 (Lazarus Group); APT38 split 2016; TradeTraitor campaign observed 2022+</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-weight: 600;">Primary targets</td>
+                            <td style="padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary);">Cryptocurrency exchanges, DeFi protocols, financial institutions, software developers</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.55rem 0; color: var(--text-muted); font-weight: 600;">Geographic focus</td>
+                            <td style="padding: 0.55rem 0; color: var(--text-secondary);">Global &mdash; US, Europe, Japan, South Korea primary targets</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                <strong>Community Threat Hunt Runbook</strong> | Created by <a href="https://crimson7.io">CRIMSON7 Security Operations</a>
+                <br><a href="https://crimson7research.github.io/ThreatHuntingReports/">All Threat Hunting Reports</a>
+            </div>
+            <div class="footer-meta">
+                <span>Version 1.0</span>
+                <span>Last Updated: June 2025</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Smooth scroll + active nav -->
+    <script>
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+                document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY + 100;
+            sections.forEach(section => {
+                if (section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+                    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                    const link = document.querySelector(`.nav a[href="#${section.id}"]`);
+                    if (link) link.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    <!-- Copy Button Injection -->
+    <script>
+    document.querySelectorAll('.code-header').forEach(header => {
+        const langEl = header.querySelector('.code-lang') || header.querySelector('.code-header-actions .code-lang');
+        const actions = document.createElement('div');
+        actions.className = 'code-header-actions';
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+        btn.addEventListener('click', () => {
+            const pre = header.closest('.code-block').querySelector('pre');
+            const text = pre.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.classList.add('copied');
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Copied';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+                }, 2000);
+            });
+        });
+        if (langEl) {
+            actions.appendChild(langEl.cloneNode(true));
+            langEl.replaceWith(actions);
+        }
+        actions.appendChild(btn);
+    });
+    </script>
+
+    <!-- IOC Download -->
+    <script>
+    const IOC_DATA = {
+        "meta": {
+            "title": "APT38 / Lazarus Group (TradeTraitor) - Indicators of Compromise",
+            "date": "June 2025",
+            "author": "CRIMSON7 Security Operations"
+        },
+        "network": [
+            {"indicator": "blocknovas.com", "type": "domain", "context": "Known APT38 front company domain", "source": "CRIMSON7/SilentPush"},
+            {"indicator": "angeloper.com", "type": "domain", "context": "Known APT38 front company domain", "source": "CRIMSON7/SilentPush"},
+            {"indicator": "softglide.com", "type": "domain", "context": "Known APT38 front company domain", "source": "CRIMSON7/SilentPush"}
+        ],
+        "file_system": [
+            {"indicator": "C:\\Users\\Public\\Edgebrowser.exe", "context": "Masquerading executable dropped by Java process", "source": "CRIMSON7"},
+            {"indicator": "C:\\Users\\Public\\rcmdun.db", "context": "DLL stager disguised as database file, executed via rundll32", "source": "CRIMSON7"},
+            {"indicator": "C:\\Users\\Public\\MusicUtil.exe", "context": "Stage 2 payload disguised as audio utility", "source": "CRIMSON7"},
+            {"indicator": "C:\\Users\\Public\\EdgeWebView.exe", "context": "Masquerading executable using Edge naming convention", "source": "CRIMSON7"},
+            {"indicator": "C:\\Users\\Public\\desktop-build.exe", "context": "Malicious executable using developer-looking name", "source": "CRIMSON7"}
+        ],
+        "process_cli": [
+            {"indicator": "rundll32.exe C:\\Users\\Public\\rcmdun.db,#1", "context": "DLL proxy execution from public folder", "source": "CRIMSON7"},
+            {"indicator": "csc.exe invoked by java.exe or maven", "context": "Compile-on-target tradecraft to evade IOC detection", "source": "CRIMSON7"}
+        ]
+    };
+
+    function downloadIOCs() {
+        let lines = [];
+        lines.push("=".repeat(80));
+        lines.push(" " + IOC_DATA.meta.title);
+        lines.push(" Date: " + IOC_DATA.meta.date);
+        lines.push(" Author: " + IOC_DATA.meta.author);
+        lines.push("=".repeat(80));
+        lines.push("");
+
+        const sections = [
+            ["NETWORK IOCs", "network", function(i) { return (i.indicator || "").padEnd(50) + " | " + i.context + " | " + i.source; }],
+            ["FILE SYSTEM IOCs", "file_system", function(i) { return (i.indicator || "").padEnd(50) + " | " + i.context + " | " + i.source; }],
+            ["PROCESS / CLI IOCs", "process_cli", function(i) { return (i.indicator || "").padEnd(50) + " | " + i.context + " | " + i.source; }]
+        ];
+
+        sections.forEach(function(s) {
+            var title = s[0], key = s[1], fmt = s[2];
+            if (IOC_DATA[key] && IOC_DATA[key].length > 0) {
+                lines.push("--- " + title + " ---");
+                lines.push("");
+                IOC_DATA[key].forEach(function(item) { lines.push(fmt(item)); });
+                lines.push("");
+            }
+        });
+
+        lines.push("=".repeat(80));
+        lines.push(" Generated from CRIMSON7 Threat Hunt Runbook");
+        lines.push(" https://crimson7.io");
+        lines.push(" https://crimson7research.github.io/ThreatHuntingReports/");
+        lines.push("=".repeat(80));
+
+        var blob = new Blob([lines.join("\n")], {type: "text/plain"});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "apt38-lazarus-iocs.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    </script>
+
+</body>
+</html>
