@@ -272,6 +272,24 @@
     "version": "1.0"
   },
   {
+    "file": "trivy-teampcp-threat-hunt-runbook.html",
+    "title": "TeamPCP Trivy Supply Chain Attack",
+    "description": "CVE-2026-33634 - GitHub Actions tag poisoning, credential stealer, CanisterWorm npm worm",
+    "severity": "critical",
+    "type": "Supply Chain",
+    "tags": [
+      "TeamPCP",
+      "Trivy",
+      "CVE-2026-33634",
+      "Supply Chain",
+      "GitHub Actions",
+      "CanisterWorm"
+    ],
+    "date": "Mar 25, 2026",
+    "queries": 12,
+    "version": "1.0"
+  },
+  {
     "file": "void-manticore-threat-hunt-runbook.html",
     "title": "Void Manticore / Handala Hack",
     "description": "Operation Epic Fury - Stryker Corporation Wiper Attack",
