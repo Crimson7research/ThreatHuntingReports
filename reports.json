@@ -58,6 +58,25 @@
     "version": "1.0"
   },
   {
+    "file": "cve-2026-20841-threat-hunt-runbook.html",
+    "title": "CVE-2026-20841: Windows Notepad Markdown RCE",
+    "description": "Command injection via unvalidated protocol handlers in Notepad Markdown rendering engine",
+    "severity": "high",
+    "type": "General",
+    "tags": [
+      "CVE-2026-20841",
+      "Windows",
+      "Notepad",
+      "Markdown",
+      "RCE",
+      "Command Injection",
+      "Protocol Handler"
+    ],
+    "date": "Aug 04, 2026",
+    "queries": 7,
+    "version": "1.0"
+  },
+  {
     "file": "etelaat-team-threat-hunt-runbook.html",
     "title": "ETELAAT TEAM Threat Hunt Runbook",
     "description": "Iranian MOIS-affiliated operation with 18,000+ documented victims. JavaScript-based data exfiltration via Telegram Bot API with geolocation harvesting and Node.js RAT deployment.",
