@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="report-title" content="Shai-Hulud (js.shai_hulud) - npm Supply Chain Attack">
+    <meta name="report-description" content="EtherHiding C2 npm supply chain worm targeting keyv, cacheable, flat-cache and 14 secondary scopes. Two-stage Bun-based payload with credential harvesting, cloud secret theft, and IDE worm propagation.">
+    <meta name="report-severity" content="critical">
+    <meta name="report-type" content="Supply Chain">
+    <meta name="report-tags" content="npm,supply-chain,etherhiding,ethereum,c2,credential-theft,worm,keyv,bun,teamPCP">
+    <meta name="report-date" content="Aug 06, 2026">
+    <meta name="report-queries" content="5">
+    <meta name="report-version" content="1.0">
+    <title>Shai-Hulud (js.shai_hulud) | Threat Hunt Runbook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #06090f;
+            --bg-secondary: #0c1017;
+            --bg-tertiary: #111820;
+            --bg-code: #0a0e14;
+            --bg-surface: #151c26;
+            --border-color: #1e2736;
+            --border-subtle: #171e29;
+            --border-hover: #2a3648;
+            --text-primary: #e8edf4;
+            --text-secondary: #7d8a9a;
+            --text-muted: #4a5568;
+            --accent-red: #ff4d4d;
+            --accent-red-dim: #e63946;
+            --accent-red-bg: rgba(255, 77, 77, 0.08);
+            --accent-orange: #f59e0b;
+            --accent-orange-bg: rgba(245, 158, 11, 0.08);
+            --accent-yellow: #eab308;
+            --accent-blue: #3b82f6;
+            --accent-blue-bright: #60a5fa;
+            --accent-green: #22c55e;
+            --accent-purple: #a78bfa;
+            --accent-cyan: #22d3ee;
+            --crimson: #dc2626;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.65; font-size: 14px; -webkit-font-smoothing: antialiased; }
+        .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 2.5rem 2rem 2rem; position: relative; overflow: hidden; }
+        .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--crimson) 0%, #ff6b35 25%, var(--accent-orange) 50%, var(--accent-blue) 75%, var(--accent-purple) 100%); }
+        .header::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 80% at 10% 50%, rgba(220,38,38,0.06), transparent), radial-gradient(ellipse 40% 60% at 90% 50%, rgba(59,130,246,0.04), transparent); pointer-events: none; }
+        .header-content { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+        .logo { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+        .logo img { width: 160px; height: auto; filter: drop-shadow(0 0 24px rgba(220,38,38,0.2)); }
+        .header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; color: var(--text-primary); line-height: 1.2; }
+        .header-meta { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-top: 0.85rem; font-size: 0.8rem; color: var(--text-muted); }
+        .header-meta span { display: flex; align-items: center; gap: 0.4rem; font-weight: 500; }
+        .header-meta strong { color: var(--text-secondary); font-weight: 600; }
+        .critical-alert { background: rgba(255, 77, 77, 0.04); border: 1px solid rgba(255, 77, 77, 0.15); border-left: 3px solid var(--accent-red); border-radius: 0; padding: 1.25rem 1.5rem; margin: 1.75rem auto; max-width: 1200px; display: flex; align-items: flex-start; gap: 1.25rem; }
+        .critical-alert-icon { width: 36px; height: 36px; background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255, 77, 77, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--accent-red); }
+        .critical-alert h2 { color: var(--accent-red); font-size: 0.75rem; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; }
+        .critical-alert p { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.55; }
+        .nav-container { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px); background: rgba(12, 16, 23, 0.9); }
+        .nav { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; gap: 0; overflow-x: auto; }
+        .nav a { color: var(--text-muted); text-decoration: none; padding: 0.75rem 1.1rem; font-size: 0.78rem; font-weight: 600; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.15s; letter-spacing: 0.2px; }
+        .nav a:hover { color: var(--text-secondary); background: rgba(255,255,255,0.02); }
+        .nav a.active { color: var(--text-primary); border-bottom-color: var(--accent-red-dim); }
+        .nav::-webkit-scrollbar { height: 0; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .section { margin-bottom: 3rem; }
+        .section-header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); }
+        .section-number { background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-muted); padding: 0.35rem 0.75rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.3px; }
+        .section h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.3px; }
+        .section h3 { font-size: 1rem; font-weight: 700; margin: 2rem 0 0.85rem; color: var(--text-primary); letter-spacing: -0.2px; }
+        .section p { color: var(--text-secondary); margin-bottom: 0.85rem; font-size: 0.88rem; line-height: 1.65; }
+        .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0; padding: 1.35rem 1.5rem; margin-bottom: 1.25rem; }
+        .card h4 { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.1px; }
+        .table-container { overflow-x: auto; margin: 0.85rem 0; border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        th { background: var(--bg-tertiary); color: var(--text-muted); font-weight: 600; text-align: left; padding: 0.65rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+        tr:hover td { background: rgba(255,255,255,0.015); }
+        .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'JetBrains Mono', monospace; }
+        .badge-critical { background: rgba(255, 77, 77, 0.1); color: var(--accent-red); border: 1px solid rgba(255, 77, 77, 0.2); }
+        .badge-high { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-medium { background: rgba(234, 179, 8, 0.1); color: var(--accent-yellow); border: 1px solid rgba(234, 179, 8, 0.2); }
+        .badge-low { background: rgba(34, 197, 94, 0.1); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.2); }
+        .code-block { background: var(--bg-code); border: 1px solid var(--border-color); border-radius: 0; margin: 0.85rem 0; overflow: hidden; }
+        .code-header { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 1rem; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); }
+        .code-title { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 600; color: var(--accent-blue); background: rgba(59, 130, 246, 0.08); padding: 0.2rem 0.45rem; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .code-header-actions { display: flex; align-items: center; gap: 0.5rem; }
+        .copy-btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.55rem; background: transparent; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; cursor: pointer; transition: all 0.15s; }
+        .copy-btn:hover { color: var(--text-secondary); border-color: var(--border-hover); background: rgba(255,255,255,0.02); }
+        .copy-btn.copied { color: var(--accent-green); border-color: rgba(34, 197, 94, 0.3); }
+        pre { padding: 1.15rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.7; }
+        code { font-family: 'JetBrains Mono', monospace; }
+        .kw { color: var(--accent-purple); }
+        .fn { color: var(--accent-blue); }
+        .str { color: var(--accent-green); }
+        .num { color: var(--accent-orange); }
+        .op { color: var(--accent-cyan); }
+        .cm { color: var(--text-muted); font-style: italic; }
+        .var { color: var(--text-primary); }
+        code.inline { background: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.82em; color: var(--accent-cyan); }
+        .attack-chain { display: flex; flex-direction: column; gap: 0; }
+        .attack-step { display: flex; gap: 1.25rem; position: relative; }
+        .step-indicator { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .step-number { width: 30px; height: 30px; background: var(--bg-tertiary); border: 1px solid var(--border-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.72rem; color: var(--text-muted); }
+        .step-line { width: 1px; flex-grow: 1; background: var(--border-color); min-height: 32px; }
+        .attack-step:last-child .step-line { display: none; }
+        .step-content { padding-bottom: 1.25rem; }
+        .step-action { font-weight: 700; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 0.2rem; letter-spacing: -0.1px; }
+        .step-description { color: var(--text-secondary); font-size: 0.84rem; }
+        .step-code { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--accent-cyan); background: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 0.4rem 0.65rem; border-radius: 3px; margin-top: 0.4rem; display: inline-block; }
+        .mitre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin: 0.85rem 0; }
+        .mitre-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0; padding: 1rem 1.15rem; border-left: 2px solid var(--accent-purple); transition: border-color 0.15s; }
+        .mitre-card:hover { border-color: var(--border-hover); border-left-color: var(--accent-purple); }
+        .mitre-tactic { font-size: 0.65rem; font-weight: 700; color: var(--accent-purple); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.2rem; font-family: 'JetBrains Mono', monospace; }
+        .mitre-technique { font-weight: 600; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 0.15rem; }
+        .mitre-id { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); }
+        .priority-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 0.85rem 0; }
+        @media (max-width: 900px) { .priority-grid { grid-template-columns: 1fr; } }
+        .priority-column h4 { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; font-size: 0.82rem; font-weight: 700; }
+        .priority-list { list-style: none; }
+        .priority-list li { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0; margin-bottom: 0.35rem; font-size: 0.82rem; }
+        .priority-list .query-num { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 600; background: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 0.2rem 0.45rem; border-radius: 3px; color: var(--text-muted); }
+        .impact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.75rem; margin: 0.85rem 0; }
+        .impact-item { display: flex; gap: 0.85rem; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0; }
+        .impact-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .impact-icon.red { background: rgba(255, 77, 77, 0.08); color: var(--accent-red); }
+        .impact-icon.orange { background: rgba(245, 158, 11, 0.08); color: var(--accent-orange); }
+        .impact-icon.blue { background: rgba(59, 130, 246, 0.08); color: var(--accent-blue); }
+        .impact-icon.purple { background: rgba(167, 139, 250, 0.08); color: var(--accent-purple); }
+        .impact-text h5 { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.15rem; }
+        .impact-text p { font-size: 0.78rem; color: var(--text-secondary); margin: 0; }
+        .hash { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-muted); word-break: break-all; }
+        .footer { background: var(--bg-secondary); border-top: 1px solid var(--border-color); padding: 1.75rem 2rem; margin-top: 2rem; }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .footer-text { color: var(--text-muted); font-size: 0.8rem; }
+        .footer-text strong { color: var(--text-secondary); font-weight: 600; }
+        .footer-meta { display: flex; gap: 1.5rem; font-size: 0.8rem; color: var(--text-muted); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+        .back-nav { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 0 2rem; }
+        .back-nav a { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 0; font-family: inherit; transition: color 0.15s; letter-spacing: 0.2px; }
+        .back-nav a:hover { color: var(--text-primary); }
+        .back-nav a svg { opacity: 0.6; transition: all 0.15s; }
+        .back-nav a:hover svg { opacity: 1; transform: translateX(-2px); }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5rem; }
+            .header { padding: 2rem 1.25rem 1.5rem; }
+            .critical-alert { flex-direction: column; margin-left: 1rem; margin-right: 1rem; padding: 1rem; }
+            .main { padding: 1.25rem 1rem; }
+            pre { font-size: 0.7rem; }
+            .back-nav { padding: 0 1rem; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); background: rgba(6,9,15,0.88); }
+            .back-nav a { font-size: 0.78rem; }
+        }
+        a { color: var(--accent-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="back-nav">
+        <a href="index.html">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            All Reports
+        </a>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="data:image/png;base64,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" alt="CRIMSON7 Logo">
+            </div>
+            <h1>Shai-Hulud (js.shai_hulud)</h1>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">npm Supply Chain Attack - Threat Hunt Runbook</p>
+            <div class="header-meta">
+                <span>Version 1.0</span>
+                <span>Last Updated: August 2026</span>
+                <span>Microsoft Sentinel / Microsoft Defender for Endpoint</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="critical-alert">
+        <div class="critical-alert-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+        </div>
+        <div>
+            <h2>Critical Threat Advisory</h2>
+            <p>npm supply chain worm with Ethereum-based C2 (EtherHiding). 11 primary packages compromised (keyv, cacheable, flat-cache) + 14 secondary scopes via worm propagation. Two-stage Bun-based payload harvests credentials from 140+ paths, steals AWS/Vault/K8s secrets, and exfiltrates via GitHub repos. Actor: TeamPCP.</p>
+        </div>
+    </div>
+
+    <nav class="nav-container">
+        <div class="nav">
+            <a href="#overview" class="active">Overview</a>
+            <a href="#iocs">Indicators of Compromise</a>
+            <a href="#queries">KQL Detection Queries</a>
+            <a href="#mitre">MITRE ATT&CK</a>
+            <a href="#priority">Priority Reference</a>
+            <a href="#references">References</a>
+        </div>
+    </nav>
+
+    <main class="main">
+
+        <!-- SECTION 01: OVERVIEW -->
+        <section id="overview" class="section">
+            <div class="section-header">
+                <span class="section-number">01</span>
+                <h2>Attack Overview</h2>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-top: 0;">What is Shai-Hulud?</h4>
+                <p>Shai-Hulud (js.shai_hulud) is an npm supply chain worm attributed to threat actor TeamPCP. First observed in May 2026 targeting @antv/TanStack packages, it escalated to the keyv/ChainDrop wave in July-August 2026. The attack compromises popular npm packages by injecting a preinstall hook that downloads the Bun runtime and executes a heavily obfuscated 727 KB JavaScript payload (Math_Symbol.js).</p>
+                <p>The payload harvests credentials from 140+ file paths across Linux/macOS/Windows, steals cloud secrets (AWS SSM, Secrets Manager, Vault, K8s), and exfiltrates data via multiple channels. The malware resolves its C2 domain dynamically from an Ethereum smart contract (EtherHiding), making domain-based blocklists ineffective. A worm component persists through Claude Code and VS Code IDE configurations and forges Sigstore SLSA provenance attestations.</p>
+            </div>
+
+            <h3>Attack Chain</h3>
+            <div class="attack-chain">
+                <div class="attack-step">
+                    <div class="step-indicator"><div class="step-number">1</div><div class="step-line"></div></div>
+                    <div class="step-content">
+                        <div class="step-action">Initial Access - Package Install</div>
+                        <div class="step-description">Victim installs a compromised npm package (e.g., keyv@6.0.0) via npm/yarn/pnpm</div>
+                        <div class="step-code">npm install keyv@6.0.0</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator"><div class="step-number">2</div><div class="step-line"></div></div>
+                    <div class="step-content">
+                        <div class="step-action">Execution - Stage 1 Loader</div>
+                        <div class="step-description">preinstall hook runs setup.mjs which downloads Bun v1.3.13 runtime from github.com/oven-sh/bun</div>
+                        <div class="step-code">node setup.mjs</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator"><div class="step-number">3</div><div class="step-line"></div></div>
+                    <div class="step-content">
+                        <div class="step-action">Payload Deploy - Stage 2</div>
+                        <div class="step-description">Bun executes Math_Symbol.js (727 KB obfuscated credential harvester + worm). Checks for Russian locale and exits if detected.</div>
+                        <div class="step-code">bun Math_Symbol.js</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator"><div class="step-number">4</div><div class="step-line"></div></div>
+                    <div class="step-content">
+                        <div class="step-action">Credential Harvesting</div>
+                        <div class="step-description">Scans 140+ credential file paths: SSH keys, cloud credentials (AWS/Azure/GCP), K8s configs, npm/yarn tokens, crypto wallets, messaging apps, VPN configs, CI/CD secrets, AI tool credentials, and shell histories.</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator"><div class="step-number">5</div><div class="step-line"></div></div>
+                    <div class="step-content">
+                        <div class="step-action">Cloud Secret Theft</div>
+                        <div class="step-description">Queries AWS SSM Parameter Store + Secrets Manager across 17 regions, IMDS for IAM credentials, Vault (20+ regex patterns), and K8s service account tokens.</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator"><div class="step-number">6</div><div class="step-line"></div></div>
+                    <div class="step-content">
+                        <div class="step-action">EtherHiding C2 Resolution</div>
+                        <div class="step-description">Resolves exfil domain from Ethereum smart contract (0xE1f2...3103) via 35 hardcoded public RPC endpoints. Attacker rotates domains by updating the contract.</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator"><div class="step-number">7</div><div class="step-line"></div></div>
+                    <div class="step-content">
+                        <div class="step-action">Exfiltration</div>
+                        <div class="step-description">RSA-4096 + AES-256-GCM encrypted data sent via HTTPS POST to C2 /router endpoint and committed to attacker-created GitHub repos (Dune-themed names).</div>
+                    </div>
+                </div>
+                <div class="attack-step">
+                    <div class="step-indicator"><div class="step-number">8</div><div class="step-line"></div></div>
+                    <div class="step-content">
+                        <div class="step-action">Worm Propagation</div>
+                        <div class="step-description">Infects victim repos via .claude/settings.json and .vscode/tasks.json persistence. Forges Sigstore SLSA provenance attestations to make worm commits appear verified.</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Impact Assessment</h3>
+            <div class="impact-grid">
+                <div class="impact-item">
+                    <div class="impact-icon red"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg></div>
+                    <div class="impact-text"><h5>Supply Chain Compromise</h5><p>11 primary + 14 secondary npm package scopes; ~25,000 exfil repos created</p></div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/></svg></div>
+                    <div class="impact-text"><h5>Credential Theft</h5><p>140+ credential paths targeted: SSH, cloud, CI/CD, crypto wallets, messaging, AI tools</p></div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></div>
+                    <div class="impact-text"><h5>Cloud Secret Theft</h5><p>AWS SSM + Secrets Manager (17 regions), Vault, K8s service accounts, IMDS</p></div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-icon purple"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                    <div class="impact-text"><h5>IDE Worm</h5><p>Self-replicating via Claude Code + VS Code config injection with Sigstore attestation forgery</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 02: IOCs -->
+        <section id="iocs" class="section">
+            <div class="section-header">
+                <span class="section-number">02</span>
+                <h2>Indicators of Compromise</h2>
+            </div>
+
+            <p><button onclick="downloadIOCs()" class="copy-btn" style="font-size:0.85rem;padding:0.5rem 1rem;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download IOCs (TXT)</button></p>
+
+            <h3>Network Indicators</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Indicator</th><th>Type</th><th>Context</th><th>Severity</th></tr></thead>
+                    <tbody>
+                        <tr><td><code class="inline">npm-cache[.]com</code></td><td>Domain</td><td>Primary C2 (Cloudflare-fronted), VT 4/91</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">pypi-get[.]com</code></td><td>Domain</td><td>Secondary C2 (Cloudflare-fronted), VT 2/91</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">js-mirror[.]com</code></td><td>Domain</td><td>Secondary C2 (Cloudflare-fronted), VT 4/91</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">awqhnjewqjkl[.]icu</code></td><td>Domain</td><td>Current active C2 (rotated 2026-08-04), VT 4/91</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">t.m-kosche[.]com</code></td><td>Domain</td><td>Earlier campaign C2 (@antv/TanStack wave, May 2026)</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">telemetry.m-kosche[.]com</code></td><td>Domain</td><td>Earlier campaign telemetry domain</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">git-tanstack[.]com</code></td><td>Domain</td><td>Earlier campaign exfil domain</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">185.95.159.32</code></td><td>IP</td><td>Actor backend infrastructure</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">83.142.209.194</code></td><td>IP</td><td>Actor backend infrastructure</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">85.137.53.71</code></td><td>IP</td><td>Actor backend infrastructure</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">94.154.172.43</code></td><td>IP</td><td>Actor backend infrastructure</td><td><span class="badge badge-high">High</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Ethereum Infrastructure</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Indicator</th><th>Type</th><th>Context</th><th>Severity</th></tr></thead>
+                    <tbody>
+                        <tr><td><code class="inline">0xE1f2395ee43e45A1556EC6438a88c31B83493103</code></td><td>Contract</td><td>C2 domain resolver (StringListStore), deployed 2026-05-25</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">0x55f9780e...97f31cd</code></td><td>Wallet</td><td>Contract owner wallet (0.01358 ETH)</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">0x4E5B2e1d...7e972F</code></td><td>Wallet</td><td>Funding wallet (FixedFloat, flagged: Phish/Hack)</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">0x53ed5143</code></td><td>Selector</td><td>Read domain list from contract</td><td><span class="badge badge-medium">Medium</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>File Indicators</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>File Name</th><th>SHA-256</th><th>Context</th></tr></thead>
+                    <tbody>
+                        <tr><td><code class="inline">Math_Symbol.js</code></td><td><span class="hash">54dc7ea54a1317cca0e890a2770630cf7fa6c97813e0cb9d2caa93012b350668</span></td><td>Stage 2 payload (727 KB)</td></tr>
+                        <tr><td><code class="inline">setup.mjs</code></td><td><span class="hash">9fc2570b7cef51c1b8df116d144d11ff4096357be7d2c4c6367cfc2509cf1bcc</span></td><td>Stage 1 loader</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size:0.82rem;">Additionally, 100 SHA-256 hashes from ThreatFox (IOC 1868515) are included in Query #6. Full hash list in the downloadable IOC file.</p>
+
+            <h3>Host Artifact Indicators</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Indicator</th><th>Description</th><th>Severity</th></tr></thead>
+                    <tbody>
+                        <tr><td><code class="inline">.claude/settings.json</code></td><td>Worm persistence via Claude Code AI agent config injection</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">.claude/setup.mjs</code></td><td>Stage 1 loader copy in repo</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">.vscode/tasks.json</code></td><td>VS Code task runner persistence (auto-execute on project open)</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">.vscode/setup.mjs</code></td><td>Stage 1 loader copy in repo</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">math_init.js</code></td><td>Alternative Stage 2 payload filename</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">codeql_analysis.yml</code></td><td>Fake GitHub Actions workflow (secrets exfil via artifact)</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">gh-token-monitor.*</code></td><td>Dead-man's switch persistence (systemd/LaunchAgent)</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">tmp.dpkg_14527.lock</code></td><td>PID lock file camouflaged as dpkg lock</td><td><span class="badge badge-medium">Medium</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>GitHub / Behavioral Indicators</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Indicator</th><th>Description</th><th>Severity</th></tr></thead>
+                    <tbody>
+                        <tr><td><code class="inline">claude@users.noreply.github.com</code></td><td>Worm commit author email</td><td><span class="badge badge-critical">Critical</span></td></tr>
+                        <tr><td><code class="inline">thebeautifulmarchoftime</code></td><td>FIRESCALE dead drop marker (GitHub commit search)</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">thebeautifulsnadsoftime</code></td><td>FIRESCALE dead drop marker (GitHub commit search)</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">chore: update config</code></td><td>Exfil data commit message to attacker repos</td><td><span class="badge badge-high">High</span></td></tr>
+                        <tr><td><code class="inline">IfYouBlockThisAPIKey...</code></td><td>Intimidation string in malware binary</td><td><span class="badge badge-medium">Medium</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 03: KQL QUERIES -->
+        <section id="queries" class="section">
+            <div class="section-header">
+                <span class="section-number">03</span>
+                <h2>KQL Detection Queries</h2>
+            </div>
+
+            <p>Deploy these queries in Microsoft Sentinel or Defender Advanced Hunting. All queries use a 30-day lookback window. 5 consolidated queries provide full IOC coverage across all known indicators.</p>
+
+            <h3>3.1 Network-Based Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #1: C2 Domains + Actor Backend IPs</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect connections to C2 domains and actor infrastructure IPs</span>
+<span class="kw">let</span> <span class="var">AllThreatDomains</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"npm-cache.com"</span>, <span class="str">"pypi-get.com"</span>, <span class="str">"js-mirror.com"</span>, <span class="str">"awqhnjewqjkl.icu"</span>, <span class="str">"t.m-kosche.com"</span>, <span class="str">"telemetry.m-kosche.com"</span>, <span class="str">"git-tanstack.com"</span>]);
+<span class="kw">let</span> <span class="var">ActorIPs</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"185.95.159.32"</span>, <span class="str">"83.142.209.194"</span>, <span class="str">"85.137.53.71"</span>, <span class="str">"94.154.172.43"</span>]);
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="var">AllThreatDomains</span>)
+    <span class="kw">or</span> <span class="var">RemoteIP</span> <span class="kw">in</span> (<span class="var">ActorIPs</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">RemoteUrl</span>, <span class="var">RemoteIP</span>, <span class="var">RemotePort</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="fn">sort</span> <span class="kw">by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #2: Node/Bun Infrastructure Abuse (EtherHiding, IMDS, Vault, Exfil)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect Node/Bun processes contacting Ethereum RPC, IMDS, Vault, exfil endpoints</span>
+<span class="kw">let</span> <span class="var">EthRPCDomains</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"go.getblock.io"</span>, <span class="str">"securerpc.com"</span>, <span class="str">"bitstack.com"</span>, <span class="str">"runonflux.io"</span>, <span class="str">"chain49.com"</span>, <span class="str">"tenderly.co"</span>, <span class="str">"diamondswap.org"</span>, <span class="str">"lokibuilder.xyz"</span>, <span class="str">"publicnode.com"</span>, <span class="str">"nodies.app"</span>, <span class="str">"unifra.io"</span>, <span class="str">"blockpi.network"</span>, <span class="str">"linkpool.io"</span>, <span class="str">"gateway.fm"</span>, <span class="str">"zan.top"</span>, <span class="str">"merkle.io"</span>, <span class="str">"tokenview.io"</span>, <span class="str">"nodeconnect.org"</span>, <span class="str">"stateless.solutions"</span>, <span class="str">"stackup.sh"</span>, <span class="str">"nodifi.ai"</span>, <span class="str">"radiumblock.co"</span>, <span class="str">"4everland.org"</span>, <span class="str">"blockrazor.xyz"</span>, <span class="str">"omniatech.io"</span>, <span class="str">"0xrpc.io"</span>, <span class="str">"owlracle.info"</span>, <span class="str">"therpc.io"</span>, <span class="str">"stakely.io"</span>, <span class="str">"poolz.finance"</span>, <span class="str">"pocket.network"</span>, <span class="str">"fullsend.to"</span>, <span class="str">"swiftnodes.io"</span>, <span class="str">"flashbots.net"</span>, <span class="str">"mevblocker.io"</span>]);
+<span class="kw">let</span> <span class="var">DuneRepoNames</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"prescient"</span>, <span class="str">"tleilaxu"</span>, <span class="str">"siridar"</span>, <span class="str">"powindah"</span>, <span class="str">"kralizec"</span>, <span class="str">"sandworm"</span>, <span class="str">"heighliner"</span>, <span class="str">"thumper"</span>, <span class="str">"sardaukar"</span>, <span class="str">"fremen"</span>, <span class="str">"atreides"</span>, <span class="str">"melange"</span>]);
+<span class="var">DeviceNetworkEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"bun"</span>, <span class="str">"bun.exe"</span>, <span class="str">"node"</span>, <span class="str">"node.exe"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="var">EthRPCDomains</span>)
+    <span class="kw">or</span> <span class="var">RemoteIP</span> <span class="kw">in</span> (<span class="str">"169.254.169.254"</span>, <span class="str">"169.254.170.2"</span>)
+    <span class="kw">or</span> (<span class="var">RemoteIP</span> <span class="op">==</span> <span class="str">"127.0.0.1"</span> <span class="kw">and</span> <span class="var">RemotePort</span> <span class="op">==</span> <span class="num">8200</span>)
+    <span class="kw">or</span> (<span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"/router"</span> <span class="kw">and</span> <span class="var">RemotePort</span> <span class="op">==</span> <span class="num">443</span>)
+    <span class="kw">or</span> (<span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"api.github.com"</span> <span class="kw">and</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="str">"graphql"</span>, <span class="str">"user/repos"</span>, <span class="str">"user/orgs"</span>, <span class="str">"search/commits"</span>))
+    <span class="kw">or</span> (<span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"api.github.com"</span> <span class="kw">and</span> <span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"repos"</span> <span class="kw">and</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="var">DuneRepoNames</span>))
+    <span class="kw">or</span> (<span class="var">RemoteUrl</span> <span class="kw">has</span> <span class="str">"registry.npmjs.org"</span> <span class="kw">and</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="str">"/tokens"</span>, <span class="str">"/-/whoami"</span>, <span class="str">"/oidc/token"</span>))
+    <span class="kw">or</span> <span class="var">RemoteUrl</span> <span class="fn">has_any</span> (<span class="str">"fulcio.sigstore.dev"</span>, <span class="str">"rekor.sigstore.dev"</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">RemoteUrl</span>, <span class="var">RemoteIP</span>, <span class="var">RemotePort</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="fn">sort</span> <span class="kw">by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <h3>3.2 Process-Based Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #5: All Behavioral Indicators</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect Bun runtime, compromised package installs, FIRESCALE markers, worm behavior</span>
+<span class="kw">let</span> <span class="var">OriginalPackages</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"keyv"</span>, <span class="str">"cacheable"</span>, <span class="str">"cacheable-request"</span>, <span class="str">"cache-manager"</span>, <span class="str">"flat-cache"</span>, <span class="str">"file-entry-cache"</span>, <span class="str">"ecto"</span>, <span class="str">"@keyv/"</span>, <span class="str">"@cacheable/"</span>]);
+<span class="kw">let</span> <span class="var">CompromisedScopes</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"@servicetitan/"</span>, <span class="str">"@onereach/"</span>, <span class="str">"@or-sdk/"</span>, <span class="str">"@ornikar/"</span>, <span class="str">"@qlik/"</span>, <span class="str">"@nebula.js/"</span>, <span class="str">"@picsart/"</span>, <span class="str">"@deliveroo/"</span>, <span class="str">"@hubsync/"</span>, <span class="str">"@arv-bedrock/"</span>, <span class="str">"@adminide-stack/"</span>, <span class="str">"@umacloud/"</span>, <span class="str">"@workbench-stack/"</span>, <span class="str">"@thiennq/"</span>]);
+<span class="kw">let</span> <span class="var">AttackerGoRepos</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"techtoboggan/claude-desktop-hardened-linux"</span>, <span class="str">"adieuu-llc/adieuu-2026"</span>, <span class="str">"rainb0w-clwn/node-cache-manager-fs-binary-ts"</span>, <span class="str">"evilgodfahim/kal"</span>, <span class="str">"juxtaposition1/v.a.p.e"</span>]);
+<span class="var">DeviceProcessEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> (<span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"bun"</span>, <span class="str">"bun.exe"</span>) <span class="kw">or</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"setup.mjs"</span>, <span class="str">"Math_Symbol"</span>, <span class="str">"math_init.js"</span>, <span class="str">"_NODE_RUNTIME_INIT"</span>))
+    <span class="kw">or</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"thebeautifulmarchoftime"</span>, <span class="str">"thebeautifulsnadsoftime"</span>, <span class="str">"IfYouBlockThisAPIKey"</span>, <span class="str">"claude@users.noreply.github.com"</span>)
+    <span class="kw">or</span> (<span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"python3"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"grep"</span> <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"-aoE"</span>, <span class="str">"tr -d"</span>))
+    <span class="kw">or</span> (<span class="var">ProcessCommandLine</span> <span class="kw">has</span> <span class="str">"chore: update config"</span> <span class="kw">and</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"bun"</span>, <span class="str">"bun.exe"</span>, <span class="str">"node"</span>, <span class="str">"node.exe"</span>, <span class="str">"git"</span>, <span class="str">"git.exe"</span>))
+    <span class="kw">or</span> (<span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"npm"</span>, <span class="str">"npm.cmd"</span>, <span class="str">"yarn"</span>, <span class="str">"yarn.cmd"</span>, <span class="str">"pnpm"</span>, <span class="str">"pnpm.cmd"</span>, <span class="str">"bun"</span>, <span class="str">"bun.exe"</span>) <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="str">"install"</span>, <span class="str">"add"</span>, <span class="str">"i "</span>) <span class="kw">and</span> (<span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="var">OriginalPackages</span>) <span class="kw">or</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="var">CompromisedScopes</span>)))
+    <span class="kw">or</span> (<span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"go"</span>, <span class="str">"go.exe"</span>) <span class="kw">and</span> <span class="var">ProcessCommandLine</span> <span class="fn">has_any</span> (<span class="var">AttackerGoRepos</span>))
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">FileName</span>, <span class="var">ProcessCommandLine</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>, <span class="var">AccountName</span>, <span class="var">FolderPath</span>
+<span class="op">|</span> <span class="fn">sort</span> <span class="kw">by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <h3>3.3 File-Based Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #6: File Hashes + Persistence Artifacts (102 hashes)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect 102 file hashes, malware filenames, worm persistence, dead-man's switch</span>
+<span class="cm">// Hash list: 2 primary samples + 100 ThreatFox hashes (IOC 1868515)</span>
+<span class="kw">let</span> <span class="var">MalwareHashes</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"54dc7ea54a1317cca0e890a2770630cf7fa6c97813e0cb9d2caa93012b350668"</span>, <span class="str">"9fc2570b7cef51c1b8df116d144d11ff4096357be7d2c4c6367cfc2509cf1bcc"</span>, <span class="str">"2258284d65f63829bd67eaba01ef6f1ada2f593f9bbe41678b2df360bd90d3df"</span>, <span class="str">"4db8275984b1b218a1c6461c5023e7a5d48e8855b61322652b37d3cd4fd5889d"</span>, <span class="str">"ece7afc64b1b37788356ad21a4e266ade94e31a6ec557aa3a327c6cc23acfe64"</span>, <span class="str">"319a7b1a2ecebd3dabfe698ad3d956e86b224e31d97b7786745a6f6741f0a622"</span>, <span class="str">"ef7a4178e39c8249d0e38570cfa468a4d641a551357a1c1a82a487dfeed7b95b"</span>, <span class="str">"afa5458077f5fe262d38867f20fc401a8a680da31daa328e33ee403741b1b0fe"</span>, <span class="str">"8b411e576a3c7ebce08ca7f2d87d4f76bba6391df49133c069428a11d3d960e7"</span>, <span class="str">"c8fa8acfd3b8dc5011f94d41641ce4e187108c1fba603bebf08ed071c000f2c8"</span>, <span class="str">"eebe8bbb5d1f4641a83e29858ba043bb17a2ab2d7fa386ceb9195b840da4b426"</span>, <span class="str">"14f0bb8238fb0a1712f55e824217a83e6a3cb31dc2d174f506129561dd075f57"</span>, <span class="str">"ea10fe718d90f663a314d6ef861acf2c2e15d83304f6ecc085abc4a315419e42"</span>, <span class="str">"4c93172866ee56ab778effe8f2a57466d7f5d67ab612772825580d450117d8a8"</span>, <span class="str">"d5124d22e8d4fe85392c20206af44eb2374bbb09c829262b478875135bc4f244"</span>, <span class="str">"6950c32835fad5c927bb641977e5387d6c6178be51cf2843eeb3df6c573c1da4"</span>, <span class="str">"3b7fb25091e6d672e3af87552e60daa8eb646434e04550646fb776a39c882d68"</span>, <span class="str">"616df733f78d520376dd121fac399a29f2b3e12a7e8868411623c86f2efb2bb7"</span>, <span class="str">"6d3eb6e7c90fb3d4e53904e8d94fbaf8ff7ff4d64705f03b8a3b5450df012529"</span>, <span class="str">"1f3f94cfecbfaab20d9cc9252add1136a416e075b58844035b218ed44d2764ce"</span>, <span class="str">"c4e344b0744df0b0a8c5d1b7a5debb1d8ff11c831a9765e6cb22cab9b2cb8164"</span>, <span class="str">"d508483959ca5672e44bebb64625f6b16b899c6e9795081d66c324062ddf8c61"</span>, <span class="str">"9b733cb48caa3c58f4550a34ffe09f2c4d702b6e89b93739e6a41b50455d291c"</span>, <span class="str">"abae5d0c6395834a98b940174c98dc78945409a73ed9ed3f2ecc290f29bc54ec"</span>, <span class="str">"f1df4896244500671eb4aa63ebb48ea11cee196fafaa0e9874e17b24ac053c02"</span>, <span class="str">"43fb940d8fd77a09f14f33df5c8f7259ff55ef3b924e7def2d47a2ed95793deb"</span>, <span class="str">"783da23a2e3a06f927904e1e7c824f897324d1e15caa24628cdf90747ec5ded9"</span>, <span class="str">"bcac34f779baf8bf9bf9668153e8adbad28ec2e13e52958ae0795d3367055a43"</span>, <span class="str">"e0250076c1d2ac38777ea8f542431daf61fcbaab0ca9c196614b28065ef5b918"</span>, <span class="str">"cbb9bc5a8496243e02f3cc080efbe3e4a1430ba0671f2e43a202bf45b05479cd"</span>, <span class="str">"4dcde9c6defaf940453f737d00944cee216d1685d7510835e885ab97656089d0"</span>, <span class="str">"f099c5d9ec417d4445a0328ac0ada9cde79fc37410914103ae9c609cbc0ee068"</span>, <span class="str">"91c00ca1037061ba4e200b48074a4c2b9bdcf73a37f8e3b67ffd6f6889460410"</span>, <span class="str">"f4aa76c95b3855e16ffd7083834664ee13bd45d91ddacd472f94ec15979e21e3"</span>, <span class="str">"d2a8178deb7bfddb802e595916477139901dccb778ed7de39268db1dd1ec7c87"</span>, <span class="str">"150dd1c60d7b46201c324beabf144bc62c0c33e23f2b61b739917952864b8871"</span>, <span class="str">"18f784b3bc9a0bcdcb1a8d7f51bc5f54323fc40cbd874119354ab609bef6e4cb"</span>, <span class="str">"0fa99abf2a5af168ffc2b44bcf88020600bb2521b20d4e3367a2c1e996f71b8f"</span>, <span class="str">"c58f445ef2ce70f2259f31e22d1a8c848a50fece9299d433bd45c3be3478041c"</span>, <span class="str">"4d00f5e171c38922b23cf7eff1068d1fce455487ba62736b1d48fbb2aa7e05c4"</span>, <span class="str">"d56336949a4e665e9d64eb783c5b5d7f280a685b618d439f7087ef88185053a5"</span>, <span class="str">"d03a0e46b3deb9d0876bbcdae9f02ab19c9d09d709039802037cb275ac4efa39"</span>, <span class="str">"2f7f1cc457a4dac32c770ecece36537ac93731bce21267a9914c8551b0a11932"</span>, <span class="str">"cc0c61453c927e5c12a36ce8a13eca4b702480afe9017738fa6ce12206b00387"</span>, <span class="str">"fc13384e461e03246d0c1081b375e8a3e4b0122f789a789d736536a25143cfa9"</span>, <span class="str">"00b0f916908bf15a5bdf54bfa30d66016d4423b74d24dbb6e6d9e858173492e7"</span>, <span class="str">"31ec91299cb5356a488e1516880470fc311783ac7b06ea47df60def8e7dc217c"</span>, <span class="str">"e1dc43676f4bf52b3cfabedbae3295ebcc0b9006946cf076b0f510ca34ffdced"</span>, <span class="str">"25361a4a83e7976579e4b102a5888ff3583cf9ba869bcfcbbbb613c1f992d6ba"</span>, <span class="str">"4ea9857098c689acebfb00422f643f6065625afd7595c3c031c883e2dd151bd6"</span>, <span class="str">"8d7eead88cb9fa9c814affcff1b559bd458d1b405d003f95843a11e333d9de9e"</span>, <span class="str">"8dd9a10f86665169edcb34b8a30533f8d45312d0cff72c262c39e3dc575dfd73"</span>, <span class="str">"e7a4926adb9b363886fad4d5547efe908e0ef7d488a2403d5634233ebf218347"</span>, <span class="str">"c1cd7b4bcdffc8fdbffc5bf8b40b5aa653c55bd8357670eb08f0b01d9da78488"</span>, <span class="str">"27989c0d5d0daa0caef7205816f39fbad9280407c62fdd80e86e0c68e8aa50d5"</span>, <span class="str">"5a3c66f7b7dcca72d7f20aa6ebf635fd97d9c46f9c12ff83b6a471dfb8470ada"</span>, <span class="str">"6670e79de4849912cf3b3f523966b3fc94efbd7696520db56e8587d4f1ffbe4c"</span>, <span class="str">"be757fdbb3d1449c1e2d6982c741c83fd5d3c8fce0ab3f925fb05c5c51f69df2"</span>, <span class="str">"5006b1559a550c5a9925cdd199009eb1c68dcf54e3a010a01705c4c1dd32122e"</span>, <span class="str">"238bdd6fc826a99f5d8f474fa2063238a5c79105d8ef1e28cdcd5ef411e007c0"</span>, <span class="str">"ae8d82a751e4a6fd2d86686593fd03384c426c7bc19c244fb49ad5b214999b1f"</span>, <span class="str">"926b873973d1ef597c183b3928c6c85bb73d834e160766eb847859835abcb67c"</span>, <span class="str">"670d28d3e6944131207853a974089b23d80953a90c94342828f648a580b3fae4"</span>, <span class="str">"30a8ebfa684c888a4b6f79255b6fcea4a2d49c32f3e04dd5eb6249c4c9997233"</span>, <span class="str">"144661ff461b992a54972087c4279d2921f98a0a5eeb42e265bda49e65ef865d"</span>, <span class="str">"b63dfa70555205fd08b588be45e079d241098217639b53788200833a34af4eed"</span>, <span class="str">"876348ef7280d958e8bb94f49073961efabce9f65bf59e40c7c23f5378cc4095"</span>, <span class="str">"bee814e86ece73ed351dd061f1b9134bc5a9387bc164c265045551fddc8ea653"</span>, <span class="str">"ee0e09e64394c451eda6f8c3766a5428195cf8eb668580c88b2fbedcc0b0aeb8"</span>, <span class="str">"ada6fd24acd295e637b82662eda57e34d538a63690ea40b3c52b7d10603e80ed"</span>, <span class="str">"26a41ad5e17fb5c1bee7ab6e6834c07e7f59d3bda691e68482ab091553d91a47"</span>, <span class="str">"03a258f8aa57046b297e3cdde69614aa8ee81fc09bc3cce6dda02797dd4a8a0b"</span>, <span class="str">"6089fecafe11241160a83d0a2ebd2ecce1d1e79e203c0e11539ba74f2f7ccffd"</span>, <span class="str">"4ce9534b535c7bc3d33f969c48930e24aa8cb04b3aaeab87c911a38373df0650"</span>, <span class="str">"33de3fda5a0d7a194c0e32ea0150043886b60b9bdcd629de6c4cdb52d4430230"</span>, <span class="str">"1a040bf8aa340ec8df9e373e493fb8af523d5b040327674f6dfe06a4db2809e6"</span>, <span class="str">"f3c82c9966020157011e933af7b13f8d4a3cf1653aa49a2ebbca555adc5bad09"</span>, <span class="str">"cacf75816ee099087559c738b4d858bb5054e849b1430dbfbb448bdf820aa201"</span>, <span class="str">"38213e36d2de303921849031bd84e1efb85f5d157eba955f2472033eb67f4f11"</span>, <span class="str">"697a91b85b7f04a92d055ffb02192c6dbe52bef6b2fa7af46331b79a14a9eac2"</span>, <span class="str">"e0d96bebf264684021a6904a238cfb25d1ff2de9ac14ba172a5f444b5acbbf78"</span>, <span class="str">"95a264a89041e405f56759b124aec6ac64176bdd4347b1a2bc7c6dce0af8cf7a"</span>, <span class="str">"ecbf7811b3bf75ce655cdb56f6237314b9cc9e03516d5a0600578c7384f1807b"</span>, <span class="str">"05f726f67c6f3cb49b0a7e64759178e44bd0461dcc1cf3f08041cc642ba66d40"</span>, <span class="str">"2d4079451c9576465a7456015a33fdd84b6450195c428bc8bae9f9b457494969"</span>, <span class="str">"a64f84936a72229b13231221f6bbb2fc902b1e44c28abdfc3ab67a40ff43e13d"</span>, <span class="str">"7cf9583eda91da3f740bf6732d07928b08e677995c806050a6bc4aed8b2bc43f"</span>, <span class="str">"2532cc453b3718095e3aa5c4d93142758bf3a0dcb5c0e268d040960a3cb0d140"</span>, <span class="str">"3d56dd15e9160fb916c69c98a5feb40965c6351f79e0bad141bf6d20254ea83f"</span>, <span class="str">"a4ee8e625cf630ef257771b87921a5de278714460a8dd9ca0adf4fe5a76c0d49"</span>, <span class="str">"f88f1359bc00549d8fda95d5e10a3d11ac696127c38f3d1a3f4aa5c896521438"</span>, <span class="str">"a22772c832222f965624afcf68f82c7b8d7747015fc6958a211958ad4b3a830e"</span>, <span class="str">"f366875904fb0acc06bb9ee89740dc81177a9bf0852df86c3eeb853814eacad0"</span>, <span class="str">"1c56bc121c4326bd996030e24d26443c884d93cc466dbc5d1c8840a9afd0be2d"</span>, <span class="str">"82d5db7870ae4325262a154179a3da3aa911ff99b860516dbaa561321ee4f9bf"</span>, <span class="str">"e84a9a18fe254e4ee87bc1153e4413d034d32ffaf1a07a174014fdab065e7fbb"</span>, <span class="str">"f410c3e6b60765e79e90201dc8f8cc1c676d3f46ce1411ae705680fef47548f0"</span>, <span class="str">"834aca7c70f84f7032a2402925914cba1a5fe964e271e2a64086f5a43183a6c9"</span>, <span class="str">"660c55fb8408d0705e535f4758296fca1b2f0dbceebd142117e1e388c6e1fb16"</span>, <span class="str">"d9653c52131d534467500978f3e5cfd152f1854576ed4d2c19c56b6aa4a5922d"</span>, <span class="str">"1ac23cd9220efb68f0bc40c713e8cacefdad48dda90999d47afc6e5e94c6a5fb"</span>]);
+<span class="kw">let</span> <span class="var">CompromisedScopes</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"@servicetitan/"</span>, <span class="str">"@onereach/"</span>, <span class="str">"@or-sdk/"</span>, <span class="str">"@ornikar/"</span>, <span class="str">"@qlik/"</span>, <span class="str">"@nebula.js/"</span>, <span class="str">"@picsart/"</span>, <span class="str">"@deliveroo/"</span>, <span class="str">"@hubsync/"</span>, <span class="str">"@arv-bedrock/"</span>, <span class="str">"@adminide-stack/"</span>, <span class="str">"@umacloud/"</span>, <span class="str">"@workbench-stack/"</span>, <span class="str">"@thiennq/"</span>]);
+<span class="kw">let</span> <span class="var">AttackerGoRepos</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">"techtoboggan/claude-desktop-hardened-linux"</span>, <span class="str">"adieuu-llc/adieuu-2026"</span>, <span class="str">"rainb0w-clwn/node-cache-manager-fs-binary-ts"</span>, <span class="str">"evilgodfahim/kal"</span>, <span class="str">"juxtaposition1/v.a.p.e"</span>]);
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">SHA256</span> <span class="kw">in</span> (<span class="var">MalwareHashes</span>)
+    <span class="kw">or</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"setup.mjs"</span>, <span class="str">"Math_Symbol.js"</span>, <span class="str">"math_init.js"</span>, <span class="str">"gh-token-monitor.service"</span>, <span class="str">"com.user.gh-token-monitor.plist"</span>, <span class="str">"gh-token-monitor.sh"</span>, <span class="str">"tmp.dpkg_14527.lock"</span>)
+    <span class="kw">or</span> <span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"gh-token-monitor"</span>
+    <span class="kw">or</span> (<span class="var">ActionType</span> <span class="kw">in</span> (<span class="str">"FileCreated"</span>, <span class="str">"FileModified"</span>) <span class="kw">and</span> (
+        (<span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">".claude"</span> <span class="kw">and</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"settings.json"</span>, <span class="str">"setup.mjs"</span>, <span class="str">"math_init.js"</span>))
+        <span class="kw">or</span> (<span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">".vscode"</span> <span class="kw">and</span> <span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"tasks.json"</span>, <span class="str">"setup.mjs"</span>))
+        <span class="kw">or</span> (<span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">".github/workflows"</span> <span class="kw">and</span> <span class="var">FileName</span> <span class="op">=~</span> <span class="str">"codeql_analysis.yml"</span>)
+    ))
+    <span class="kw">or</span> (<span class="var">FolderPath</span> <span class="kw">has</span> <span class="str">"node_modules"</span> <span class="kw">and</span> (<span class="var">FileName</span> <span class="fn">in~</span> (<span class="str">"setup.mjs"</span>, <span class="str">"Math_Symbol.js"</span>, <span class="str">"math_init.js"</span>) <span class="kw">or</span> (<span class="var">FolderPath</span> <span class="fn">has_any</span> (<span class="var">CompromisedScopes</span>) <span class="kw">and</span> <span class="var">FileName</span> <span class="op">==</span> <span class="str">"package.json"</span>)))
+    <span class="kw">or</span> <span class="var">FolderPath</span> <span class="fn">has_any</span> (<span class="var">AttackerGoRepos</span>)
+<span class="op">|</span> <span class="fn">project</span> <span class="var">Timestamp</span>, <span class="var">DeviceName</span>, <span class="var">FileName</span>, <span class="var">FolderPath</span>, <span class="var">SHA256</span>, <span class="var">ActionType</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessCommandLine</span>
+<span class="op">|</span> <span class="fn">sort</span> <span class="kw">by</span> <span class="var">Timestamp</span> <span class="kw">desc</span></pre>
+            </div>
+
+            <h3>3.4 Credential Access Detection</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Query #7: Credential Harvesting (58 path categories)</span>
+                    <span class="code-lang">KQL</span>
+                </div>
+                <pre><span class="cm">// Detect Node/Bun accessing 3+ credential file categories simultaneously</span>
+<span class="kw">let</span> <span class="var">SensitivePaths</span> <span class="op">=</span> <span class="fn">dynamic</span>([<span class="str">".ssh/id_"</span>, <span class="str">".ssh/config"</span>, <span class="str">".aws/credentials"</span>, <span class="str">".azure/accessTokens"</span>, <span class="str">".azure/msal_token_cache"</span>, <span class="str">".kube/config"</span>, <span class="str">".npmrc"</span>, <span class="str">".yarnrc"</span>, <span class="str">".git-credentials"</span>, <span class="str">".gitconfig"</span>, <span class="str">".vault-token"</span>, <span class="str">".claude/credentials"</span>, <span class="str">".claude/settings.json"</span>, <span class="str">".claude.json"</span>, <span class="str">".config/gcloud"</span>, <span class="str">".pypirc"</span>, <span class="str">".docker/config"</span>, <span class="str">".bitcoin/wallet.dat"</span>, <span class="str">".electrum/wallets"</span>, <span class="str">".monero"</span>, <span class="str">".dash/wallet.dat"</span>, <span class="str">".dogecoin/wallet.dat"</span>, <span class="str">".zcash/wallet.dat"</span>, <span class="str">".foundry/keystores"</span>, <span class="str">".brownie/accounts"</span>, <span class="str">"TelegramDesktop/tdata"</span>, <span class="str">"Signal"</span>, <span class="str">"Element/Local Storage"</span>, <span class="str">"discord/Local Storage"</span>, <span class="str">"Slack/Cookies"</span>, <span class="str">".config/filezilla/sitemanager"</span>, <span class="str">"NordVPN"</span>, <span class="str">"CyberGhost"</span>, <span class="str">"Windscribe"</span>, <span class="str">"OpenVPN/config"</span>, <span class="str">".terraform.d/credentials"</span>, <span class="str">".config/gh/hosts.yml"</span>, <span class="str">".config/argocd"</span>, <span class="str">".argocd"</span>, <span class="str">".jenkins/config.xml"</span>, <span class="str">".jenkins/secrets"</span>, <span class="str">".ansible.cfg"</span>, <span class="str">".config/openai/auth.json"</span>, <span class="str">".anthropic/auth.json"</span>, <span class="str">".codex/auth.json"</span>, <span class="str">".cursor/config.json"</span>, <span class="str">".cursor/credentials"</span>, <span class="str">"kubernetes.io/serviceaccount/token"</span>, <span class="str">".config/helm"</span>, <span class="str">".bash_history"</span>, <span class="str">".zsh_history"</span>, <span class="str">".node_repl_history"</span>, <span class="str">".python_history"</span>, <span class="str">".config/pypoetry/auth.toml"</span>, <span class="str">".alibabacloud"</span>, <span class="str">".tccli"</span>, <span class="str">".hcloud"</span>, <span class="str">"Ledger Live"</span>, <span class="str">".config/solana"</span>, <span class="str">"keyrings/login.keyring"</span>, <span class="str">".mc/config.json"</span>]);
+<span class="var">DeviceFileEvents</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">Timestamp</span> <span class="op">&gt;</span> <span class="fn">ago</span>(<span class="num">30d</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">InitiatingProcessFileName</span> <span class="fn">in~</span> (<span class="str">"bun"</span>, <span class="str">"bun.exe"</span>, <span class="str">"node"</span>, <span class="str">"node.exe"</span>)
+<span class="op">|</span> <span class="kw">where</span> <span class="var">FolderPath</span> <span class="fn">has_any</span> (<span class="var">SensitivePaths</span>)
+<span class="op">|</span> <span class="fn">summarize</span> <span class="var">CredTypes</span><span class="op">=</span><span class="fn">dcount</span>(<span class="var">FileName</span>), <span class="var">Files</span><span class="op">=</span><span class="fn">make_set</span>(<span class="var">FolderPath</span>, <span class="num">50</span>), <span class="var">FirstSeen</span><span class="op">=</span><span class="fn">min</span>(<span class="var">Timestamp</span>), <span class="var">LastSeen</span><span class="op">=</span><span class="fn">max</span>(<span class="var">Timestamp</span>) <span class="kw">by</span> <span class="var">DeviceName</span>, <span class="var">InitiatingProcessFileName</span>, <span class="var">InitiatingProcessId</span>
+<span class="op">|</span> <span class="kw">where</span> <span class="var">CredTypes</span> <span class="op">&gt;=</span> <span class="num">3</span>
+<span class="op">|</span> <span class="fn">sort</span> <span class="kw">by</span> <span class="var">CredTypes</span> <span class="kw">desc</span></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 04: MITRE ATT&CK -->
+        <section id="mitre" class="section">
+            <div class="section-header">
+                <span class="section-number">04</span>
+                <h2>MITRE ATT&CK Mapping</h2>
+            </div>
+
+            <div class="mitre-grid">
+                <div class="mitre-card"><div class="mitre-tactic">Initial Access</div><div class="mitre-technique">Supply Chain Compromise: Software Supply Chain</div><div class="mitre-id">T1195.002</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Execution</div><div class="mitre-technique">Command and Scripting Interpreter: JavaScript</div><div class="mitre-id">T1059.007</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Persistence</div><div class="mitre-technique">Event Triggered Execution (IDE hooks)</div><div class="mitre-id">T1546</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Defense Evasion</div><div class="mitre-technique">Obfuscated Files or Information</div><div class="mitre-id">T1027</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Defense Evasion</div><div class="mitre-technique">Masquerading: Match Legitimate Name</div><div class="mitre-id">T1036.005</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Credential Access</div><div class="mitre-technique">Unsecured Credentials: Credentials In Files</div><div class="mitre-id">T1552.001</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Credential Access</div><div class="mitre-technique">Unsecured Credentials: Cloud Instance Metadata API</div><div class="mitre-id">T1552.005</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Discovery</div><div class="mitre-technique">Cloud Infrastructure Discovery</div><div class="mitre-id">T1580</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Collection</div><div class="mitre-technique">Automated Collection</div><div class="mitre-id">T1119</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Exfiltration</div><div class="mitre-technique">Exfiltration to Code Repository</div><div class="mitre-id">T1567.001</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Command and Control</div><div class="mitre-technique">Web Service: Bidirectional Communication (Ethereum)</div><div class="mitre-id">T1102.002</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Command and Control</div><div class="mitre-technique">Encrypted Channel: Asymmetric Cryptography</div><div class="mitre-id">T1573.002</div></div>
+                <div class="mitre-card"><div class="mitre-tactic">Lateral Movement</div><div class="mitre-technique">Taint Shared Content (IDE worm)</div><div class="mitre-id">T1080</div></div>
+            </div>
+        </section>
+
+        <!-- SECTION 05: PRIORITY -->
+        <section id="priority" class="section">
+            <div class="section-header">
+                <span class="section-number">05</span>
+                <h2>Query Priority Reference</h2>
+            </div>
+
+            <p>Run P1-CRIT queries first for immediate threat detection. All 5 queries are critical priority due to the active nature of this campaign.</p>
+
+            <div class="priority-grid">
+                <div class="priority-column">
+                    <h4><span class="badge badge-critical">P1-CRIT</span> Direct C2/IOC</h4>
+                    <ul class="priority-list">
+                        <li><span class="query-num">#1</span> C2 domains + actor IPs</li>
+                    </ul>
+                </div>
+                <div class="priority-column">
+                    <h4><span class="badge badge-critical">P1-CRIT</span> Behavioral</h4>
+                    <ul class="priority-list">
+                        <li><span class="query-num">#5</span> Runtime + package installs + worm</li>
+                        <li><span class="query-num">#6</span> 102 file hashes + persistence</li>
+                        <li><span class="query-num">#7</span> Credential harvesting (58 paths)</li>
+                    </ul>
+                </div>
+                <div class="priority-column">
+                    <h4><span class="badge badge-critical">P1-CRIT</span> Infrastructure</h4>
+                    <ul class="priority-list">
+                        <li><span class="query-num">#2</span> EtherHiding RPC + IMDS + Vault + exfil</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 06: REFERENCES -->
+        <section id="references" class="section">
+            <div class="section-header">
+                <span class="section-number">06</span>
+                <h2>References &amp; Resources</h2>
+            </div>
+
+            <div class="card">
+                <h4>Source Intelligence</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 1rem;"><strong>CRIMSON7 - Shai-Hulud: Ethereum C2 npm Supply Chain Analysis</strong><br><a href="https://www.crimson7.io/resources/blogs/shai-hulud-ethereum-c2-npm-supply-chain" target="_blank">https://www.crimson7.io/resources/blogs/shai-hulud-ethereum-c2-npm-supply-chain</a></li>
+                    <li style="margin-bottom: 1rem;"><strong>Aikido - keyv and friends compromised in npm supply chain attack</strong><br><a href="https://www.aikido.dev/blog/keyv-and-friends-compromised-in-npm-supply-chain-attack" target="_blank">https://www.aikido.dev/blog/keyv-and-friends-compromised-in-npm-supply-chain-attack</a></li>
+                    <li style="margin-bottom: 1rem;"><strong>Wiz - Technical analysis of the Shai-Hulud malware</strong><br><a href="https://www.wiz.io/blog/analysis-of-shai-hulud-malware" target="_blank">https://www.wiz.io/blog/analysis-of-shai-hulud-malware</a></li>
+                    <li style="margin-bottom: 1rem;"><strong>Datadog - npm supply chain attack: keyv, cacheable packages compromised</strong><br><a href="https://securitylabs.datadoghq.com/articles/npm-supply-chain-attack-keyv-cacheable/" target="_blank">https://securitylabs.datadoghq.com/articles/npm-supply-chain-attack-keyv-cacheable/</a></li>
+                    <li style="margin-bottom: 1rem;"><strong>OX Security - Shai-Hulud malware analysis</strong><br><a href="https://www.ox.security/blog/shai-hulud-malware-analysis/" target="_blank">https://www.ox.security/blog/shai-hulud-malware-analysis/</a></li>
+                    <li style="margin-bottom: 1rem;"><strong>JFrog - npm supply chain attack analysis</strong><br><a href="https://jfrog.com/blog/npm-supply-chain-attack-targets-keyv-ecosystem/" target="_blank">https://jfrog.com/blog/npm-supply-chain-attack-targets-keyv-ecosystem/</a></li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>Threat Actor Profile</h4>
+                <p><strong>Actor:</strong> TeamPCP</p>
+                <p><strong>Malware Family:</strong> js.shai_hulud</p>
+                <p><strong>Active since:</strong> May 2026</p>
+                <p><strong>Primary targets:</strong> npm ecosystem, JavaScript/Node.js developers, CI/CD pipelines</p>
+                <p style="margin-bottom: 0;"><strong>Notable technique:</strong> EtherHiding - Ethereum smart contract for dynamic C2 domain resolution</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                <strong>Community Threat Hunt Runbook</strong> | Created by <a href="https://crimson7.io">CRIMSON7 Security Operations</a>
+                <br><a href="https://crimson7research.github.io/ThreatHuntingReports/">All Threat Hunting Reports</a>
+            </div>
+            <div class="footer-meta">
+                <span>Last Updated: August 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                target.scrollIntoView({ behavior: 'smooth' });
+                document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY + 100;
+            sections.forEach(section => {
+                if (section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+                    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                    document.querySelector(`.nav a[href="#${section.id}"]`)?.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    <script>
+    document.querySelectorAll('.code-header').forEach(header => {
+        const lang = header.querySelector('.code-lang');
+        const actions = document.createElement('div');
+        actions.className = 'code-header-actions';
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+        btn.addEventListener('click', () => {
+            const pre = header.closest('.code-block').querySelector('pre');
+            const text = pre.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.classList.add('copied');
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Copied';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+                }, 2000);
+            });
+        });
+        actions.appendChild(lang.cloneNode(true));
+        actions.appendChild(btn);
+        lang.replaceWith(actions);
+    });
+    </script>
+
+    <script>
+    const IOC_DATA = {
+        "meta": {
+            "title": "Shai-Hulud (js.shai_hulud) - Indicators of Compromise",
+            "date": "August 06, 2026",
+            "advisories": ["ThreatFox IOC 1868515"],
+            "author": "CRIMSON7 Security Operations"
+        },
+        "network": [
+            {"indicator": "npm-cache[.]com", "type": "domain", "context": "Primary C2 (Cloudflare-fronted)", "source": "Wiz, JFrog"},
+            {"indicator": "pypi-get[.]com", "type": "domain", "context": "Secondary C2 (Cloudflare-fronted)", "source": "Wiz, JFrog"},
+            {"indicator": "js-mirror[.]com", "type": "domain", "context": "Secondary C2 (Cloudflare-fronted)", "source": "Wiz, JFrog"},
+            {"indicator": "awqhnjewqjkl[.]icu", "type": "domain", "context": "Current active C2 (rotated 2026-08-04)", "source": "CRIMSON7"},
+            {"indicator": "t.m-kosche[.]com", "type": "domain", "context": "Earlier campaign C2", "source": "Datadog"},
+            {"indicator": "telemetry.m-kosche[.]com", "type": "domain", "context": "Earlier campaign telemetry", "source": "Datadog"},
+            {"indicator": "git-tanstack[.]com", "type": "domain", "context": "Earlier campaign exfil", "source": "Datadog"},
+            {"indicator": "185.95.159.32", "type": "ip", "context": "Actor backend IP", "source": "Vendor intel"},
+            {"indicator": "83.142.209.194", "type": "ip", "context": "Actor backend IP", "source": "Vendor intel"},
+            {"indicator": "85.137.53.71", "type": "ip", "context": "Actor backend IP", "source": "Vendor intel"},
+            {"indicator": "94.154.172.43", "type": "ip", "context": "Actor backend IP", "source": "Vendor intel"}
+        ],
+        "file_system": [
+            {"indicator": ".claude/settings.json", "context": "Worm persistence (Claude Code)", "source": "Datadog, Wiz"},
+            {"indicator": ".claude/setup.mjs", "context": "Stage 1 loader copy", "source": "Datadog, Wiz"},
+            {"indicator": ".vscode/tasks.json", "context": "Worm persistence (VS Code)", "source": "Datadog, Wiz"},
+            {"indicator": ".vscode/setup.mjs", "context": "Stage 1 loader copy", "source": "Datadog, Wiz"},
+            {"indicator": "codeql_analysis.yml", "context": "Fake GitHub Actions workflow", "source": "Datadog"},
+            {"indicator": "gh-token-monitor.*", "context": "Dead-man's switch persistence", "source": "Snyk, SafeDep"},
+            {"indicator": "tmp.dpkg_14527.lock", "context": "PID lock file", "source": "Datadog, Wiz"}
+        ],
+        "hashes": [
+            {"hash": "54dc7ea54a1317cca0e890a2770630cf7fa6c97813e0cb9d2caa93012b350668", "package": "Math_Symbol.js (Stage 2)", "source": "CRIMSON7"},
+            {"hash": "9fc2570b7cef51c1b8df116d144d11ff4096357be7d2c4c6367cfc2509cf1bcc", "package": "setup.mjs (Stage 1)", "source": "CRIMSON7"}
+        ],
+        "process_cli": [
+            {"indicator": "claude@users.noreply.github.com", "context": "Worm commit author", "source": "Datadog, Wiz"},
+            {"indicator": "thebeautifulmarchoftime", "context": "FIRESCALE dead drop marker", "source": "OX Security"},
+            {"indicator": "thebeautifulsnadsoftime", "context": "FIRESCALE dead drop marker", "source": "OX Security"},
+            {"indicator": "chore: update config", "context": "Exfil commit message", "source": "Datadog, JFrog"},
+            {"indicator": "IfYouBlockThisAPIKey...", "context": "Intimidation string", "source": "Wiz"}
+        ],
+        "ethereum": [
+            {"indicator": "0xE1f2395ee43e45A1556EC6438a88c31B83493103", "context": "C2 domain resolver contract", "source": "CRIMSON7, Upwind, JFrog"},
+            {"indicator": "0x55f9780e1492344b7417fa723aedc4d0b97f31cd", "context": "Contract owner wallet", "source": "CRIMSON7"},
+            {"indicator": "0x4E5B2e1dc63F6b91cb6Cd759936495434C7e972F", "context": "Funding wallet (FixedFloat)", "source": "CRIMSON7"}
+        ]
+    };
+
+    function downloadIOCs() {
+        let lines = [];
+        lines.push("=" .repeat(80));
+        lines.push(" " + IOC_DATA.meta.title);
+        lines.push(" Date: " + IOC_DATA.meta.date);
+        lines.push(" Author: " + IOC_DATA.meta.author);
+        lines.push("=" .repeat(80));
+        lines.push("");
+
+        const sections = [
+            ["NETWORK IOCs", "network", (i) => `${(i.indicator || "").padEnd(55)} | ${i.context} | ${i.source}`],
+            ["FILE SYSTEM IOCs", "file_system", (i) => `${(i.indicator || "").padEnd(55)} | ${i.context} | ${i.source}`],
+            ["HASHES", "hashes", (i) => `${(i.hash || "").padEnd(55)} | ${i.package} | ${i.source}`],
+            ["PROCESS / CLI IOCs", "process_cli", (i) => `${(i.indicator || "").padEnd(55)} | ${i.context} | ${i.source}`],
+            ["ETHEREUM INFRASTRUCTURE", "ethereum", (i) => `${(i.indicator || "").padEnd(55)} | ${i.context} | ${i.source}`]
+        ];
+
+        sections.forEach(([title, key, fmt]) => {
+            if (IOC_DATA[key] && IOC_DATA[key].length > 0) {
+                lines.push(`--- ${title} ---`);
+                lines.push("");
+                IOC_DATA[key].forEach(item => lines.push(fmt(item)));
+                lines.push("");
+            }
+        });
+
+        lines.push("=" .repeat(80));
+        lines.push(" Generated from CRIMSON7 Threat Hunt Runbook");
+        lines.push(" https://crimson7.io");
+        lines.push(" https://crimson7research.github.io/ThreatHuntingReports/");
+        lines.push("=" .repeat(80));
+
+        const blob = new Blob([lines.join("\n")], {type: "text/plain"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "shai-hulud-iocs.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    </script>
+</body>
+</html>
