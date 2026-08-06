@@ -59,7 +59,7 @@
   },
   {
     "file": "cve-2026-20841-threat-hunt-runbook.html",
-    "title": "CVE-2026-20841: Windows Notepad Markdown RCE",
+    "title": "CVE-2026-20841: Windows Notepad Markdown Command Injection",
     "description": "Command injection via unvalidated protocol handlers in Notepad Markdown rendering engine",
     "severity": "high",
     "type": "General",
@@ -68,8 +68,8 @@
       "Windows",
       "Notepad",
       "Markdown",
-      "RCE",
       "Command Injection",
+      "Arbitrary Code Execution",
       "Protocol Handler"
     ],
     "date": "Aug 04, 2026",
